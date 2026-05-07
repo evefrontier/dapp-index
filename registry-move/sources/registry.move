@@ -4,6 +4,9 @@ module dapp_registry::registry;
 use std::string::{Self, String};
 use sui::dynamic_field as df;
 use sui::event;
+use sui::object::{Self as object, UID};
+use sui::transfer;
+use sui::tx_context::{Self as tx_context, TxContext};
 
 // --- errors ---
 const E_EMPTY_SLUG: u64 = 0;
@@ -119,6 +122,7 @@ fun register_app_impl(
     let sender = tx_context::sender(_ctx);
     let now = tx_context::epoch(_ctx);
     let slug_for_event = copy slug;
+    let slug_for_field = copy slug;
 
     let listing = DappListing {
         owner: sender,
@@ -130,7 +134,7 @@ fun register_app_impl(
         updated_at_epoch: now,
     };
 
-    df::add(&mut registry.id, listing.slug, listing);
+    df::add(&mut registry.id, slug_for_field, listing);
 
     event::emit(DappRegistered {
         owner: sender,
