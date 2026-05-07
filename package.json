@@ -1,0 +1,11 @@
+{
+  "name": "dapp-index",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "bun@1.3.1",
+  "scripts": {
+    "move:build": "sui move build --path registry-move",
+    "move:test": "sui move test --path registry-move"
+  }
+}
