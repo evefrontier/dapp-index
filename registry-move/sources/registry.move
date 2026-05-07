@@ -4,9 +4,6 @@ module dapp_registry::registry;
 use std::string::{Self, String};
 use sui::dynamic_field as df;
 use sui::event;
-use sui::object::{Self as object, UID};
-use sui::transfer;
-use sui::tx_context::{Self as tx_context, TxContext};
 
 // --- errors ---
 const E_EMPTY_SLUG: u64 = 0;
@@ -30,7 +27,7 @@ const MAX_CATEGORY_LEN: u64 = 64;
 const METADATA_HASH_LEN: u64 = 32;
 
 public struct DappRegistry has key {
-    id: UID,
+    id: sui::object::UID,
 }
 
 public struct DappListing has copy, drop, store {
@@ -58,11 +55,11 @@ public struct DappRemoved has copy, drop {
     slug: String,
 }
 
-fun init(ctx: &mut TxContext) {
+fun init(ctx: &mut sui::tx_context::TxContext) {
     let registry = DappRegistry {
-        id: object::new(ctx),
+        id: sui::object::new(ctx),
     };
-    transfer::share_object(registry);
+    sui::transfer::share_object(registry);
 }
 
 fun assert_slug(slug: &String) {
@@ -110,7 +107,7 @@ fun register_app_impl(
     metadata_uri: String,
     metadata_hash: vector<u8>,
     categories: vector<String>,
-    _ctx: &mut TxContext,
+    _ctx: &mut sui::tx_context::TxContext,
 ) {
     assert_slug(&slug);
     assert_metadata_uri(&metadata_uri);
@@ -119,8 +116,8 @@ fun register_app_impl(
 
     assert!(!df::exists_(&registry.id, copy slug), E_DUPLICATE_SLUG);
 
-    let sender = tx_context::sender(_ctx);
-    let now = tx_context::epoch(_ctx);
+    let sender = sui::tx_context::sender(_ctx);
+    let now = sui::tx_context::epoch(_ctx);
     let slug_for_event = copy slug;
     let slug_for_field = copy slug;
 
@@ -148,7 +145,7 @@ public fun register_app(
     metadata_uri: String,
     metadata_hash: vector<u8>,
     categories: vector<String>,
-    ctx: &mut TxContext,
+    ctx: &mut sui::tx_context::TxContext,
 ) {
     register_app_impl(registry, slug, metadata_uri, metadata_hash, categories, ctx);
 }
@@ -159,7 +156,7 @@ public fun update_app(
     metadata_uri: String,
     metadata_hash: vector<u8>,
     categories: vector<String>,
-    ctx: &mut TxContext,
+    ctx: &mut sui::tx_context::TxContext,
 ) {
     assert_slug(&slug);
     assert_metadata_uri(&metadata_uri);
@@ -167,14 +164,14 @@ public fun update_app(
     assert_categories(&categories);
     assert_listing_exists(registry, copy slug);
 
-    let sender = tx_context::sender(ctx);
+    let sender = sui::tx_context::sender(ctx);
     let listing = df::borrow_mut<String, DappListing>(&mut registry.id, slug);
     assert!(listing.owner == sender, E_NOT_OWNER);
 
     listing.metadata_uri = metadata_uri;
     listing.metadata_hash = metadata_hash;
     listing.categories = categories;
-    listing.updated_at_epoch = tx_context::epoch(ctx);
+    listing.updated_at_epoch = sui::tx_context::epoch(ctx);
 
     let slug_copy = copy listing.slug;
     event::emit(DappUpdated {
@@ -183,11 +180,11 @@ public fun update_app(
     });
 }
 
-public fun remove_app(registry: &mut DappRegistry, slug: String, ctx: &mut TxContext) {
+public fun remove_app(registry: &mut DappRegistry, slug: String, ctx: &mut sui::tx_context::TxContext) {
     assert_slug(&slug);
     assert_listing_exists(registry, copy slug);
 
-    let sender = tx_context::sender(ctx);
+    let sender = sui::tx_context::sender(ctx);
     let owner_check = {
         let r = df::borrow<String, DappListing>(&registry.id, copy slug);
         r.owner
@@ -207,11 +204,11 @@ public fun remove_app(registry: &mut DappRegistry, slug: String, ctx: &mut TxCon
 // === test helpers ===
 
 #[test_only]
-public fun init_for_testing(ctx: &mut TxContext) {
+public fun init_for_testing(ctx: &mut sui::tx_context::TxContext) {
     let registry = DappRegistry {
-        id: object::new(ctx),
+        id: sui::object::new(ctx),
     };
-    transfer::share_object(registry);
+    sui::transfer::share_object(registry);
 }
 
 #[test_only]
@@ -221,7 +218,7 @@ public fun register_app_for_test(
     metadata_uri: String,
     metadata_hash: vector<u8>,
     categories: vector<String>,
-    ctx: &mut TxContext,
+    ctx: &mut sui::tx_context::TxContext,
 ) {
     register_app_impl(registry, slug, metadata_uri, metadata_hash, categories, ctx);
 }
