@@ -1,0 +1,15 @@
+.DS_Store
+node_modules
+
+# Local environment files
+.env
+.env.local
+
+# Build and test output
+dist
+build
+coverage
+
+# Tool caches
+.cache
+.vite
