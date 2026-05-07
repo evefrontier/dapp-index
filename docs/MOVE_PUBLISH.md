@@ -13,11 +13,9 @@ This is the current prototype deployment used for testnet wiring.
 
 | Field | Value |
 |--------|--------|
-| **Transaction digest** | `TFUwCY49EeCz2VVfSR4k2T3mHyaHoim2TrAFsFS1GCC` |
-| **Package ID** | `0x22c04589e7ce5fd6c6b982215972244a9648bc96086cc618b246c9a194a171fc` |
-| **Shared `DappRegistry` object ID** | `0x81bdd87afb38e560c04aca9afa64775bd8b2af1a644a7424c64511ed9ba8916b` |
-
-Explorer: [testnet.suivision transaction](https://testnet.suivision.xyz/tx/TFUwCY49EeCz2VVfSR4k2T3mHyaHoim2TrAFsFS1GCC).
+| **Transaction digest** | [`TFUwCY49EeCz2VVfSR4k2T3mHyaHoim2TrAFsFS1GCC`](https://suiscan.xyz/testnet/tx/TFUwCY49EeCz2VVfSR4k2T3mHyaHoim2TrAFsFS1GCC) |
+| **Package ID** | [`0x22c04589e7ce5fd6c6b982215972244a9648bc96086cc618b246c9a194a171fc`](https://suiscan.xyz/testnet/object/0x22c04589e7ce5fd6c6b982215972244a9648bc96086cc618b246c9a194a171fc/tx-blocks) |
+| **Shared DappRegistry object ID** | [`0x81bdd87afb38e560c04aca9afa64775bd8b2af1a644a7424c64511ed9ba8916b`](https://suiscan.xyz/testnet/object/0x81bdd87afb38e560c04aca9afa64775bd8b2af1a644a7424c64511ed9ba8916b) |
 
 ## Web app env
 
@@ -43,8 +41,8 @@ sui move test
 sui client publish --gas-budget 100000000
 ```
 
-After republishing, update the package ID, registry object ID, explorer link,
-and web app env vars in this document.
+After republishing, update the package ID, registry object ID, Suiscan links
+in the deployment table, and web app env vars in this document.
 
 ## Mainnet readiness
 
