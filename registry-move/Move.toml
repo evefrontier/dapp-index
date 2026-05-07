@@ -1,0 +1,7 @@
+[package]
+name = "dapp_registry"
+version = "0.1.0"
+edition = "2024.beta"
+
+[addresses]
+dapp_registry = "0x0"
