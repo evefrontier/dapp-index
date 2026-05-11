@@ -6,6 +6,7 @@ Vite + React + TypeScript shell for the Dapp Index frontend.
 - **`@evefrontier/dapp-kit`** — providers, wallet connection, Sui chain client
 - **`@mysten/dapp-kit-react/ui`** — `<ConnectButton />` wallet UI
 - **`@evefrontier/ui`** — EVE Frontier UI component library (vendored at `vendor/@evefrontier/ui`)
+- **TanStack Router** — file-based routing with auto code splitting
 - **TanStack Query** — async state and chain reads
 - **Tailwind v4** — utility CSS with DS token variables
 
@@ -62,6 +63,16 @@ Only `VITE_*` keys are public to the browser.
 - **`staleTime`: 60s** — data treated as fresh for one minute before background refetch.
 - **`retry`: 1** — one automatic retry on failure.
 
+## Routing
+
+File-based routes live in `src/routes/`. The Vite plugin generates `src/routeTree.gen.ts` automatically on `bun dev` or `bun run build`. The generated file is committed so `tsc` can typecheck without running the generator first.
+
+To manually regenerate after adding a new route file:
+
+```bash
+bun run router:generate
+```
+
 ## Toolchain
 
 - **TypeScript 6** — strict; path alias `@/*` → `./src/*`
@@ -70,9 +81,10 @@ Only `VITE_*` keys are public to the browser.
 
 ## Scripts
 
-| Script              | Description        |
-| ------------------- | ------------------ |
-| `bun dev`           | Vite dev server    |
-| `bun run build`     | Production build   |
-| `bun run preview`   | Serve `dist`       |
-| `bun run typecheck` | `tsc -b`           |
+| Script                 | Description                        |
+| ---------------------- | ---------------------------------- |
+| `bun dev`              | Vite dev server                    |
+| `bun run build`        | Production build                   |
+| `bun run preview`      | Serve `dist`                       |
+| `bun run typecheck`    | `tsc -b`                           |
+| `bun run router:generate` | Regenerate `routeTree.gen.ts`   |
