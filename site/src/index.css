@@ -1,9 +1,8 @@
 /**
- * App shell overrides on top of @evefrontier/ui/styles.css (Tailwind + DS tokens + typography).
- * The DS entry already sets :root tokens and @import "tailwindcss".
- * This file adds Tailwind source scanning for utilities used only in this app.
+ * App shell overrides on top of @evefrontier/ui/styles.css (precompiled DS tokens + base + utilities).
+ * This file imports Tailwind utilities only for classes used in this app.
  */
-@import "tailwindcss";
+@import "tailwindcss/utilities";
 
 body {
   margin: 0;

@@ -16,7 +16,7 @@ export default defineConfig({
   },
   build: {
     target: 'es2024',
-    sourcemap: true,
+    sourcemap: false,
     reportCompressedSize: true,
   },
 });

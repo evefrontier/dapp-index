@@ -1,7 +1,7 @@
 import { RouterProvider } from '@tanstack/react-router';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import '@evefrontier/ui';
+import '@evefrontier/ui/styles.css';
 import { AppProviders } from '@/providers/AppProviders';
 import { router } from '@/router';
 import './index.css';
