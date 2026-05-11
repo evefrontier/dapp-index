@@ -1,9 +1,19 @@
-@import 'tailwindcss';
+/**
+ * App shell overrides on top of @evefrontier/ui/styles.css (Tailwind + DS tokens + typography).
+ * The DS entry already sets :root tokens and @import "tailwindcss".
+ * This file adds Tailwind source scanning for utilities used only in this app.
+ */
+@import "tailwindcss";
 
-@source "./src/**/*.{js,ts,jsx,tsx}";
-
-@layer base {
-  body {
-    @apply min-h-dvh bg-slate-50 text-slate-900 antialiased;
-  }
+body {
+  margin: 0;
+  min-height: 100dvh;
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-normal);
+  font-weight: var(--font-weight-normal);
+  color: var(--color-foreground);
+  background-color: var(--color-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

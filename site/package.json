@@ -19,7 +19,8 @@
     "@tanstack/react-query": "^5.95.2",
     "@tanstack/react-query-devtools": "^5.95.2",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "@evefrontier/ui": "file:./vendor/@evefrontier/ui"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.2",
