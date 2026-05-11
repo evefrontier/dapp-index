@@ -1,47 +1,17 @@
-import { useConnection } from '@evefrontier/dapp-kit';
 import { ConnectButton } from '@mysten/dapp-kit-react/ui';
 import { ChainIdentifierReadout } from '@/components/ChainIdentifierReadout';
 
 export function App() {
-  const {
-    isConnected,
-    walletAddress,
-    hasEveVault,
-    handleConnect,
-    handleDisconnect,
-  } = useConnection();
-
   return (
-    <main>
-      <h1>Dapp Index</h1>
-      <p>
-        Infrastructure: <strong>@evefrontier/dapp-kit</strong> (Eve Vault
-        preferred for connect) + TanStack Query.
+    <main className="mx-auto max-w-xl space-y-6 p-6">
+      <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Dapp Index</h1>
+      <p className="text-slate-600">
+        Shell using <strong className="font-semibold text-slate-800">@evefrontier/dapp-kit</strong> with
+        TanStack Query for chain reads.
       </p>
-      <section style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
-        {isConnected ? (
-          <>
-            <span>
-              Connected: <code>{walletAddress}</code>
-            </span>
-            <button type="button" onClick={handleDisconnect}>
-              Disconnect
-            </button>
-          </>
-        ) : (
-          <button type="button" onClick={handleConnect}>
-            {hasEveVault ? 'Connect (Eve Vault)' : 'Connect wallet'}
-          </button>
-        )}
-        <span style={{ fontSize: '0.875rem', color: '#64748b' }}>
-          {hasEveVault
-            ? 'Slush and other wallets stay available via the wallet menu.'
-            : 'Install Eve Vault for the default connect experience; other wallets below.'}
-        </span>
-      </section>
-      <p style={{ marginTop: '1rem' }}>
+      <section className="flex flex-wrap items-center gap-3">
         <ConnectButton />
-      </p>
+      </section>
       <ChainIdentifierReadout />
     </main>
   );

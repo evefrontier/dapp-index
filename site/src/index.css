@@ -1,17 +1,9 @@
-body {
-  margin: 0;
-  min-height: 100dvh;
-  font-family:
-    ui-sans-serif,
-    system-ui,
-    sans-serif;
-  font-size: 1rem;
-  line-height: 1.5;
-  color: #0f172a;
-  background-color: #f8fafc;
-}
+@import 'tailwindcss';
 
-#root {
-  padding: 1.5rem;
-  max-width: 40rem;
+@source "./src/**/*.{js,ts,jsx,tsx}";
+
+@layer base {
+  body {
+    @apply min-h-dvh bg-slate-50 text-slate-900 antialiased;
+  }
 }

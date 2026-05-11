@@ -21,14 +21,16 @@ export function ChainIdentifierReadout() {
   });
 
   if (q.isPending) {
-    return <p>Chain: loading…</p>;
+    return <p className="text-sm text-slate-600">Chain: loading…</p>;
   }
   if (q.isError) {
-    return <p>Chain error: {String(q.error)}</p>;
+    return <p className="text-sm text-red-700">Chain error: {String(q.error)}</p>;
   }
   return (
-    <p>
-      Network: <code>{network}</code> · chain id: <code>{q.data}</code>
+    <p className="text-sm text-slate-600">
+      Network: <code className="rounded bg-slate-200/80 px-1.5 py-0.5 text-slate-800">{network}</code> ·
+      chain id:{' '}
+      <code className="rounded bg-slate-200/80 px-1.5 py-0.5 text-slate-800">{q.data}</code>
     </p>
   );
 }
