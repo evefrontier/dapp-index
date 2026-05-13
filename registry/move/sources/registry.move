@@ -18,6 +18,7 @@ const E_NOT_OWNER: u64 = 8;
 const E_EMPTY_CATEGORIES: u64 = 9;
 const E_DUPLICATE_CATEGORY: u64 = 10;
 const E_NOT_FOUND: u64 = 11;
+const E_INVALID_SLUG_CHAR: u64 = 12;
 
 const MAX_SLUG_LEN: u64 = 50;
 const MAX_METADATA_URI_LEN: u64 = 512;
@@ -63,9 +64,22 @@ fun init(ctx: &mut sui::tx_context::TxContext) {
 }
 
 fun assert_slug(slug: &String) {
-    let len = string::length(slug);
+    let bytes = string::as_bytes(slug);
+    let len = vector::length(bytes);
     assert!(len > 0, E_EMPTY_SLUG);
     assert!(len <= MAX_SLUG_LEN, E_SLUG_TOO_LONG);
+    let mut i = 0u64;
+    while (i < len) {
+        let b = *vector::borrow(bytes, i);
+        // a-z, 0-9, or hyphen
+        assert!(
+            (b >= 97 && b <= 122) ||
+            (b >= 48 && b <= 57)  ||
+            b == 45,
+            E_INVALID_SLUG_CHAR
+        );
+        i = i + 1;
+    };
 }
 
 fun assert_metadata_uri(uri: &String) {
