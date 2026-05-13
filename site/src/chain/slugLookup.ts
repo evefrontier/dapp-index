@@ -237,7 +237,7 @@ export async function lookupRegistrySlug(
       }
       const listing = parseListingObject(obj);
       if (!listing) continue;
-      if (listing.slug === normalized) {
+      if (listing.slug.trim().toLowerCase() === normalized) {
         return { status: 'taken', listing };
       }
     }
