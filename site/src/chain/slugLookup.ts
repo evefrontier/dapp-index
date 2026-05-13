@@ -37,7 +37,7 @@ async function mapWithConcurrency<T, R>(
       const i = nextIndex++;
       if (i >= items.length) break;
       const item = items[i];
-      if (item === undefined) break;
+      if (item === undefined) continue;
       results[i] = await fn(item, i);
     }
   }
