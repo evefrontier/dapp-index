@@ -1,0 +1,8 @@
+node_modules
+dist
+!vendor/**/dist
+.env.local
+.env.*.local
+*.local
+.vite
+node_modules/.tmp
