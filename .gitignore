@@ -4,11 +4,13 @@ node_modules
 # Local environment files
 .env
 .env.local
+*.local.md
 
 # Build and test output
 dist
 build
 coverage
+registry-move/build
 
 # Tool caches
 .cache
