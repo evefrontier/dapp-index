@@ -34,7 +34,7 @@ Rebuild the site after changing env vars.
 Maintainers can build, test, and publish from the Move package directory:
 
 ```bash
-cd registry-move
+cd registry/move
 sui client switch --env testnet
 sui move build
 sui move test
