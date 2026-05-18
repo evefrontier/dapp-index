@@ -95,7 +95,7 @@
     },
     "httpsUrl": {
       "type": "string",
-      "pattern": "^https://.+"
+      "pattern": "^https://\\S+"
     },
     "walrusBlobUri": {
       "type": "string",
@@ -104,10 +104,6 @@
     "sha256Hex": {
       "type": "string",
       "pattern": "^[0-9a-fA-F]{64}$"
-    },
-    "positiveInteger": {
-      "type": "integer",
-      "minimum": 1
     },
     "suiObjectId": {
       "type": "string",
@@ -184,9 +180,8 @@
       "type": "string",
       "enum": ["thumbnail", "hero", "gallery", "demo", "logo"]
     },
-    "imageAsset": {
+    "imageAssetBase": {
       "type": "object",
-      "additionalProperties": false,
       "required": [
         "uri",
         "mimeType",
@@ -219,46 +214,21 @@
         "caption": { "type": "string", "minLength": 1, "maxLength": 240 }
       }
     },
-    "imageMediaItem": {
+    "imageAsset": {
       "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "id",
-        "kind",
-        "role",
-        "uri",
-        "mimeType",
-        "sha256",
-        "sizeBytes",
-        "width",
-        "height",
-        "alt"
-      ],
+      "allOf": [{ "$ref": "#/$defs/imageAssetBase" }],
+      "unevaluatedProperties": false
+    },
+    "imageMediaItem": {
+      "allOf": [{ "$ref": "#/$defs/imageAssetBase" }],
+      "type": "object",
+      "required": ["id", "kind", "role"],
       "properties": {
         "id": { "$ref": "#/$defs/mediaId" },
         "kind": { "type": "string", "const": "image" },
-        "role": { "$ref": "#/$defs/mediaRole" },
-        "uri": { "$ref": "#/$defs/walrusBlobUri" },
-        "mimeType": { "$ref": "#/$defs/imageMimeType" },
-        "sha256": { "$ref": "#/$defs/sha256Hex" },
-        "sizeBytes": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 5000000
-        },
-        "width": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 3840
-        },
-        "height": {
-          "type": "integer",
-          "minimum": 1,
-          "maximum": 2160
-        },
-        "alt": { "type": "string", "minLength": 1, "maxLength": 240 },
-        "caption": { "type": "string", "minLength": 1, "maxLength": 240 }
-      }
+        "role": { "$ref": "#/$defs/mediaRole" }
+      },
+      "unevaluatedProperties": false
     },
     "videoSource": {
       "type": "object",

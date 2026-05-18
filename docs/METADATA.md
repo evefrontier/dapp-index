@@ -10,6 +10,19 @@ Walrus metadata document.
 3. Canonicalize and upload the metadata JSON to Walrus.
 4. Register the metadata blob URI and SHA-256 hash in the Sui registry.
 
+### Canonical JSON
+
+The `metadataHash` is a SHA-256 hash of the **canonical form** of the metadata
+JSON. Canonical form is defined as:
+
+- Object keys sorted lexicographically (UTF-16 code unit order, ascending).
+- No extra whitespace — no indentation, no newlines between tokens.
+- UTF-8 encoded.
+
+The `canonicalJson` utility in `site/src/utils/canonicalJson.ts` produces this
+form. Builders computing the hash independently must follow the same rules to
+produce a matching hash.
+
 The Sui registry remains the ownership and pointer layer. Walrus is the source
 for display metadata and public media.
 
@@ -22,7 +35,7 @@ The Move package stores one `DappListing` per slug:
   "owner": "0xBUILDER_ADDRESS",
   "slug": "route-planner",
   "metadata_uri": "walrus://blob/METADATA_BLOB_ID",
-  "metadata_hash": [32, "bytes", "of", "sha256"],
+  "metadata_hash": [180, 23, 246, 5, 202, 88, 131, 17, 64, 201, 37, 155, 98, 44, 7, 219, 113, 250, 60, 141, 88, 179, 24, 7, 34, 118, 93, 41, 206, 77, 162, 5],
   "categories": ["logistics", "infrastructure"],
   "created_at_epoch": 123,
   "updated_at_epoch": 123
@@ -43,6 +56,11 @@ Registration and update transactions provide:
 ```
 
 ## Walrus Metadata Manifest
+
+The `id` field in the manifest **must equal** the on-chain `slug` for this
+listing, and `categories` **must exactly match** the on-chain `categories` array
+supplied during registration. Clients that discover inconsistencies between the
+manifest fields and the registry record should treat the listing as invalid.
 
 ```json
 {

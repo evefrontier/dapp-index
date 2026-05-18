@@ -1,4 +1,9 @@
 import { describe, expect, test } from 'bun:test';
+import type {
+  DappIndexImageMediaItem,
+  DappIndexMediaItem,
+  DappIndexVideoMediaItem,
+} from '../types/dapp-index';
 import { validateRegistryMetadataJson } from './registryMetadata';
 
 const HEX_32 = '0'.repeat(64);
@@ -78,7 +83,7 @@ function validMetadata() {
           ],
           caption: 'Creating a route and handing it off to a fleet',
         },
-      ],
+      ] as DappIndexMediaItem[],
     },
     proofs: {
       domain: {
@@ -96,21 +101,26 @@ describe('registry metadata media schema', () => {
 
   test('rejects external public media URLs', () => {
     const metadata = validMetadata();
-    metadata.media.items[0].uri = 'https://cdn.example/dashboard.webp';
+    (metadata.media.items[0] as DappIndexImageMediaItem).uri =
+      'https://cdn.example/dashboard.webp' as unknown as `walrus://blob/${string}`;
 
     expect(validateRegistryMetadataJson(metadata).ok).toBe(false);
   });
 
   test('rejects unsupported video formats', () => {
     const metadata = validMetadata();
-    metadata.media.items[1].sources[0].mimeType = 'video/quicktime';
+    const src = (
+      metadata.media.items[1] as DappIndexVideoMediaItem
+    ).sources[0]!;
+    (src as unknown as { mimeType: string }).mimeType = 'video/quicktime';
 
     expect(validateRegistryMetadataJson(metadata).ok).toBe(false);
   });
 
   test('rejects videos over the public listing limit', () => {
     const metadata = validMetadata();
-    metadata.media.items[1].sources[0].sizeBytes = 60_000_001;
+    (metadata.media.items[1] as DappIndexVideoMediaItem).sources[0]!.sizeBytes =
+      60_000_001;
 
     expect(validateRegistryMetadataJson(metadata).ok).toBe(false);
   });
@@ -131,44 +141,40 @@ describe('registry metadata media schema', () => {
 
   test('rejects more than two videos', () => {
     const metadata = validMetadata();
-    metadata.media.items.push({
-      ...metadata.media.items[1],
-      id: 'demo-2',
-    });
-    metadata.media.items.push({
-      ...metadata.media.items[1],
-      id: 'demo-3',
-    });
+    const videoItem = metadata.media.items[1] as DappIndexVideoMediaItem;
+    metadata.media.items.push({ ...videoItem, id: 'demo-2' });
+    metadata.media.items.push({ ...videoItem, id: 'demo-3' });
 
     expect(validateRegistryMetadataJson(metadata).ok).toBe(false);
   });
 
   test('rejects total public media over the listing budget', () => {
     const metadata = validMetadata();
-    metadata.media.items[0].sizeBytes = 5_000_000;
-    metadata.media.items[1].poster.sizeBytes = 5_000_000;
-    metadata.media.items[1].sources[0].sizeBytes = 60_000_000;
+    (metadata.media.items[0] as DappIndexImageMediaItem).sizeBytes = 5_000_000;
+    const videoItem = metadata.media.items[1] as DappIndexVideoMediaItem;
+    videoItem.poster.sizeBytes = 5_000_000;
+    videoItem.sources[0]!.sizeBytes = 60_000_000;
     metadata.media.items.push({
-      ...metadata.media.items[1],
+      ...videoItem,
       id: 'demo-2',
       poster: {
-        ...metadata.media.items[1].poster,
+        ...videoItem.poster,
         uri: 'walrus://blob/posterBlobId2',
       },
       sources: [
         {
-          ...metadata.media.items[1].sources[0],
+          ...videoItem.sources[0]!,
           uri: 'walrus://blob/webmBlobId2',
         },
       ],
     });
     for (let i = 0; i < 5; i += 1) {
       metadata.media.items.push({
-        ...metadata.media.items[0],
+        ...(metadata.media.items[0] as DappIndexImageMediaItem),
         id: `gallery-${i}`,
         role: 'gallery',
         uri: `walrus://blob/galleryBlobId${i}`,
-      });
+      } as DappIndexImageMediaItem);
     }
 
     expect(validateRegistryMetadataJson(metadata).ok).toBe(false);
@@ -176,9 +182,9 @@ describe('registry metadata media schema', () => {
 
   test('rejects videos whose primary source is not WebM', () => {
     const metadata = validMetadata();
-    metadata.media.items[1].sources.unshift({
+    (metadata.media.items[1] as DappIndexVideoMediaItem).sources.unshift({
       uri: 'walrus://blob/mp4BlobId',
-      mimeType: 'video/mp4',
+      mimeType: 'video/mp4' as unknown as 'video/webm',
       codecs: 'h264,aac',
       sha256: HEX_32,
       sizeBytes: 20_000_000,
@@ -192,9 +198,9 @@ describe('registry metadata media schema', () => {
 
   test('rejects MP4 fallback sources while public video support is WebM-only', () => {
     const metadata = validMetadata();
-    metadata.media.items[1].sources.push({
+    (metadata.media.items[1] as DappIndexVideoMediaItem).sources.push({
       uri: 'walrus://blob/mp4BlobId',
-      mimeType: 'video/mp4',
+      mimeType: 'video/mp4' as unknown as 'video/webm',
       codecs: 'h264,aac',
       sha256: HEX_32,
       sizeBytes: 20_000_000,

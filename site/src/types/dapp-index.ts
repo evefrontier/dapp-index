@@ -190,6 +190,12 @@ export interface DappIndexEntry {
   maintainer?: DappIndexMaintainer;
   /** Walrus-hosted public gallery for cards, detail pages, and video demos. */
   media?: DappIndexMediaGallery;
+  /** Ownership and domain proof records. */
+  proofs?: {
+    domain?: {
+      url: string;
+    };
+  };
   /** Extra context (dependencies, testnet-only, etc.). */
   notes?: string;
 }
