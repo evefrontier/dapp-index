@@ -57,6 +57,24 @@ export type DappIndexSmartAssemblyType =
  */
 export type DappIndexServerTenant = 'stillness' | 'utopia';
 
+export type DappIndexSuiNetwork = 'mainnet' | 'testnet';
+
+export type DappIndexSuiPackageRole = 'core' | 'dependency' | 'utility';
+
+export interface DappIndexSuiPackage {
+  network: DappIndexSuiNetwork;
+  role: DappIndexSuiPackageRole;
+  /** Canonical Move Registry name, e.g. `@studio/game`. */
+  mvrName: string;
+  /** Published Move package object ID resolved by MVR. */
+  packageId: string;
+  /** MVR PackageInfo object ID for this package on `network`. */
+  packageInfoId: string;
+  /** Move modules surfaced by this dapp package. */
+  modules?: string[];
+  explorerUrl?: string;
+}
+
 /** Sui testnet package page on Suivision (explorer). */
 export function suivisionTestnetPackageUrl(packageId: string): string {
   const id = packageId.trim().toLowerCase();
@@ -81,6 +99,8 @@ export interface DappIndexEntry {
   repositoryUrl?: string;
   /** Published Move package object IDs when known. */
   packageIds?: string[];
+  /** Move Registry verified Sui packages required before public release. */
+  suiPackages: DappIndexSuiPackage[];
   /** Walrus / metadata URI recorded in the on-chain registry. */
   metadataUri?: string;
   /** Hex-encoded SHA-256 metadata hash recorded in the on-chain registry. */
