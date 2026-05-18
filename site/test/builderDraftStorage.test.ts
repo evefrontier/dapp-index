@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 import {
+  BUILDER_DRAFTS_STORAGE_KEY,
+  MAX_BUILDER_DRAFT_SCREENSHOT_BYTES,
+  MAX_BUILDER_DRAFT_VIDEO_BYTES,
   createBuilderDraftStorage,
   createMemoryBuilderDraftMediaStore,
   createMemoryLocalStorage,
@@ -19,6 +22,10 @@ const draft: BuilderDraft = {
   media: [],
 };
 
+function blobLike(input: { size: number; type: string }): Blob {
+  return input as Blob;
+}
+
 describe('builder draft storage', () => {
   test('stores draft fields in local storage', async () => {
     const localStorage = createMemoryLocalStorage();
@@ -30,7 +37,7 @@ describe('builder draft storage', () => {
     await storage.saveDraft(draft);
 
     expect(await storage.getDraft('draft-1')).toEqual(draft);
-    expect(localStorage.getItem('dapp-index:builder-drafts:v1')).toContain(
+    expect(localStorage.getItem(BUILDER_DRAFTS_STORAGE_KEY)).toContain(
       'frontier-map',
     );
   });
@@ -57,14 +64,15 @@ describe('builder draft storage', () => {
     expect(media.size).toBe(9);
     expect(savedDraft?.media).toEqual([media]);
     expect(savedBlob).toEqual(blob);
-    expect(localStorage.getItem('dapp-index:builder-drafts:v1')).not.toContain(
+    expect(localStorage.getItem(BUILDER_DRAFTS_STORAGE_KEY)).not.toContain(
       'webm-data',
     );
   });
 
   test('clears draft metadata and media after publish succeeds', async () => {
+    const localStorage = createMemoryLocalStorage();
     const storage = createBuilderDraftStorage({
-      localStorage: createMemoryLocalStorage(),
+      localStorage,
       mediaStore: createMemoryBuilderDraftMediaStore(),
     });
 
@@ -79,9 +87,23 @@ describe('builder draft storage', () => {
 
     expect(await storage.getDraft('draft-1')).toBeNull();
     expect(await storage.getMediaBlob('draft-1', 'screen-1')).toBeNull();
+    expect(localStorage.getItem(BUILDER_DRAFTS_STORAGE_KEY)).toBeNull();
   });
 
-  test('keeps only webm videos eligible for draft media', () => {
+  test('removes local draft storage key when the last draft is deleted', async () => {
+    const localStorage = createMemoryLocalStorage();
+    const storage = createBuilderDraftStorage({
+      localStorage,
+      mediaStore: createMemoryBuilderDraftMediaStore(),
+    });
+
+    await storage.saveDraft(draft);
+    await storage.deleteDraft('draft-1');
+
+    expect(localStorage.getItem(BUILDER_DRAFTS_STORAGE_KEY)).toBeNull();
+  });
+
+  test('keeps only supported MIME types and sizes eligible for draft media', () => {
     expect(
       validateBuilderDraftMediaFile({
         kind: 'video',
@@ -98,9 +120,29 @@ describe('builder draft storage', () => {
 
     expect(
       validateBuilderDraftMediaFile({
+        kind: 'video',
+        file: blobLike({
+          size: MAX_BUILDER_DRAFT_VIDEO_BYTES + 1,
+          type: 'video/webm',
+        }),
+      }).ok,
+    ).toBe(false);
+
+    expect(
+      validateBuilderDraftMediaFile({
         kind: 'screenshot',
         file: new File(['image'], 'screen.webp', { type: 'image/webp' }),
       }).ok,
     ).toBe(true);
+
+    expect(
+      validateBuilderDraftMediaFile({
+        kind: 'screenshot',
+        file: blobLike({
+          size: MAX_BUILDER_DRAFT_SCREENSHOT_BYTES + 1,
+          type: 'image/png',
+        }),
+      }).ok,
+    ).toBe(false);
   });
 });

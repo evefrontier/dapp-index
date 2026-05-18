@@ -1,4 +1,6 @@
 export const BUILDER_DRAFTS_STORAGE_KEY = 'dapp-index:builder-drafts:v1';
+export const MAX_BUILDER_DRAFT_SCREENSHOT_BYTES = 10 * 1024 * 1024;
+export const MAX_BUILDER_DRAFT_VIDEO_BYTES = 100 * 1024 * 1024;
 
 const INDEXED_DB_NAME = 'dapp-index-builder-drafts';
 const INDEXED_DB_VERSION = 1;
@@ -91,6 +93,11 @@ export function createBuilderDraftStorage(
   }
 
   function writeDrafts(drafts: Record<string, BuilderDraft>): void {
+    if (Object.keys(drafts).length === 0) {
+      storage.removeItem(BUILDER_DRAFTS_STORAGE_KEY);
+      return;
+    }
+
     storage.setItem(BUILDER_DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
   }
 
@@ -195,19 +202,35 @@ export function validateBuilderDraftMediaFile(input: {
   const mimeType = (input.mimeType ?? input.file.type).toLowerCase();
 
   if (input.kind === 'video') {
-    return mimeType === 'video/webm'
-      ? { ok: true }
-      : { ok: false, reason: 'Only video/webm videos are supported.' };
-  }
+    if (mimeType !== 'video/webm') {
+      return { ok: false, reason: 'Only video/webm videos are supported.' };
+    }
 
-  if (['image/png', 'image/jpeg', 'image/webp'].includes(mimeType)) {
+    if (input.file.size > MAX_BUILDER_DRAFT_VIDEO_BYTES) {
+      return {
+        ok: false,
+        reason: `Videos must be ${formatBytes(MAX_BUILDER_DRAFT_VIDEO_BYTES)} or smaller.`,
+      };
+    }
+
     return { ok: true };
   }
 
-  return {
-    ok: false,
-    reason: 'Screenshots must be PNG, JPEG, or WebP images.',
-  };
+  if (!['image/png', 'image/jpeg', 'image/webp'].includes(mimeType)) {
+    return {
+      ok: false,
+      reason: 'Screenshots must be PNG, JPEG, or WebP images.',
+    };
+  }
+
+  if (input.file.size > MAX_BUILDER_DRAFT_SCREENSHOT_BYTES) {
+    return {
+      ok: false,
+      reason: `Screenshots must be ${formatBytes(MAX_BUILDER_DRAFT_SCREENSHOT_BYTES)} or smaller.`,
+    };
+  }
+
+  return { ok: true };
 }
 
 export function createIndexedDbBuilderDraftMediaStore(
@@ -302,6 +325,10 @@ type MediaBlobRecord = {
 
 function mediaKey(draftId: string, mediaId: string): string {
   return `${draftId}:${mediaId}`;
+}
+
+function formatBytes(bytes: number): string {
+  return `${Math.round(bytes / (1024 * 1024))} MB`;
 }
 
 function openBuilderDraftDb(indexedDb: IDBFactory): Promise<IDBDatabase> {
