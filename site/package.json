@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "test": "bun test",
     "typecheck": "tsc -b",
     "preview": "vite preview",
     "router:generate": "tsr generate"

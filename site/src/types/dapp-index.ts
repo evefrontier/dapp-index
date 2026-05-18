@@ -53,9 +53,103 @@ export type DappIndexSmartAssemblyType =
 /**
  * EVE Frontier **game server tenant** where this dapp is aimed or deployed
  * (e.g. Stillness / Utopia). Not Sui chain (devnet / testnet / mainnet)—use
- * `packageIds` and wallet tooling for chain targeting.
+ * `suiPackages` and wallet tooling for chain targeting.
  */
 export type DappIndexServerTenant = 'stillness' | 'utopia';
+
+export const DAPP_INDEX_METADATA_SCHEMA = 'evefrontier.dapp-index.metadata';
+export const DAPP_INDEX_METADATA_SCHEMA_VERSION = 1;
+
+export type DappIndexMetadataSchema = typeof DAPP_INDEX_METADATA_SCHEMA;
+export type DappIndexMetadataSchemaVersion =
+  typeof DAPP_INDEX_METADATA_SCHEMA_VERSION;
+
+export type DappIndexSuiNetwork =
+  | 'testnet'
+  | 'mainnet'
+  | 'devnet'
+  | 'localnet';
+
+export type DappIndexSuiPackageRole =
+  | 'core'
+  | 'integration'
+  | 'dependency'
+  | 'example';
+
+export interface DappIndexSuiPackage {
+  network: DappIndexSuiNetwork;
+  packageId: string;
+  role?: DappIndexSuiPackageRole;
+  modules?: string[];
+  explorerUrl?: string;
+}
+
+export interface DappIndexMaintainer {
+  name: string;
+  url?: string;
+  contact?: string;
+}
+
+export type DappIndexImageMimeType =
+  | 'image/webp'
+  | 'image/png'
+  | 'image/jpeg';
+
+export type DappIndexVideoMimeType = 'video/webm';
+
+export type DappIndexMediaRole =
+  | 'thumbnail'
+  | 'hero'
+  | 'gallery'
+  | 'demo'
+  | 'logo';
+
+export interface DappIndexImageAsset {
+  uri: `walrus://blob/${string}`;
+  mimeType: DappIndexImageMimeType;
+  sha256: string;
+  sizeBytes: number;
+  width: number;
+  height: number;
+  alt: string;
+  caption?: string;
+}
+
+export interface DappIndexImageMediaItem extends DappIndexImageAsset {
+  id: string;
+  kind: 'image';
+  role: DappIndexMediaRole;
+}
+
+export interface DappIndexVideoSource {
+  uri: `walrus://blob/${string}`;
+  mimeType: DappIndexVideoMimeType;
+  codecs?: string;
+  sha256: string;
+  sizeBytes: number;
+  width: number;
+  height: number;
+  durationSeconds: number;
+}
+
+export interface DappIndexVideoMediaItem {
+  id: string;
+  kind: 'video';
+  role: DappIndexMediaRole;
+  poster: DappIndexImageAsset;
+  sources: DappIndexVideoSource[];
+  caption?: string;
+}
+
+export type DappIndexMediaItem =
+  | DappIndexImageMediaItem
+  | DappIndexVideoMediaItem;
+
+export interface DappIndexMediaGallery {
+  thumbnail?: string;
+  hero?: string;
+  items: DappIndexMediaItem[];
+}
 
 /** Sui testnet package page on Suivision (explorer). */
 export function suivisionTestnetPackageUrl(packageId: string): string {
@@ -65,10 +159,13 @@ export function suivisionTestnetPackageUrl(packageId: string): string {
 
 /** One discoverable Frontier ecosystem dapp / tool. */
 export interface DappIndexEntry {
+  schema: DappIndexMetadataSchema;
+  schemaVersion: DappIndexMetadataSchemaVersion;
   /** URL slug for /explore/:id */
   id: string;
   name: string;
   summary: string;
+  description?: string;
   /** Search & filter; dapps can appear under multiple categories. */
   categories: DappIndexCategoryId[];
   /**
@@ -76,11 +173,12 @@ export interface DappIndexEntry {
    * Omitted or empty → em dash in the table.
    */
   smartAssemblyTypes?: DappIndexSmartAssemblyType[];
-  /** Public demo or production site (https or http). */
+  /** Public demo or production site. Public listings require HTTPS. */
   liveUrl: string;
   repositoryUrl?: string;
-  /** Published Move package object IDs when known. */
-  packageIds?: string[];
+  documentationUrl?: string;
+  /** Structured package metadata for each supported Sui network. */
+  suiPackages?: DappIndexSuiPackage[];
   /** Walrus / metadata URI recorded in the on-chain registry. */
   metadataUri?: string;
   /** Hex-encoded SHA-256 metadata hash recorded in the on-chain registry. */
@@ -89,14 +187,11 @@ export interface DappIndexEntry {
   registryOwner?: string;
   /** Frontier server tenant; not Sui devnet/testnet/mainnet. */
   serverTenant: DappIndexServerTenant;
-  maintainer?: string;
+  maintainer?: DappIndexMaintainer;
+  /** Walrus-hosted public gallery for cards, detail pages, and video demos. */
+  media?: DappIndexMediaGallery;
   /** Extra context (dependencies, testnet-only, etc.). */
   notes?: string;
-  /**
-   * Card / detail hero image (screenshot, logo, or Open Graph asset).
-   * When omitted, the UI may use the live site favicon or a generated placeholder.
-   */
-  thumbnailUrl?: string;
 }
 
 export function getDappCategoryRow(
