@@ -109,7 +109,6 @@ export interface DappIndexEntry {
   registryOwner?: string;
   /** Frontier server tenant; not Sui devnet/testnet/mainnet. */
   serverTenant: DappIndexServerTenant;
-  maintainer?: string;
   /** Extra context (dependencies, testnet-only, etc.). */
   notes?: string;
   /**

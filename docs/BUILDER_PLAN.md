@@ -79,7 +79,7 @@ I should be able to:
 - register the metadata pointer on Sui;
 - update my listing when the dapp changes;
 - select categories and smart assembly facets that match my dapp;
-- showcase links, package IDs, maintainer details, and integration notes when
+- showcase links, Move Registry packages, and integration notes when
   useful.
 
 ## Architecture Summary
@@ -91,9 +91,9 @@ listing records, ownership, metadata pointers, metadata hashes, high-level
 facets, and events.
 
 Walrus stores the full dapp metadata document. This document can include display
-copy, screenshots, extended descriptions, integration details, links, maintainer
-context, and other fields that are too large or too changeable to keep directly
-in the registry.
+copy, screenshots, extended descriptions, integration details, and links that
+are too large or too changeable to keep directly in the registry. Package
+maintainer/contact metadata belongs in Move Registry package metadata.
 
 The Dapp Index frontend queries Sui for listing records, then fetches and
 verifies the referenced Walrus metadata. Any generated local data remains an
@@ -176,7 +176,7 @@ configured Sui package and registry object.
 
 Future approval options:
 
-- maintainer approval before a listing appears in the default index view;
+- index reviewer approval before a listing appears in the default index view;
 - community voting or staking to promote trusted dapps;
 - challenge or report flows for stale, malicious, or abandoned listings;
 - separate visibility states such as pending, approved, rejected, hidden, or
@@ -197,8 +197,9 @@ The builder-facing listing data uses the same concepts across Sui and Walrus:
 - `smartAssemblyTypes`: optional assembly facets such as Storage unit, Turret,
   and Gate;
 - `liveUrl`: where users can open the dapp;
-- `repositoryUrl`, `packageIds`, `serverTenant`, `maintainer`, and `notes`:
-  optional context for users and maintainers.
+- `repositoryUrl`, `packageIds`, `suiPackages`, `serverTenant`, and `notes`:
+  optional listing context. Package maintainers, source links, and package icons
+  should come from the referenced Move Registry package metadata.
 
 The Sui registry stores the metadata URI and hash so the full metadata can be
 retrieved from Walrus and verified off-chain.
@@ -276,8 +277,8 @@ The intended builder path is:
 These are intentionally not locked yet:
 
 - whether registration becomes a public builder product surface or a
-  maintainer-assisted flow;
-- what exact approval model ships first: maintainer approval, voting, staking,
+  reviewer-assisted flow;
+- what exact approval model ships first: reviewer approval, voting, staking,
   or a hybrid;
 - which metadata fields should be required for the first public builder
   submission flow;
