@@ -95,6 +95,9 @@ copy, screenshots, extended descriptions, integration details, links, maintainer
 context, and other fields that are too large or too changeable to keep directly
 in the registry.
 
+The concrete JSON structure, Sui registry pointer shape, and public media
+restrictions are documented in [METADATA.md](./METADATA.md).
+
 The Dapp Index frontend queries Sui for listing records, then fetches and
 verifies the referenced Walrus metadata. Any generated local data remains an
 implementation fallback while the Sui package and Walrus read flow are being
@@ -197,7 +200,9 @@ The builder-facing listing data uses the same concepts across Sui and Walrus:
 - `smartAssemblyTypes`: optional assembly facets such as Storage unit, Turret,
   and Gate;
 - `liveUrl`: where users can open the dapp;
-- `repositoryUrl`, `packageIds`, `serverTenant`, `maintainer`, and `notes`:
+- `media`: Walrus-hosted screenshots, posters, and video sources for the public
+  gallery;
+- `repositoryUrl`, `suiPackages`, `serverTenant`, `maintainer`, and `notes`:
   optional context for users and maintainers.
 
 The Sui registry stores the metadata URI and hash so the full metadata can be
