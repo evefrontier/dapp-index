@@ -83,6 +83,17 @@ export async function verifyMoveRegistryPackage(
     const resolved = await packageResolver.resolvePackage({ package: mvrName });
     const resolvedPackageId = normalizePackageId(resolved.package);
 
+    if (!resolvedPackageId) {
+      return {
+        status: 'unreachable',
+        entry,
+        mvrName,
+        packageId,
+        reason: 'invalid-resolved-package-id',
+        errorMessage: `MVR resolver returned an invalid package id: ${String(resolved.package)}`,
+      };
+    }
+
     if (resolvedPackageId === packageId) {
       return {
         status: 'verified',
