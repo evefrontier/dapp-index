@@ -8,12 +8,22 @@ import {
 
 const packageId =
   '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+const packageInfoId =
+  '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
 
-function resolver(resolvedPackageId: string): MoveRegistryResolver {
+function resolver(options: {
+  packageId?: string;
+  packageInfoId?: string;
+  network?: 'mainnet' | 'testnet';
+} = {}): MoveRegistryResolver {
   return {
     core: {
       mvr: {
-        resolvePackage: async () => ({ package: resolvedPackageId }),
+        resolvePackage: async () => ({
+          package: options.packageId ?? packageId,
+          packageInfoId: options.packageInfoId ?? packageInfoId,
+          network: options.network,
+        }),
       },
     },
   };
@@ -24,45 +34,78 @@ const corePackage: MoveRegistryResolvablePackage = {
   role: 'core',
   mvrName: '@frontier/map',
   packageId,
-  packageInfoId:
-    '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+  packageInfoId,
 };
 
 describe('Move Registry package verification', () => {
-  test('marks a package verified when MVR resolves to the declared package ID', async () => {
+  test('marks a package verified when MVR resolves to the declared package and PackageInfo IDs', async () => {
     const result = await verifyMoveRegistryPackage(
       corePackage,
-      resolver(packageId.toUpperCase()),
+      resolver({ packageId: `0x${packageId.slice(2).toUpperCase()}` }),
     );
 
     expect(result.status).toBe('verified');
     expect(result.resolvedPackageId).toBe(packageId);
+    expect(result.resolvedPackageInfoId).toBe(packageInfoId);
   });
 
   test('marks a package mismatched when MVR resolves a different package ID', async () => {
     const result = await verifyMoveRegistryPackage(
       corePackage,
-      resolver('0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'),
+      resolver({
+        packageId:
+          '0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+      }),
     );
 
     expect(result.status).toBe('mismatch');
+    expect(result.reason).toBe('resolved-package-id-mismatch');
     expect(result.resolvedPackageId).toBe(
       '0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
     );
   });
 
-  test('marks a package missing when the MVR name is absent or malformed', async () => {
+  test('marks a package mismatched when MVR resolves a different PackageInfo ID', async () => {
+    const result = await verifyMoveRegistryPackage(
+      corePackage,
+      resolver({
+        packageInfoId:
+          '0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+      }),
+    );
+
+    expect(result.status).toBe('mismatch');
+    expect(result.reason).toBe('resolved-package-info-id-mismatch');
+  });
+
+  test('marks a package mismatched when MVR resolves on a different network', async () => {
+    const result = await verifyMoveRegistryPackage(
+      corePackage,
+      resolver({ network: 'testnet' }),
+    );
+
+    expect(result.status).toBe('mismatch');
+    expect(result.reason).toBe('resolved-network-mismatch');
+  });
+
+  test('marks a package missing when required identity fields are absent or malformed', async () => {
     const missingName = await verifyMoveRegistryPackage(
       { ...corePackage, mvrName: '' },
-      resolver(packageId),
+      resolver(),
     );
     const malformedName = await verifyMoveRegistryPackage(
       { ...corePackage, mvrName: 'frontier-map' },
-      resolver(packageId),
+      resolver(),
+    );
+    const malformedPackageInfoId = await verifyMoveRegistryPackage(
+      { ...corePackage, packageInfoId: '0x123' },
+      resolver(),
     );
 
     expect(missingName.status).toBe('missing');
     expect(malformedName.status).toBe('missing');
+    expect(malformedPackageInfoId.status).toBe('missing');
+    expect(malformedPackageInfoId.reason).toBe('missing-package-info-id');
   });
 
   test('marks a package unreachable when MVR resolution throws', async () => {
@@ -83,19 +126,30 @@ describe('Move Registry package verification', () => {
   test('requires every package to verify and at least one core package for release', async () => {
     const good = await verifyMoveRegistryPackagesForRelease(
       [corePackage],
-      resolver(packageId),
+      resolver(),
     );
     const noCore = await verifyMoveRegistryPackagesForRelease(
       [{ ...corePackage, role: 'dependency' }],
-      resolver(packageId),
+      resolver(),
     );
     const mismatch = await verifyMoveRegistryPackagesForRelease(
       [corePackage],
-      resolver('0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'),
+      resolver({
+        packageId:
+          '0xdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
+      }),
+    );
+    const badPackageInfo = await verifyMoveRegistryPackagesForRelease(
+      [corePackage],
+      resolver({
+        packageInfoId:
+          '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee',
+      }),
     );
 
     expect(good.ok).toBe(true);
     expect(noCore.ok).toBe(false);
     expect(mismatch.ok).toBe(false);
+    expect(badPackageInfo.ok).toBe(false);
   });
 });
