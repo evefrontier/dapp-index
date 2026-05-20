@@ -4,8 +4,9 @@ import type {
   DappIndexSuiPackageRole,
 } from '../types/dapp-index';
 
-export const MVR_NAME_PATTERN =
-  /^(@[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*\.sui)\/[a-z0-9][a-z0-9_-]*(?:\/[1-9][0-9]*)?$/;
+export const MVR_NAME_PATTERN_SOURCE =
+  '(@[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*\\.sui)/[a-z0-9][a-z0-9_-]*(?:/[1-9][0-9]*)?';
+export const MVR_NAME_PATTERN = new RegExp(`^${MVR_NAME_PATTERN_SOURCE}$`);
 
 export type MoveRegistryResolvablePackage = {
   network: DappIndexSuiNetwork;
