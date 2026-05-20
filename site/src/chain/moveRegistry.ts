@@ -127,13 +127,15 @@ export async function verifyMoveRegistryPackagesForRelease(
   entries: MoveRegistryResolvablePackage[],
   resolver: MoveRegistryResolver,
 ): Promise<MoveRegistryReleaseVerification> {
-  if (!entries.some((entry) => entry.role === 'core')) {
-    return { ok: false, reason: 'missing-core-package', results: [] };
-  }
+  const hasCorePackage = entries.some((entry) => entry.role === 'core');
 
   const results = await Promise.all(
     entries.map((entry) => verifyMoveRegistryPackage(entry, resolver)),
   );
+
+  if (!hasCorePackage) {
+    return { ok: false, reason: 'missing-core-package', results };
+  }
 
   if (results.every((result) => result.status === 'verified')) {
     return { ok: true, results };
