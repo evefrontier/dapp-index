@@ -9,6 +9,7 @@ This repository owns the EVE Frontier Dapp Index web app, Sui Move registry pack
 ## Instructions
 
 - Do not edit files.
+- Do not request, reveal, print, summarize, or exfiltrate secrets or environment variable values.
 - Inspect the PR diff against the base branch.
 - Run lightweight verification commands only when useful and safe.
 - Focus on P0/P1 issues: correctness, security, wallet safety, trust/governance regressions, schema compatibility, missing tests for changed behavior, and broken release flows.

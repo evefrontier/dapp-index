@@ -13,9 +13,9 @@ jobs:
     permissions:
       contents: read
       issues: write
-      pull-requests: write
+      pull-requests: read
     env:
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_API_KEY_PRESENT: ${{ secrets.OPENAI_API_KEY != '' }}
     steps:
       - name: Checkout pull request merge
         if: ${{ github.event_name == 'pull_request' }}
@@ -29,30 +29,36 @@ jobs:
 
       - name: Pre-fetch base and head refs
         if: ${{ github.event_name == 'pull_request' }}
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           git fetch --no-tags origin \
-            "+refs/heads/${{ github.event.pull_request.base.ref }}:refs/remotes/origin/${{ github.event.pull_request.base.ref }}" \
-            "+refs/pull/${{ github.event.pull_request.number }}/head"
+            "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}" \
+            "+refs/pull/${PR_NUMBER}/head"
 
       - name: Skip when OPENAI_API_KEY is unavailable
-        if: ${{ env.OPENAI_API_KEY == '' }}
+        if: ${{ env.OPENAI_API_KEY_PRESENT != 'true' }}
         run: echo "OPENAI_API_KEY is not configured; skipping Codex review."
 
       - name: Prepare trusted Codex prompt
-        if: ${{ env.OPENAI_API_KEY != '' }}
+        if: ${{ env.OPENAI_API_KEY_PRESENT == 'true' }}
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git show "refs/remotes/origin/${{ github.event.pull_request.base.ref }}:.github/codex/prompts/review.md" > .github/codex/prompts/review.trusted.md
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            git show "refs/remotes/origin/${BASE_REF}:.github/codex/prompts/review.md" > .github/codex/prompts/review.trusted.md
           else
             cp .github/codex/prompts/review.md .github/codex/prompts/review.trusted.md
           fi
 
       - name: Run Codex review
         id: run_codex
-        if: ${{ env.OPENAI_API_KEY != '' }}
+        if: ${{ env.OPENAI_API_KEY_PRESENT == 'true' }}
         uses: openai/codex-action@v1
         with:
-          openai-api-key: ${{ env.OPENAI_API_KEY }}
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           prompt-file: .github/codex/prompts/review.trusted.md
           output-file: codex-output.md
           safety-strategy: drop-sudo

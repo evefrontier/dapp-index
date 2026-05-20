@@ -42,13 +42,8 @@ jobs:
 
       - name: Install suiup
         run: |
-          SUIUP_INSTALL_COMMIT="<PINNED_SUIUP_COMMIT_SHA>"
-          SUIUP_INSTALL_SHA256="<PINNED_INSTALL_SH_SHA256>"
-          curl -sSfL "https://raw.githubusercontent.com/MystenLabs/suiup/${SUIUP_INSTALL_COMMIT}/install.sh" -o /tmp/suiup-install.sh
-          printf '%s  %s\n' "$SUIUP_INSTALL_SHA256" /tmp/suiup-install.sh | sha256sum -c -
-          sh /tmp/suiup-install.sh
-          rm -f /tmp/suiup-install.sh
-          echo "$HOME/.suiup/bin" >> "$GITHUB_PATH"
+          cargo install --git https://github.com/MystenLabs/suiup.git --rev a65c6923fe84562660e933a2dd12849de77a07b1 --locked suiup
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
       - name: Install Sui CLI
         run: suiup install -y sui@testnet-1.40.1
