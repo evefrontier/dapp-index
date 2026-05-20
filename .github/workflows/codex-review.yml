@@ -15,6 +15,7 @@ jobs:
       issues: write
       pull-requests: read
     env:
+      CODEX_REVIEW_ALLOWED_ACTOR: ${{ github.actor != 'Copilot' && !endsWith(github.actor, '[bot]') }}
       OPENAI_API_KEY_PRESENT: ${{ secrets.OPENAI_API_KEY != '' }}
     steps:
       - name: Checkout pull request merge
@@ -41,8 +42,12 @@ jobs:
         if: ${{ env.OPENAI_API_KEY_PRESENT != 'true' }}
         run: echo "OPENAI_API_KEY is not configured; skipping Codex review."
 
+      - name: Skip when actor cannot run Codex review
+        if: ${{ env.CODEX_REVIEW_ALLOWED_ACTOR != 'true' }}
+        run: echo "Actor '${{ github.actor }}' is not allowed to run Codex review; skipping."
+
       - name: Prepare trusted Codex prompt
-        if: ${{ env.OPENAI_API_KEY_PRESENT == 'true' }}
+        if: ${{ env.OPENAI_API_KEY_PRESENT == 'true' && env.CODEX_REVIEW_ALLOWED_ACTOR == 'true' }}
         env:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
           EVENT_NAME: ${{ github.event_name }}
@@ -61,7 +66,7 @@ jobs:
 
       - name: Run Codex review
         id: run_codex
-        if: ${{ env.OPENAI_API_KEY_PRESENT == 'true' }}
+        if: ${{ env.OPENAI_API_KEY_PRESENT == 'true' && env.CODEX_REVIEW_ALLOWED_ACTOR == 'true' }}
         uses: openai/codex-action@v1
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
