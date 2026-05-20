@@ -1,4 +1,4 @@
-# Codex Docs Drift Review Prompt
+# Codex Docs And Agent Drift Review Prompt
 
 Check whether repository documentation has drifted from code and configuration.
 
@@ -7,7 +7,12 @@ Check whether repository documentation has drifted from code and configuration.
 - `README.md`
 - `docs/BUILDER_PLAN.md`
 - `docs/MOVE_PUBLISH.md`
-- `docs/CODEX_AUTOMATION.md`
+- `docs/AGENT_AUTOMATION.md`
+- `AGENTS.md`
+- `.github/copilot-instructions.md`
+- `CLAUDE.md`
+- `GEMINI.md`
+- `.cursor/rules/dapp-index.mdc`
 - `package.json`
 - `site/package.json`
 - `registry/schema/registry-entry.schema.json`
