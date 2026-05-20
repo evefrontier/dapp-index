@@ -51,7 +51,7 @@ jobs:
           echo "$HOME/.suiup/bin" >> "$GITHUB_PATH"
 
       - name: Install Sui CLI
-        run: suiup install -y sui@testnet
+        run: suiup install -y sui@testnet-1.40.1
 
       - name: Build Move package
         run: bun run move:build
