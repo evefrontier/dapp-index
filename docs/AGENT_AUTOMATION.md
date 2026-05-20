@@ -4,10 +4,9 @@ This playbook explains how to use AI coding agents safely in the EVE Frontier
 Dapp Index repo. The goal is to make common work repeatable while keeping Sui
 publishing, wallet-funded actions, and governance decisions human-controlled.
 
-Codex is the first automated review path in this repo, but the shared project
-guidance is tool-neutral. Forks can use Codex, GitHub Copilot, Claude Code,
-Gemini CLI, Cursor, Windsurf, or another agent as long as they follow the same
-repo rules and verification matrix.
+The shared project guidance is tool-neutral. Forks can use Codex, GitHub
+Copilot, Claude Code, Gemini CLI, Cursor, Windsurf, or another agent as long as
+they follow the same repo rules and verification matrix.
 
 ## Instruction Files
 
@@ -52,17 +51,8 @@ Run commands from the repository root.
 
 ### Review a PR
 
-Use your agent's PR review flow. For Codex, use the GitHub comment:
-
-```text
-@codex review
-```
-
-For a focused review:
-
-```text
-@codex review for schema drift and trust/governance regressions
-```
+Use your agent's PR review flow. Until a hosted review action is enabled, run
+Codex review manually from the Codex app or CLI.
 
 The reviewing agent should read `AGENTS.md`, inspect the diff, run lightweight
 checks when useful, and report only serious findings.
@@ -166,13 +156,12 @@ Move publish docs, and agent automation docs where they drift from code.
 This repo includes:
 
 - `.github/workflows/ci.yml` for site and Move checks;
-- `.github/workflows/codex-review.yml` for Codex PR review comments;
 - `.github/codex/prompts/` for reusable Codex review prompts.
 
-The Codex review workflow requires `OPENAI_API_KEY` as a GitHub secret. It is
-designed for review comments, not automatic fixes or merges. Builders who fork
-the repo can disable this workflow or replace it with their preferred review
-agent.
+Hosted Codex PR review is intentionally not enabled yet. Re-enable it later by
+adding a workflow that uses `.github/codex/prompts/review.md` and a GitHub
+Actions secret for the OpenAI API key. Until then, use manual agent reviews so
+forks do not need OpenAI Platform billing configured.
 
 ## Suggested Recurring Automations
 

@@ -22,10 +22,9 @@ Dapp listings are intended to be registered through the Sui registry and backed 
 ## AI Agent Automation
 
 This repo includes shared agent guidance and reusable prompts for assisted
-development, review, docs checks, and release-readiness sweeps. Codex is the
-first configured GitHub review path, but the repo also includes adapters for
-GitHub Copilot, Claude Code, Gemini CLI, and Cursor. Windsurf can read the
-shared `AGENTS.md` instructions directly.
+development, review, docs checks, and release-readiness sweeps. The repo
+includes adapters for Codex, GitHub Copilot, Claude Code, Gemini CLI, and
+Cursor. Windsurf can read the shared `AGENTS.md` instructions directly.
 
 Start with [docs/AGENT_AUTOMATION.md](docs/AGENT_AUTOMATION.md) and the root
 `AGENTS.md` before delegating work to an AI coding agent.
