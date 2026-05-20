@@ -19,10 +19,23 @@ This repo owns:
 
 Dapp listings are intended to be registered through the Sui registry and backed by Walrus metadata.
 
+## Codex Automation
+
+This repo includes project guidance and reusable prompts for Codex-assisted
+development, review, docs checks, and release-readiness sweeps.
+
+Start with [docs/CODEX_AUTOMATION.md](docs/CODEX_AUTOMATION.md) and the root
+`AGENTS.md` before delegating work to Codex.
+
 ## Planned Layout
 
 ```text
 dapp-index/
   site/
-  registry-move/
+  registry/
+    move/
+    schema/
   docs/
+  .github/
+  AGENTS.md
+```

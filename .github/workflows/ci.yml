@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  site:
+    name: Site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.1
+
+      - name: Install site dependencies
+        run: bun install --cwd site --frozen-lockfile
+
+      - name: Test
+        run: bun run site:test
+
+      - name: Typecheck
+        run: bun run site:typecheck
+
+      - name: Build
+        run: bun run site:build
+
+  move:
+    name: Sui Move
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.1
+
+      - name: Install suiup
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/MystenLabs/suiup/main/install.sh | sh
+          echo "$HOME/.suiup/bin" >> "$GITHUB_PATH"
+
+      - name: Install Sui CLI
+        run: suiup install -y sui@testnet
+
+      - name: Build Move package
+        run: bun run move:build
+
+      - name: Test Move package
+        run: bun run move:test
