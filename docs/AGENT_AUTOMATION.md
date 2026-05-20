@@ -156,13 +156,12 @@ Move publish docs, and agent automation docs where they drift from code.
 This repo includes:
 
 - `.github/workflows/ci.yml` for site and Move checks;
-- `.github/workflows/codex-review.yml` for Codex PR review comments;
 - `.github/codex/prompts/` for reusable Codex review prompts.
 
-The Codex review workflow requires `OPENAI_API_KEY` as a GitHub Actions secret.
-It is designed for review comments, not automatic fixes or merges. It skips
-when the key is unavailable and when bot actors such as Copilot trigger the
-workflow.
+Hosted Codex PR review is intentionally not enabled yet. Re-enable it later by
+adding a workflow that uses `.github/codex/prompts/review.md` and a GitHub
+Actions secret for the OpenAI API key. Until then, use manual agent reviews so
+forks do not need OpenAI Platform billing configured.
 
 ## Suggested Recurring Automations
 
