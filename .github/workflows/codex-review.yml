@@ -48,7 +48,13 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
         run: |
           if [ "$EVENT_NAME" = "pull_request" ]; then
-            git show "refs/remotes/origin/${BASE_REF}:.github/codex/prompts/review.md" > .github/codex/prompts/review.trusted.md
+            if git show "refs/remotes/origin/${BASE_REF}:.github/codex/prompts/review.md" \
+                > .github/codex/prompts/review.trusted.md 2>/dev/null; then
+              echo "Using review prompt from base branch."
+            else
+              echo "Prompt file not found in base branch; using PR version."
+              cp .github/codex/prompts/review.md .github/codex/prompts/review.trusted.md
+            fi
           else
             cp .github/codex/prompts/review.md .github/codex/prompts/review.trusted.md
           fi
