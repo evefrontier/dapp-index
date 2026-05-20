@@ -5,7 +5,11 @@
   "type": "module",
   "packageManager": "bun@1.3.1",
   "scripts": {
+    "site:test": "bun test --cwd site",
+    "site:typecheck": "bun run --cwd site typecheck",
+    "site:build": "bun run --cwd site build",
     "move:build": "sui move build --path registry/move",
-    "move:test": "sui move test --path registry/move"
+    "move:test": "sui move test --path registry/move",
+    "ci": "bun run site:test && bun run site:typecheck && bun run site:build && bun run move:build && bun run move:test"
   }
 }
