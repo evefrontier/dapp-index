@@ -1,10 +1,31 @@
-# Codex Automation Playbook
+# AI Agent Automation Playbook
 
-This playbook explains how to use Codex safely in the EVE Frontier Dapp Index
-repo. The goal is to make common work repeatable while keeping Sui publishing,
-wallet-funded actions, and governance decisions human-controlled.
+This playbook explains how to use AI coding agents safely in the EVE Frontier
+Dapp Index repo. The goal is to make common work repeatable while keeping Sui
+publishing, wallet-funded actions, and governance decisions human-controlled.
 
-## What Codex Should Automate First
+Codex is the first automated review path in this repo, but the shared project
+guidance is tool-neutral. Forks can use Codex, GitHub Copilot, Claude Code,
+Gemini CLI, Cursor, Windsurf, or another agent as long as they follow the same
+repo rules and verification matrix.
+
+## Instruction Files
+
+The shared instruction source is `AGENTS.md`.
+
+| Tool | Repo file |
+| --- | --- |
+| Codex | `AGENTS.md` |
+| GitHub Copilot | `.github/copilot-instructions.md` points to `AGENTS.md` |
+| Claude Code | `CLAUDE.md` imports `AGENTS.md` |
+| Gemini CLI | `GEMINI.md` imports `AGENTS.md` |
+| Cursor | `.cursor/rules/dapp-index.mdc` points to `AGENTS.md` |
+| Windsurf | `AGENTS.md` |
+
+Keep durable project rules in `AGENTS.md`. Keep tool-specific behavior in the
+adapter file or workflow prompt for that tool.
+
+## What Agents Should Automate First
 
 - Repo understanding: summarize architecture, affected files, and risks.
 - Verification: run the smallest relevant command set and report exact output.
@@ -12,7 +33,7 @@ wallet-funded actions, and governance decisions human-controlled.
 - Docs drift: compare docs, schema, Move package, and site behavior.
 - Draft implementation: create small branches with tests and PR descriptions.
 
-Codex should not automatically publish Sui packages, pay for transactions,
+Agents should not automatically publish Sui packages, pay for transactions,
 merge PRs, or change governance/release policy without explicit approval.
 
 ## Command Matrix
@@ -27,11 +48,11 @@ Run commands from the repository root.
 | Cross-surface change | `bun run ci` |
 | Docs only | inspect changed links and commands; explain if code checks were skipped |
 
-## Common Codex Tasks
+## Common Agent Tasks
 
 ### Review a PR
 
-Use the GitHub comment:
+Use your agent's PR review flow. For Codex, use the GitHub comment:
 
 ```text
 @codex review
@@ -43,8 +64,8 @@ For a focused review:
 @codex review for schema drift and trust/governance regressions
 ```
 
-Codex should read `AGENTS.md`, inspect the diff, run lightweight checks when
-useful, and report only serious findings.
+The reviewing agent should read `AGENTS.md`, inspect the diff, run lightweight
+checks when useful, and report only serious findings.
 
 ### Fix CI
 
@@ -137,7 +158,7 @@ Prompt:
 
 ```text
 Review changes merged since <commit/tag/date> and update README, builder plan,
-Move publish docs, and Codex automation docs where they drift from code.
+Move publish docs, and agent automation docs where they drift from code.
 ```
 
 ## GitHub Automation
@@ -149,12 +170,14 @@ This repo includes:
 - `.github/codex/prompts/` for reusable Codex review prompts.
 
 The Codex review workflow requires `OPENAI_API_KEY` as a GitHub secret. It is
-designed for review comments, not automatic fixes or merges.
+designed for review comments, not automatic fixes or merges. Builders who fork
+the repo can disable this workflow or replace it with their preferred review
+agent.
 
 ## Suggested Recurring Automations
 
-Start these manually in Codex first. Schedule only after the prompt produces
-useful output.
+Start these manually first. Schedule only after the prompt produces useful
+output for the agent you plan to use.
 
 ### Weekly Docs And Schema Drift
 
@@ -163,10 +186,11 @@ Cadence: weekly.
 Prompt:
 
 ```text
-Check README, docs/BUILDER_PLAN.md, docs/MOVE_PUBLISH.md, docs/CODEX_AUTOMATION.md,
-registry/schema/registry-entry.schema.json, registry/move/README.md, and package
-scripts for drift. Report stale or contradictory docs. Do not edit files unless
-there is a small, obvious docs-only fix.
+Check README, docs/BUILDER_PLAN.md, docs/MOVE_PUBLISH.md,
+docs/AGENT_AUTOMATION.md, registry/schema/registry-entry.schema.json,
+registry/move/README.md, package scripts, and agent instruction files for drift.
+Report stale or contradictory docs. Do not edit files unless there is a small,
+obvious docs-only fix.
 ```
 
 ### Weekly Dependency And Build Health
@@ -194,7 +218,7 @@ commands run, manual Sui/Walrus/MVR steps, governance risks, and go/no-go notes.
 
 ## Safety Defaults
 
-- Codex-generated implementation branches should start from `main`.
+- Agent-generated implementation branches should start from `main`.
 - Use worktrees for unattended or recurring automation.
 - Keep internet access limited unless current external docs are required.
 - Keep secrets out of the agent phase where possible.
