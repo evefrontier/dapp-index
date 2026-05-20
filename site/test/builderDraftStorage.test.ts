@@ -69,6 +69,28 @@ describe('builder draft storage', () => {
     );
   });
 
+  test('rejects MIME overrides that do not match the blob type', async () => {
+    const storage = createBuilderDraftStorage({
+      localStorage: createMemoryLocalStorage(),
+      mediaStore: createMemoryBuilderDraftMediaStore(),
+    });
+
+    await storage.saveDraft(draft);
+
+    await expect(
+      storage.saveMedia(
+        'draft-1',
+        {
+          id: 'screen-1',
+          kind: 'screenshot',
+          name: 'screen.png',
+          mimeType: 'image/jpeg',
+        },
+        new Blob(['image-data'], { type: 'image/png' }),
+      ),
+    ).rejects.toThrow('Provided media MIME type does not match the blob MIME type.');
+  });
+
   test('clears draft metadata and media after publish succeeds', async () => {
     const localStorage = createMemoryLocalStorage();
     const storage = createBuilderDraftStorage({
@@ -101,6 +123,81 @@ describe('builder draft storage', () => {
     await storage.deleteDraft('draft-1');
 
     expect(localStorage.getItem(BUILDER_DRAFTS_STORAGE_KEY)).toBeNull();
+  });
+
+  test('does not lose concurrent media saves for the same draft', async () => {
+    const storage = createBuilderDraftStorage({
+      localStorage: createMemoryLocalStorage(),
+      mediaStore: createMemoryBuilderDraftMediaStore(),
+    });
+
+    await storage.saveDraft(draft);
+    await Promise.all([
+      storage.saveMedia(
+        'draft-1',
+        { id: 'screen-1', kind: 'screenshot', name: 'screen-1.png' },
+        new Blob(['image-data-1'], { type: 'image/png' }),
+      ),
+      storage.saveMedia(
+        'draft-1',
+        { id: 'screen-2', kind: 'screenshot', name: 'screen-2.png' },
+        new Blob(['image-data-2'], { type: 'image/png' }),
+      ),
+    ]);
+
+    const savedDraft = await storage.getDraft('draft-1');
+    expect(savedDraft?.media.map((item) => item.id).sort()).toEqual([
+      'screen-1',
+      'screen-2',
+    ]);
+  });
+
+  test('keeps draft metadata when deleting media blobs fails', async () => {
+    const localStorage = createMemoryLocalStorage();
+    const storage = createBuilderDraftStorage({
+      localStorage,
+      mediaStore: {
+        put: async () => {},
+        get: async () => null,
+        deleteDraft: async () => {
+          throw new Error('delete failed');
+        },
+        clear: async () => {},
+      },
+    });
+
+    await storage.saveDraft(draft);
+
+    await expect(storage.deleteDraft('draft-1')).rejects.toThrow('delete failed');
+    expect(await storage.getDraft('draft-1')).toEqual(draft);
+  });
+
+  test('supports prototype-like draft IDs safely', async () => {
+    const storage = createBuilderDraftStorage({
+      localStorage: createMemoryLocalStorage(),
+      mediaStore: createMemoryBuilderDraftMediaStore(),
+    });
+
+    const protoDraft = {
+      ...draft,
+      id: '__proto__',
+    };
+    await storage.saveDraft(protoDraft);
+
+    expect(await storage.getDraft('__proto__')).toEqual(protoDraft);
+    expect(await storage.getDraft('toString')).toBeNull();
+  });
+
+  test('does not collide media keys when IDs contain colons', async () => {
+    const store = createMemoryBuilderDraftMediaStore();
+    const firstBlob = new Blob(['first'], { type: 'image/png' });
+    const secondBlob = new Blob(['second'], { type: 'image/png' });
+
+    await store.put({ draftId: 'a:b', mediaId: 'c', blob: firstBlob });
+    await store.put({ draftId: 'a', mediaId: 'b:c', blob: secondBlob });
+
+    expect(await store.get('a:b', 'c')).toEqual(firstBlob);
+    expect(await store.get('a', 'b:c')).toEqual(secondBlob);
   });
 
   test('keeps only supported MIME types and sizes eligible for draft media', () => {

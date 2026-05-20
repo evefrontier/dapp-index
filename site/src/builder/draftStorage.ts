@@ -3,8 +3,9 @@ export const MAX_BUILDER_DRAFT_SCREENSHOT_BYTES = 10 * 1024 * 1024;
 export const MAX_BUILDER_DRAFT_VIDEO_BYTES = 100 * 1024 * 1024;
 
 const INDEXED_DB_NAME = 'dapp-index-builder-drafts';
-const INDEXED_DB_VERSION = 1;
+const INDEXED_DB_VERSION = 2;
 const MEDIA_BLOB_STORE = 'mediaBlobs';
+const MEDIA_BLOB_DRAFT_ID_INDEX = 'byDraftId';
 
 export type BuilderDraftStatus = 'draft' | 'ready-to-publish' | 'published';
 
@@ -80,15 +81,25 @@ export function createBuilderDraftStorage(
   const mediaStore =
     options.mediaStore ?? createIndexedDbBuilderDraftMediaStore();
   const now = options.now ?? (() => new Date());
+  const draftLocks = new Map<string, Promise<void>>();
 
   function readDrafts(): Record<string, BuilderDraft> {
     const raw = storage.getItem(BUILDER_DRAFTS_STORAGE_KEY);
-    if (!raw) return {};
+    if (!raw) return createDraftRecord();
 
     try {
-      return JSON.parse(raw) as Record<string, BuilderDraft>;
+      const parsed = JSON.parse(raw) as unknown;
+      if (!parsed || typeof parsed !== 'object') {
+        return createDraftRecord();
+      }
+
+      const drafts = createDraftRecord();
+      for (const [draftId, draft] of Object.entries(parsed)) {
+        drafts[draftId] = draft as BuilderDraft;
+      }
+      return drafts;
     } catch {
-      return {};
+      return createDraftRecord();
     }
   }
 
@@ -109,7 +120,7 @@ export function createBuilderDraftStorage(
   }
 
   async function getDraft(draftId: string): Promise<BuilderDraft | null> {
-    return readDrafts()[draftId] ?? null;
+    return getOwnDraft(readDrafts(), draftId);
   }
 
   async function listDrafts(): Promise<BuilderDraft[]> {
@@ -123,44 +134,65 @@ export function createBuilderDraftStorage(
     input: BuilderDraftMediaInput,
     blob: Blob,
   ): Promise<BuilderDraftMedia> {
-    const drafts = readDrafts();
-    const draft = drafts[draftId];
-    if (!draft) {
-      throw new Error(`Builder draft not found: ${draftId}`);
-    }
+    return withDraftLock(draftId, async () => {
+      const drafts = readDrafts();
+      const draft = getOwnDraft(drafts, draftId);
+      if (!draft) {
+        throw new Error(`Builder draft not found: ${draftId}`);
+      }
 
-    const mimeType = input.mimeType ?? blob.type;
-    const validation = validateBuilderDraftMediaFile({
-      kind: input.kind,
-      file: blob,
-      mimeType,
+      const blobMimeType = blob.type.toLowerCase();
+      const inputMimeType = input.mimeType?.toLowerCase();
+      if (blobMimeType && inputMimeType && blobMimeType !== inputMimeType) {
+        throw new Error(
+          'Provided media MIME type does not match the blob MIME type.',
+        );
+      }
+
+      const mimeType = blobMimeType || inputMimeType || '';
+      const validation = validateBuilderDraftMediaFile({
+        kind: input.kind,
+        file: blob,
+        mimeType,
+      });
+      if (!validation.ok) {
+        throw new Error(validation.reason);
+      }
+
+      const media: BuilderDraftMedia = {
+        id: input.id,
+        kind: input.kind,
+        name: input.name,
+        mimeType,
+        size: blob.size,
+        createdAt: now().toISOString(),
+      };
+
+      drafts[draftId] = {
+        ...draft,
+        updatedAt: now().toISOString(),
+        media: [...draft.media.filter((item) => item.id !== media.id), media],
+      };
+      writeDrafts(drafts);
+
+      try {
+        await mediaStore.put({ draftId, mediaId: media.id, blob });
+      } catch (error) {
+        const rollbackDrafts = readDrafts();
+        const rollbackDraft = getOwnDraft(rollbackDrafts, draftId);
+        if (rollbackDraft) {
+          rollbackDrafts[draftId] = {
+            ...rollbackDraft,
+            updatedAt: now().toISOString(),
+            media: rollbackDraft.media.filter((item) => item.id !== media.id),
+          };
+          writeDrafts(rollbackDrafts);
+        }
+        throw error;
+      }
+
+      return media;
     });
-    if (!validation.ok) {
-      throw new Error(validation.reason);
-    }
-
-    const media: BuilderDraftMedia = {
-      id: input.id,
-      kind: input.kind,
-      name: input.name,
-      mimeType,
-      size: blob.size,
-      createdAt: now().toISOString(),
-    };
-
-    await mediaStore.put({ draftId, mediaId: media.id, blob });
-
-    drafts[draftId] = {
-      ...draft,
-      updatedAt: now().toISOString(),
-      media: [
-        ...draft.media.filter((item) => item.id !== media.id),
-        media,
-      ],
-    };
-    writeDrafts(drafts);
-
-    return media;
   }
 
   async function getMediaBlob(
@@ -171,10 +203,12 @@ export function createBuilderDraftStorage(
   }
 
   async function deleteDraft(draftId: string): Promise<void> {
-    const drafts = readDrafts();
-    delete drafts[draftId];
-    writeDrafts(drafts);
-    await mediaStore.deleteDraft(draftId);
+    await withDraftLock(draftId, async () => {
+      await mediaStore.deleteDraft(draftId);
+      const drafts = readDrafts();
+      delete drafts[draftId];
+      writeDrafts(drafts);
+    });
   }
 
   async function clearDrafts(): Promise<void> {
@@ -192,6 +226,26 @@ export function createBuilderDraftStorage(
     clearPublishedDraft: deleteDraft,
     clearDrafts,
   };
+
+  async function withDraftLock<T>(
+    draftId: string,
+    work: () => Promise<T>,
+  ): Promise<T> {
+    const previous = draftLocks.get(draftId) ?? Promise.resolve();
+    let release = () => {};
+    const current = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+
+    draftLocks.set(draftId, previous.then(() => current));
+    await previous;
+
+    try {
+      return await work();
+    } finally {
+      release();
+    }
+  }
 }
 
 export function validateBuilderDraftMediaFile(input: {
@@ -289,8 +343,9 @@ export function createMemoryBuilderDraftMediaStore(): BuilderDraftMediaStore {
     get: async (draftId, mediaId) =>
       blobs.get(mediaKey(draftId, mediaId)) ?? null,
     deleteDraft: async (draftId) => {
+      const draftPrefix = `${encodeURIComponent(draftId)}:`;
       for (const key of blobs.keys()) {
-        if (key.startsWith(`${draftId}:`)) {
+        if (key.startsWith(draftPrefix)) {
           blobs.delete(key);
         }
       }
@@ -324,7 +379,7 @@ type MediaBlobRecord = {
 };
 
 function mediaKey(draftId: string, mediaId: string): string {
-  return `${draftId}:${mediaId}`;
+  return `${encodeURIComponent(draftId)}:${encodeURIComponent(mediaId)}`;
 }
 
 function formatBytes(bytes: number): string {
@@ -337,8 +392,17 @@ function openBuilderDraftDb(indexedDb: IDBFactory): Promise<IDBDatabase> {
 
     request.onupgradeneeded = () => {
       const db = request.result;
+      let store: IDBObjectStore;
       if (!db.objectStoreNames.contains(MEDIA_BLOB_STORE)) {
-        db.createObjectStore(MEDIA_BLOB_STORE, { keyPath: 'key' });
+        store = db.createObjectStore(MEDIA_BLOB_STORE, { keyPath: 'key' });
+      } else {
+        store = request.transaction!.objectStore(MEDIA_BLOB_STORE);
+      }
+
+      if (!store.indexNames.contains(MEDIA_BLOB_DRAFT_ID_INDEX)) {
+        store.createIndex(MEDIA_BLOB_DRAFT_ID_INDEX, 'draftId', {
+          unique: false,
+        });
       }
     };
     request.onerror = () => reject(request.error);
@@ -351,7 +415,8 @@ function deleteDraftMediaBlobs(
   draftId: string,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    const request = store.openCursor();
+    const index = store.index(MEDIA_BLOB_DRAFT_ID_INDEX);
+    const request = index.openCursor(IDBKeyRange.only(draftId));
 
     request.onerror = () => reject(request.error);
     request.onsuccess = () => {
@@ -361,10 +426,7 @@ function deleteDraftMediaBlobs(
         return;
       }
 
-      const record = cursor.value as MediaBlobRecord;
-      if (record.draftId === draftId) {
-        cursor.delete();
-      }
+      cursor.delete();
       cursor.continue();
     };
   });
@@ -387,4 +449,17 @@ function transactionDone(tx: IDBTransaction): Promise<void> {
 
 function isIdbRequest<T>(value: unknown): value is IDBRequest<T> {
   return Boolean(value && typeof value === 'object' && 'onsuccess' in value);
+}
+
+function createDraftRecord(): Record<string, BuilderDraft> {
+  return Object.create(null) as Record<string, BuilderDraft>;
+}
+
+function getOwnDraft(
+  drafts: Record<string, BuilderDraft>,
+  draftId: string,
+): BuilderDraft | null {
+  return Object.prototype.hasOwnProperty.call(drafts, draftId)
+    ? drafts[draftId]
+    : null;
 }
