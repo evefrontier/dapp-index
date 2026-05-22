@@ -45,8 +45,8 @@
       "uniqueItems": true,
       "items": { "$ref": "#/$defs/smartAssemblyType" }
     },
-    "liveUrl": { "type": "string", "minLength": 1 },
-    "repositoryUrl": { "type": "string", "minLength": 1 },
+    "liveUrl": { "$ref": "#/$defs/httpsUrl" },
+    "repositoryUrl": { "$ref": "#/$defs/httpsUrl" },
     "packageIds": {
       "type": "array",
       "items": {
