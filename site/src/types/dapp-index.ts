@@ -64,11 +64,7 @@ export type DappIndexMetadataSchema = typeof DAPP_INDEX_METADATA_SCHEMA;
 export type DappIndexMetadataSchemaVersion =
   typeof DAPP_INDEX_METADATA_SCHEMA_VERSION;
 
-export type DappIndexSuiNetwork =
-  | 'testnet'
-  | 'mainnet'
-  | 'devnet'
-  | 'localnet';
+export type DappIndexSuiNetwork = 'testnet' | 'mainnet';
 
 export interface DappIndexMaintainer {
   name: string;
