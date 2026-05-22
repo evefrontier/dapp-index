@@ -1,7 +1,6 @@
 import type { AnySchema, ErrorObject } from 'ajv';
 import Ajv2020 from 'ajv/dist/2020.js';
 import {
-  DAPP_INDEX_VIDEO_MIME_TYPE,
   PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES,
   PUBLIC_MEDIA_VIDEO_LIMIT,
 } from '@/constants';
@@ -96,16 +95,6 @@ function validateRegistryMetadataSemantics(data: unknown): ErrorObject[] {
     totalMediaSizeBytes += numberValue(poster?.sizeBytes);
 
     const sources = Array.isArray(entry.sources) ? entry.sources : [];
-    const firstSource = asRecord(sources[0]);
-    if (firstSource?.mimeType !== DAPP_INDEX_VIDEO_MIME_TYPE) {
-      errors.push(
-        customError(
-          `/media/items/${index}/sources/0/mimeType`,
-          `primary video source must be ${DAPP_INDEX_VIDEO_MIME_TYPE}`,
-        ),
-      );
-    }
-
     sources.forEach((source) => {
       totalMediaSizeBytes += numberValue(asRecord(source)?.sizeBytes);
     });

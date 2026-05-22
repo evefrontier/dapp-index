@@ -183,38 +183,6 @@ describe('registry metadata media schema', () => {
     expect(validateRegistryMetadataJson(metadata).ok).toBe(false);
   });
 
-  test('rejects videos whose primary source is not WebM', () => {
-    const metadata = validMetadata();
-    (metadata.media.items[1] as DappIndexVideoMediaItem).sources.unshift({
-      uri: 'walrus://blob/mp4BlobId',
-      mimeType: 'video/mp4' as unknown as typeof DAPP_INDEX_VIDEO_MIME_TYPE,
-      codecs: 'h264,aac',
-      sha256: HEX_32,
-      sizeBytes: 20_000_000,
-      width: 1920,
-      height: 1080,
-      durationSeconds: 42,
-    });
-
-    expect(validateRegistryMetadataJson(metadata).ok).toBe(false);
-  });
-
-  test('rejects MP4 fallback sources while public video support is WebM-only', () => {
-    const metadata = validMetadata();
-    (metadata.media.items[1] as DappIndexVideoMediaItem).sources.push({
-      uri: 'walrus://blob/mp4BlobId',
-      mimeType: 'video/mp4' as unknown as typeof DAPP_INDEX_VIDEO_MIME_TYPE,
-      codecs: 'h264,aac',
-      sha256: HEX_32,
-      sizeBytes: 20_000_000,
-      width: 1920,
-      height: 1080,
-      durationSeconds: 42,
-    });
-
-    expect(validateRegistryMetadataJson(metadata).ok).toBe(false);
-  });
-
   test('rejects legacy thumbnailUrl metadata', () => {
     const metadata = {
       ...validMetadata(),
