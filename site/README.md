@@ -85,6 +85,8 @@ bun run router:generate
 | ---------------------- | ---------------------------------- |
 | `bun dev`              | Vite dev server                    |
 | `bun run build`        | Production build                   |
+| `bun run test`         | Run unit tests with Bun            |
+| `bun run typecheck`    | `tsc -b` (app sources)             |
+| `bun run typecheck:test` | `tsc` typecheck for test files   |
 | `bun run preview`      | Serve `dist`                       |
-| `bun run typecheck`    | `tsc -b`                           |
 | `bun run router:generate` | Regenerate `routeTree.gen.ts`   |
