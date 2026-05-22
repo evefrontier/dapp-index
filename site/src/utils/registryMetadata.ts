@@ -94,16 +94,6 @@ function validateRegistryMetadataSemantics(data: unknown): ErrorObject[] {
     totalMediaSizeBytes += numberValue(poster?.sizeBytes);
 
     const sources = Array.isArray(entry.sources) ? entry.sources : [];
-    const firstSource = asRecord(sources[0]);
-    if (firstSource?.mimeType !== 'video/webm') {
-      errors.push(
-        customError(
-          `/media/items/${index}/sources/0/mimeType`,
-          'primary video source must be video/webm',
-        ),
-      );
-    }
-
     sources.forEach((source) => {
       totalMediaSizeBytes += numberValue(asRecord(source)?.sizeBytes);
     });
