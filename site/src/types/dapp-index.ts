@@ -175,8 +175,6 @@ export interface DappIndexEntry {
   liveUrl: string;
   repositoryUrl?: string;
   documentationUrl?: string;
-  /** Structured package metadata for each supported Sui network. */
-  suiPackages?: DappIndexSuiPackage[];
   /** Published Move package object IDs when known. */
   packageIds?: string[];
   /** Move Registry verified Sui packages required before public release. */
