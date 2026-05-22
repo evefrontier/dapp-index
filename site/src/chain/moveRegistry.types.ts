@@ -58,6 +58,10 @@ export type MoveRegistryReleaseVerification =
       results: MoveRegistryVerificationResult[];
     };
 
+export type Declaration<T, Reason extends string> =
+  | { ok: true; value: T }
+  | { ok: false; reason: Reason; errorMessage?: string };
+
 export type MoveRegistryVerificationContext = Pick<
   MoveRegistryVerificationResult,
   'entry'
@@ -82,5 +86,31 @@ export type DeclaredMoveRegistryPackage = {
 };
 
 export type MoveRegistryPackageDeclaration =
-  | { ok: true; declared: DeclaredMoveRegistryPackage }
+  | { ok: true; value: DeclaredMoveRegistryPackage }
   | { ok: false; result: MoveRegistryVerificationResult };
+
+export type MoveRegistryPackageResolverReason =
+  | 'missing-mvr-resolver'
+  | 'invalid-mvr-resolver-shape';
+
+export type MoveRegistryPackageResolverSource = 'core.mvr' | 'mvr';
+
+export type MoveRegistryPackageResolverDeclaration = Declaration<
+  MoveRegistryPackageResolver,
+  MoveRegistryPackageResolverReason
+>;
+
+export type MoveRegistryPackageIdReason =
+  | 'missing-package-id'
+  | 'invalid-package-id'
+  | 'missing-package-info-id'
+  | 'invalid-package-info-id'
+  | 'missing-resolved-package-id'
+  | 'invalid-resolved-package-id'
+  | 'missing-resolved-package-info-id'
+  | 'invalid-resolved-package-info-id';
+
+export type MoveRegistryPackageIdDeclaration = Declaration<
+  string,
+  MoveRegistryPackageIdReason
+>;

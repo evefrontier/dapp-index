@@ -2,6 +2,11 @@ import { normalizeSuiObjectId } from '@mysten/sui/utils';
 import type { DappIndexSuiNetwork } from '../types/dapp-index';
 import type {
   MoveRegistryPackageDeclaration,
+  MoveRegistryPackageIdDeclaration,
+  MoveRegistryPackageIdReason,
+  MoveRegistryPackageResolver,
+  MoveRegistryPackageResolverDeclaration,
+  MoveRegistryPackageResolverSource,
   MoveRegistryReleaseVerification,
   MoveRegistryResolvablePackage,
   MoveRegistryResolver,
@@ -30,27 +35,35 @@ export async function verifyMoveRegistryPackage(
     return declaration.result;
   }
 
-  const declared = declaration.declared;
+  const declared = declaration.value;
   const { network, mvrName, packageId, packageInfoId } = declared;
-  const packageResolver = resolver.core?.mvr ?? resolver.mvr;
-  if (!packageResolver) {
+  const packageResolver = declareMoveRegistryPackageResolver(resolver);
+  if (!packageResolver.ok) {
     return moveRegistryVerificationResult('unreachable', declared, {
-      errorMessage: 'MVR resolver is unavailable',
+      reason: packageResolver.reason,
+      errorMessage: packageResolver.errorMessage,
     });
   }
 
   try {
-    const resolved = await packageResolver.resolvePackage({
+    const resolved = await packageResolver.value.resolvePackage({
       package: mvrName,
       network,
     });
-    const resolvedPackageId = normalizePackageId(resolved.package);
-    const resolvedPackageInfoId = normalizePackageId(resolved.packageInfoId);
 
-    if (!resolvedPackageId) {
+    const resolvedPackageId = declarePackageId(
+      resolved.package,
+      'missing-resolved-package-id',
+      'invalid-resolved-package-id',
+    );
+
+    if (!resolvedPackageId.ok) {
       return moveRegistryVerificationResult('unreachable', declared, {
-        reason: 'invalid-resolved-package-id',
-        errorMessage: `MVR resolver returned an invalid package id: ${String(resolved.package)}`,
+        reason: resolvedPackageId.reason,
+        errorMessage:
+          resolvedPackageId.reason === 'missing-resolved-package-id'
+            ? 'MVR resolver did not return a package id'
+            : `MVR resolver returned an invalid package id: ${String(resolved.package)}`,
       });
     }
 
@@ -59,7 +72,7 @@ export async function verifyMoveRegistryPackage(
         'mismatch',
         {
           ...declared,
-          resolvedPackageId,
+          resolvedPackageId: resolvedPackageId.value,
           resolvedNetwork: resolved.network,
         },
         {
@@ -68,27 +81,36 @@ export async function verifyMoveRegistryPackage(
       );
     }
 
-    if (!resolvedPackageInfoId) {
+    const resolvedPackageInfoId = declarePackageId(
+      resolved.packageInfoId,
+      'missing-resolved-package-info-id',
+      'invalid-resolved-package-info-id',
+    );
+
+    if (!resolvedPackageInfoId.ok) {
       return moveRegistryVerificationResult(
         'unreachable',
         {
           ...declared,
-          resolvedPackageId,
+          resolvedPackageId: resolvedPackageId.value,
         },
         {
-          reason: 'missing-resolved-package-info-id',
-          errorMessage: 'MVR resolver did not return a PackageInfo object id',
+          reason: resolvedPackageInfoId.reason,
+          errorMessage:
+            resolvedPackageInfoId.reason === 'missing-resolved-package-info-id'
+              ? 'MVR resolver did not return a PackageInfo object id'
+              : `MVR resolver returned an invalid PackageInfo object id: ${String(resolved.packageInfoId)}`,
         },
       );
     }
 
-    if (resolvedPackageId !== packageId) {
+    if (resolvedPackageId.value !== packageId) {
       return moveRegistryVerificationResult(
         'mismatch',
         {
           ...declared,
-          resolvedPackageId,
-          resolvedPackageInfoId,
+          resolvedPackageId: resolvedPackageId.value,
+          resolvedPackageInfoId: resolvedPackageInfoId.value,
         },
         {
           reason: 'resolved-package-id-mismatch',
@@ -96,13 +118,13 @@ export async function verifyMoveRegistryPackage(
       );
     }
 
-    if (resolvedPackageInfoId !== packageInfoId) {
+    if (resolvedPackageInfoId.value !== packageInfoId) {
       return moveRegistryVerificationResult(
         'mismatch',
         {
           ...declared,
-          resolvedPackageId,
-          resolvedPackageInfoId,
+          resolvedPackageId: resolvedPackageId.value,
+          resolvedPackageInfoId: resolvedPackageInfoId.value,
         },
         {
           reason: 'resolved-package-info-id-mismatch',
@@ -112,8 +134,8 @@ export async function verifyMoveRegistryPackage(
 
     return moveRegistryVerificationResult('verified', {
       ...declared,
-      resolvedPackageId,
-      resolvedPackageInfoId,
+      resolvedPackageId: resolvedPackageId.value,
+      resolvedPackageInfoId: resolvedPackageInfoId.value,
     });
   } catch (error) {
     return moveRegistryVerificationResult('unreachable', declared, {
@@ -143,13 +165,20 @@ export async function verifyMoveRegistryPackagesForRelease(
   return { ok: false, reason: 'verification-failed', results };
 }
 
-function normalizePackageId(value: string | undefined): string | undefined {
-  if (!value) return undefined;
-  if (!SUI_OBJECT_ID_PATTERN.test(value)) return undefined;
+function declarePackageId(
+  value: string | undefined,
+  missingReason: MoveRegistryPackageIdReason,
+  invalidReason: MoveRegistryPackageIdReason,
+): MoveRegistryPackageIdDeclaration {
+  if (!value) return { ok: false, reason: missingReason };
+  if (!SUI_OBJECT_ID_PATTERN.test(value)) {
+    return { ok: false, reason: invalidReason };
+  }
+
   try {
-    return normalizeSuiObjectId(value);
+    return { ok: true, value: normalizeSuiObjectId(value) };
   } catch {
-    return undefined;
+    return { ok: false, reason: invalidReason };
   }
 }
 
@@ -157,13 +186,90 @@ function isSuiNetwork(value: string): value is DappIndexSuiNetwork {
   return value === 'mainnet' || value === 'testnet';
 }
 
+function declareMoveRegistryPackageResolver(
+  resolver: MoveRegistryResolver,
+): MoveRegistryPackageResolverDeclaration {
+  const coreResolver = declareMoveRegistryPackageResolverCandidate(
+    'core.mvr',
+    resolver.core?.mvr,
+  );
+  if (coreResolver.ok) {
+    return coreResolver;
+  }
+
+  const rootResolver = declareMoveRegistryPackageResolverCandidate(
+    'mvr',
+    resolver.mvr,
+  );
+  if (rootResolver.ok) {
+    return rootResolver;
+  }
+
+  const invalidResolver = [coreResolver, rootResolver].find(
+    (candidate) => candidate.reason === 'invalid-mvr-resolver-shape',
+  );
+
+  return {
+    ok: false,
+    reason: invalidResolver?.reason ?? 'missing-mvr-resolver',
+    errorMessage: [coreResolver.errorMessage, rootResolver.errorMessage].join(
+      '; ',
+    ),
+  };
+}
+
+function declareMoveRegistryPackageResolverCandidate(
+  source: MoveRegistryPackageResolverSource,
+  value: unknown,
+): MoveRegistryPackageResolverDeclaration {
+  if (value === undefined || value === null) {
+    return {
+      ok: false,
+      reason: 'missing-mvr-resolver',
+      errorMessage: `MVR resolver candidate ${source} is missing`,
+    };
+  }
+
+  if (typeof value !== 'object' || value === null) {
+    return {
+      ok: false,
+      reason: 'invalid-mvr-resolver-shape',
+      errorMessage: `MVR resolver candidate ${source} is not an object`,
+    };
+  }
+
+  if (
+    typeof (value as Partial<MoveRegistryPackageResolver>).resolvePackage !==
+    'function'
+  ) {
+    return {
+      ok: false,
+      reason: 'invalid-mvr-resolver-shape',
+      errorMessage: `MVR resolver candidate ${source} is missing resolvePackage()`,
+    };
+  }
+
+  return {
+    ok: true,
+    value: value as MoveRegistryPackageResolver,
+  };
+}
+
 function declareMoveRegistryPackage(
   entry: MoveRegistryResolvablePackage,
 ): MoveRegistryPackageDeclaration {
   const network = entry.network;
   const mvrName = entry.mvrName?.trim();
-  const packageId = normalizePackageId(entry.packageId);
-  const packageInfoId = normalizePackageId(entry.packageInfoId);
+  const packageId = declarePackageId(
+    entry.packageId,
+    'missing-package-id',
+    'invalid-package-id',
+  );
+  const packageInfoId = declarePackageId(
+    entry.packageInfoId,
+    'missing-package-info-id',
+    'invalid-package-info-id',
+  );
 
   if (!isSuiNetwork(network)) {
     return rejectMoveRegistryPackageDeclaration({ entry }, 'invalid-network');
@@ -183,23 +289,29 @@ function declareMoveRegistryPackage(
     );
   }
 
-  if (!packageId) {
+  if (!packageId.ok) {
     return rejectMoveRegistryPackageDeclaration(
       { entry, network, mvrName },
-      'missing-package-id',
+      packageId.reason,
     );
   }
 
-  if (!packageInfoId) {
+  if (!packageInfoId.ok) {
     return rejectMoveRegistryPackageDeclaration(
-      { entry, network, mvrName, packageId },
-      'missing-package-info-id',
+      { entry, network, mvrName, packageId: packageId.value },
+      packageInfoId.reason,
     );
   }
 
   return {
     ok: true,
-    declared: { entry, network, mvrName, packageId, packageInfoId },
+    value: {
+      entry,
+      network,
+      mvrName,
+      packageId: packageId.value,
+      packageInfoId: packageInfoId.value,
+    },
   };
 }
 

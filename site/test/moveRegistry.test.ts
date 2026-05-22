@@ -4,6 +4,7 @@ import {
   verifyMoveRegistryPackagesForRelease,
 } from '../src/chain/moveRegistry';
 import type {
+  MoveRegistryPackageResolver,
   MoveRegistryResolvablePackage,
   MoveRegistryResolver,
 } from '../src/chain/moveRegistry.types';
@@ -103,11 +104,16 @@ describe('Move Registry package verification', () => {
       { ...corePackage, packageInfoId: '0x123' },
       resolver(),
     );
+    const missingPackageInfoId = await verifyMoveRegistryPackage(
+      { ...corePackage, packageInfoId: undefined },
+      resolver(),
+    );
 
     expect(missingName.status).toBe('missing');
     expect(malformedName.status).toBe('missing');
     expect(malformedPackageInfoId.status).toBe('missing');
-    expect(malformedPackageInfoId.reason).toBe('missing-package-info-id');
+    expect(malformedPackageInfoId.reason).toBe('invalid-package-info-id');
+    expect(missingPackageInfoId.reason).toBe('missing-package-info-id');
   });
 
   test('marks a package unreachable when MVR resolution throws', async () => {
@@ -123,6 +129,43 @@ describe('Move Registry package verification', () => {
 
     expect(result.status).toBe('unreachable');
     expect(result.errorMessage).toBe('MVR unavailable');
+  });
+
+  test('marks a package unreachable with a reason when no MVR resolver is declared', async () => {
+    const result = await verifyMoveRegistryPackage(corePackage, {});
+
+    expect(result.status).toBe('unreachable');
+    expect(result.reason).toBe('missing-mvr-resolver');
+    expect(result.errorMessage).toContain('core.mvr is missing');
+    expect(result.errorMessage).toContain('mvr is missing');
+  });
+
+  test('marks a package unreachable with a reason when resolver candidates are malformed', async () => {
+    const result = await verifyMoveRegistryPackage(corePackage, {
+      core: { mvr: {} },
+      mvr: {},
+    } as unknown as MoveRegistryResolver);
+
+    expect(result.status).toBe('unreachable');
+    expect(result.reason).toBe('invalid-mvr-resolver-shape');
+    expect(result.errorMessage).toContain('core.mvr is missing resolvePackage()');
+    expect(result.errorMessage).toContain('mvr is missing resolvePackage()');
+  });
+
+  test('uses the root MVR resolver when the core resolver shape is unavailable', async () => {
+    const rootResolver: MoveRegistryPackageResolver = {
+      resolvePackage: async () => ({
+        package: packageId,
+        packageInfoId,
+      }),
+    };
+
+    const result = await verifyMoveRegistryPackage(corePackage, {
+      core: { mvr: {} },
+      mvr: rootResolver,
+    } as unknown as MoveRegistryResolver);
+
+    expect(result.status).toBe('verified');
   });
 
   test('requires every package to verify and at least one core package for release', async () => {
