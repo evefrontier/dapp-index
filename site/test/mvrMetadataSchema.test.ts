@@ -1,10 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import { isValidNamedPackage } from '@mysten/sui/utils';
 import registryEntrySchema from '../../registry/schema/registry-entry.schema.json';
-import {
-  isValidMvrName,
-  MVR_NAME_PATTERN_SOURCE,
-} from '../src/chain/moveRegistry';
+import { isValidMvrName } from '../src/chain/moveRegistry';
 import { validateRegistryMetadataJson } from '../src/utils/registryMetadata';
 
 const baseEntry = {
@@ -30,12 +27,6 @@ const corePackage = {
 };
 
 describe('registry metadata MVR package shape', () => {
-  test('keeps schema and runtime MVR name patterns in sync', () => {
-    expect(registryEntrySchema.$defs.mvrName.pattern).toBe(
-      `^${MVR_NAME_PATTERN_SOURCE}$`,
-    );
-  });
-
   test('keeps MVR name validation aligned with the Sui SDK', () => {
     for (const name of [
       '@frontier/map',

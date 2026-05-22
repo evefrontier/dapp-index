@@ -16,15 +16,6 @@ import type {
   MoveRegistryVerificationStatus,
 } from './moveRegistry.types';
 
-const SUI_NS_AT_NAME_PATTERN_SOURCE =
-  '(?!.*(^(?!@)|[-.@])($|[-.@]))(?:[A-Za-z0-9-]{0,63}(?:\\.[A-Za-z0-9-]{0,63})*)?@[A-Za-z0-9-]{0,63}';
-const SUI_NS_DOMAIN_PATTERN_SOURCE =
-  '(?!.*(^|[-.])($|[-.]))(?:[A-Za-z0-9-]{0,63}\\.)+sui';
-const MVR_APP_NAME_PATTERN_SOURCE =
-  '(?=[a-z0-9-]{1,63}(?:/\\d+)?$)[a-z0-9]+(?:-[a-z0-9]+)*(?:/\\d+)?';
-
-export const MVR_NAME_PATTERN_SOURCE = `(?:${SUI_NS_AT_NAME_PATTERN_SOURCE}|${SUI_NS_DOMAIN_PATTERN_SOURCE})/${MVR_APP_NAME_PATTERN_SOURCE}`;
-export const MVR_NAME_PATTERN = new RegExp(`^${MVR_NAME_PATTERN_SOURCE}$`);
 const SUI_OBJECT_ID_PATTERN = /^0x[0-9a-fA-F]{64}$/;
 
 export function isValidMvrName(value: string): boolean {
