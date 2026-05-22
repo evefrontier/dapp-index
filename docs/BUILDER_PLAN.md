@@ -205,9 +205,9 @@ The builder-facing listing data uses the same concepts across Sui and Walrus:
 - `suiPackages`: required Move Registry package identities with at least one
   core package;
 - `serverTenant`: required EVE Frontier game server tenant;
-- `repositoryUrl`, `packageIds`, and `notes`: optional listing context. Package
-  maintainers, source links, and package icons should come from the referenced
-  Move Registry package metadata.
+- `repositoryUrl`, `documentationUrl`, `proofs`, and `notes`: optional listing
+  context. Package maintainers, source links, and package icons should come from
+  the referenced Move Registry package metadata.
 
 The Sui registry stores the metadata URI and hash so the full metadata can be
 retrieved from Walrus and verified off-chain.

@@ -52,6 +52,23 @@ describe('Move Registry package verification', () => {
     expect(result.resolvedPackageInfoId).toBe(packageInfoId);
   });
 
+  test('marks a package verified when the SDK MVR resolver returns only the package ID', async () => {
+    const result = await verifyMoveRegistryPackage(corePackage, {
+      core: {
+        mvr: {
+          resolvePackage: async () => ({
+            package: packageId,
+          }),
+        },
+      },
+    });
+
+    expect(result.status).toBe('verified');
+    expect(result.resolvedPackageId).toBe(packageId);
+    expect(result.packageInfoId).toBe(packageInfoId);
+    expect(result.resolvedPackageInfoId).toBeUndefined();
+  });
+
   test('marks a package mismatched when MVR resolves a different package ID', async () => {
     const result = await verifyMoveRegistryPackage(
       corePackage,

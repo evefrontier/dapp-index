@@ -1,4 +1,4 @@
-import { normalizeSuiObjectId } from '@mysten/sui/utils';
+import { isValidNamedPackage, normalizeSuiObjectId } from '@mysten/sui/utils';
 import type { DappIndexSuiNetwork } from '../types/dapp-index';
 import type {
   MoveRegistryPackageDeclaration,
@@ -16,13 +16,19 @@ import type {
   MoveRegistryVerificationStatus,
 } from './moveRegistry.types';
 
-export const MVR_NAME_PATTERN_SOURCE =
-  '(@[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*\\.sui)/[a-z0-9][a-z0-9_-]*(?:/[1-9][0-9]*)?';
+const SUI_NS_AT_NAME_PATTERN_SOURCE =
+  '(?!.*(^(?!@)|[-.@])($|[-.@]))(?:[A-Za-z0-9-]{0,63}(?:\\.[A-Za-z0-9-]{0,63})*)?@[A-Za-z0-9-]{0,63}';
+const SUI_NS_DOMAIN_PATTERN_SOURCE =
+  '(?!.*(^|[-.])($|[-.]))(?:[A-Za-z0-9-]{0,63}\\.)+sui';
+const MVR_APP_NAME_PATTERN_SOURCE =
+  '(?=[a-z0-9-]{1,63}(?:/\\d+)?$)[a-z0-9]+(?:-[a-z0-9]+)*(?:/\\d+)?';
+
+export const MVR_NAME_PATTERN_SOURCE = `(?:${SUI_NS_AT_NAME_PATTERN_SOURCE}|${SUI_NS_DOMAIN_PATTERN_SOURCE})/${MVR_APP_NAME_PATTERN_SOURCE}`;
 export const MVR_NAME_PATTERN = new RegExp(`^${MVR_NAME_PATTERN_SOURCE}$`);
 const SUI_OBJECT_ID_PATTERN = /^0x[0-9a-fA-F]{64}$/;
 
 export function isValidMvrName(value: string): boolean {
-  return MVR_NAME_PATTERN.test(value.trim());
+  return isValidNamedPackage(value.trim());
 }
 
 export async function verifyMoveRegistryPackage(
@@ -81,27 +87,32 @@ export async function verifyMoveRegistryPackage(
       );
     }
 
-    const resolvedPackageInfoId = declarePackageId(
-      resolved.packageInfoId,
-      'missing-resolved-package-info-id',
-      'invalid-resolved-package-info-id',
-    );
-
-    if (!resolvedPackageInfoId.ok) {
-      return moveRegistryVerificationResult(
-        'unreachable',
-        {
-          ...declared,
-          resolvedPackageId: resolvedPackageId.value,
-        },
-        {
-          reason: resolvedPackageInfoId.reason,
-          errorMessage:
-            resolvedPackageInfoId.reason === 'missing-resolved-package-info-id'
-              ? 'MVR resolver did not return a PackageInfo object id'
-              : `MVR resolver returned an invalid PackageInfo object id: ${String(resolved.packageInfoId)}`,
-        },
+    let resolvedPackageInfoId: string | undefined;
+    if (resolved.packageInfoId !== undefined) {
+      const packageInfoIdDeclaration = declarePackageId(
+        resolved.packageInfoId,
+        'missing-resolved-package-info-id',
+        'invalid-resolved-package-info-id',
       );
+
+      if (!packageInfoIdDeclaration.ok) {
+        return moveRegistryVerificationResult(
+          'unreachable',
+          {
+            ...declared,
+            resolvedPackageId: resolvedPackageId.value,
+          },
+          {
+            reason: packageInfoIdDeclaration.reason,
+            errorMessage:
+              packageInfoIdDeclaration.reason === 'missing-resolved-package-info-id'
+                ? 'MVR resolver did not return a PackageInfo object id'
+                : `MVR resolver returned an invalid PackageInfo object id: ${String(resolved.packageInfoId)}`,
+          },
+        );
+      }
+
+      resolvedPackageInfoId = packageInfoIdDeclaration.value;
     }
 
     if (resolvedPackageId.value !== packageId) {
@@ -110,7 +121,7 @@ export async function verifyMoveRegistryPackage(
         {
           ...declared,
           resolvedPackageId: resolvedPackageId.value,
-          resolvedPackageInfoId: resolvedPackageInfoId.value,
+          resolvedPackageInfoId,
         },
         {
           reason: 'resolved-package-id-mismatch',
@@ -118,13 +129,16 @@ export async function verifyMoveRegistryPackage(
       );
     }
 
-    if (resolvedPackageInfoId.value !== packageInfoId) {
+    if (
+      resolvedPackageInfoId !== undefined &&
+      resolvedPackageInfoId !== packageInfoId
+    ) {
       return moveRegistryVerificationResult(
         'mismatch',
         {
           ...declared,
           resolvedPackageId: resolvedPackageId.value,
-          resolvedPackageInfoId: resolvedPackageInfoId.value,
+          resolvedPackageInfoId,
         },
         {
           reason: 'resolved-package-info-id-mismatch',
@@ -135,7 +149,7 @@ export async function verifyMoveRegistryPackage(
     return moveRegistryVerificationResult('verified', {
       ...declared,
       resolvedPackageId: resolvedPackageId.value,
-      resolvedPackageInfoId: resolvedPackageInfoId.value,
+      resolvedPackageInfoId,
     });
   } catch (error) {
     return moveRegistryVerificationResult('unreachable', declared, {

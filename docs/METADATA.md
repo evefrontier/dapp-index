@@ -76,16 +76,13 @@ manifest fields and the registry record should treat the listing as invalid.
   "liveUrl": "https://route-planner.example",
   "repositoryUrl": "https://github.com/example/route-planner",
   "documentationUrl": "https://docs.route-planner.example",
-  "maintainer": {
-    "name": "Example Builders",
-    "url": "https://builders.example",
-    "contact": "hello@builders.example"
-  },
   "suiPackages": [
     {
       "network": "testnet",
-      "packageId": "0x0000000000000000000000000000000000000000000000000000000000000000",
       "role": "core",
+      "mvrName": "@example/route-planner",
+      "packageId": "0x0000000000000000000000000000000000000000000000000000000000000000",
+      "packageInfoId": "0x1111111111111111111111111111111111111111111111111111111111111111",
       "modules": ["routes"],
       "explorerUrl": "https://testnet.suivision.xyz/package/0x0000000000000000000000000000000000000000000000000000000000000000"
     }
