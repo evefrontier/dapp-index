@@ -7,6 +7,7 @@ import type {
 import {
   DAPP_INDEX_METADATA_SCHEMA,
   DAPP_INDEX_METADATA_SCHEMA_VERSION,
+  DAPP_INDEX_VIDEO_MIME_TYPE,
 } from '@/constants';
 import { validateRegistryMetadataJson } from './registryMetadata';
 
@@ -29,16 +30,14 @@ function validMetadata() {
     liveUrl: 'https://route-planner.example',
     repositoryUrl: 'https://github.com/example/route-planner',
     documentationUrl: 'https://docs.route-planner.example',
-    maintainer: {
-      name: 'Example Builders',
-      url: 'https://builders.example',
-      contact: 'hello@builders.example',
-    },
     suiPackages: [
       {
         network: 'testnet',
         packageId: PACKAGE_ID,
         role: 'core',
+        mvrName: '@example/route-planner',
+        packageInfoId:
+          '0x1111111111111111111111111111111111111111111111111111111111111111',
         modules: ['routes'],
         explorerUrl: `https://testnet.suivision.xyz/package/${PACKAGE_ID}`,
       },
@@ -76,7 +75,7 @@ function validMetadata() {
           sources: [
             {
               uri: 'walrus://blob/webmBlobId',
-              mimeType: 'video/webm',
+              mimeType: DAPP_INDEX_VIDEO_MIME_TYPE,
               codecs: 'vp9,opus',
               sha256: HEX_32,
               sizeBytes: 41_839_200,
@@ -188,7 +187,7 @@ describe('registry metadata media schema', () => {
     const metadata = validMetadata();
     (metadata.media.items[1] as DappIndexVideoMediaItem).sources.unshift({
       uri: 'walrus://blob/mp4BlobId',
-      mimeType: 'video/mp4' as unknown as 'video/webm',
+      mimeType: 'video/mp4' as unknown as typeof DAPP_INDEX_VIDEO_MIME_TYPE,
       codecs: 'h264,aac',
       sha256: HEX_32,
       sizeBytes: 20_000_000,
@@ -204,7 +203,7 @@ describe('registry metadata media schema', () => {
     const metadata = validMetadata();
     (metadata.media.items[1] as DappIndexVideoMediaItem).sources.push({
       uri: 'walrus://blob/mp4BlobId',
-      mimeType: 'video/mp4' as unknown as 'video/webm',
+      mimeType: 'video/mp4' as unknown as typeof DAPP_INDEX_VIDEO_MIME_TYPE,
       codecs: 'h264,aac',
       sha256: HEX_32,
       sizeBytes: 20_000_000,

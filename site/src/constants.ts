@@ -47,6 +47,39 @@ export const DAPP_INDEX_SMART_ASSEMBLY_TYPES = [
 export const DAPP_INDEX_METADATA_SCHEMA = 'evefrontier.dapp-index.metadata';
 export const DAPP_INDEX_METADATA_SCHEMA_VERSION = 1;
 
+export const DAPP_INDEX_SERVER_TENANTS = ['stillness', 'utopia'] as const;
+
+export const DAPP_INDEX_SERVER_TENANT_LABELS = {
+  stillness: 'Stillness',
+  utopia: 'Utopia',
+} as const;
+
+export const DAPP_INDEX_SUI_NETWORKS = ['testnet', 'mainnet'] as const;
+
+export const DAPP_INDEX_CORE_SUI_PACKAGE_ROLE = 'core';
+
+export const DAPP_INDEX_SUI_PACKAGE_ROLES = [
+  DAPP_INDEX_CORE_SUI_PACKAGE_ROLE,
+  'dependency',
+  'utility',
+] as const;
+
+export const DAPP_INDEX_IMAGE_MIME_TYPES = [
+  'image/webp',
+  'image/png',
+  'image/jpeg',
+] as const;
+
+export const DAPP_INDEX_VIDEO_MIME_TYPE = 'video/webm';
+
+export const DAPP_INDEX_MEDIA_ROLES = [
+  'thumbnail',
+  'hero',
+  'gallery',
+  'demo',
+  'logo',
+] as const;
+
 /** Public listing media budget across images, posters, and video sources. */
 export const PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES = 150_000_000;
 

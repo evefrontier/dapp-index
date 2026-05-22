@@ -1,15 +1,29 @@
 import {
   DAPP_INDEX_CATEGORIES,
+  DAPP_INDEX_IMAGE_MIME_TYPES,
+  DAPP_INDEX_MEDIA_ROLES,
   DAPP_INDEX_METADATA_SCHEMA,
   DAPP_INDEX_METADATA_SCHEMA_VERSION,
   DAPP_INDEX_SMART_ASSEMBLY_TYPES,
+  DAPP_INDEX_SERVER_TENANTS,
+  DAPP_INDEX_SERVER_TENANT_LABELS,
+  DAPP_INDEX_SUI_NETWORKS,
+  DAPP_INDEX_SUI_PACKAGE_ROLES,
+  DAPP_INDEX_VIDEO_MIME_TYPE,
 } from '@/constants';
 
 export {
   DAPP_INDEX_CATEGORIES,
+  DAPP_INDEX_IMAGE_MIME_TYPES,
+  DAPP_INDEX_MEDIA_ROLES,
   DAPP_INDEX_METADATA_SCHEMA,
   DAPP_INDEX_METADATA_SCHEMA_VERSION,
   DAPP_INDEX_SMART_ASSEMBLY_TYPES,
+  DAPP_INDEX_SERVER_TENANTS,
+  DAPP_INDEX_SERVER_TENANT_LABELS,
+  DAPP_INDEX_SUI_NETWORKS,
+  DAPP_INDEX_SUI_PACKAGE_ROLES,
+  DAPP_INDEX_VIDEO_MIME_TYPE,
 } from '@/constants';
 
 export type DappIndexCategoryId =
@@ -23,51 +37,25 @@ export type DappIndexSmartAssemblyType =
  * (e.g. Stillness / Utopia). Not Sui chain (devnet / testnet / mainnet)—use
  * `suiPackages` and wallet tooling for chain targeting.
  */
-export type DappIndexServerTenant = 'stillness' | 'utopia';
+export type DappIndexServerTenant =
+  (typeof DAPP_INDEX_SERVER_TENANTS)[number];
 
 export type DappIndexMetadataSchema = typeof DAPP_INDEX_METADATA_SCHEMA;
 export type DappIndexMetadataSchemaVersion =
   typeof DAPP_INDEX_METADATA_SCHEMA_VERSION;
 
-export type DappIndexSuiNetwork =
-  | 'testnet'
-  | 'mainnet'
-  | 'devnet'
-  | 'localnet';
+export type DappIndexSuiNetwork = (typeof DAPP_INDEX_SUI_NETWORKS)[number];
 
 export type DappIndexSuiPackageRole =
-  | 'core'
-  | 'integration'
-  | 'dependency'
-  | 'example';
-
-export interface DappIndexSuiPackage {
-  network: DappIndexSuiNetwork;
-  packageId: string;
-  role?: DappIndexSuiPackageRole;
-  modules?: string[];
-  explorerUrl?: string;
-}
-
-export interface DappIndexMaintainer {
-  name: string;
-  url?: string;
-  contact?: string;
-}
+  (typeof DAPP_INDEX_SUI_PACKAGE_ROLES)[number];
 
 export type DappIndexImageMimeType =
-  | 'image/webp'
-  | 'image/png'
-  | 'image/jpeg';
+  (typeof DAPP_INDEX_IMAGE_MIME_TYPES)[number];
 
-export type DappIndexVideoMimeType = 'video/webm';
+export type DappIndexVideoMimeType = typeof DAPP_INDEX_VIDEO_MIME_TYPE;
 
 export type DappIndexMediaRole =
-  | 'thumbnail'
-  | 'hero'
-  | 'gallery'
-  | 'demo'
-  | 'logo';
+  (typeof DAPP_INDEX_MEDIA_ROLES)[number];
 
 export interface DappIndexImageAsset {
   uri: `walrus://blob/${string}`;
@@ -116,6 +104,20 @@ export interface DappIndexMediaGallery {
   items: DappIndexMediaItem[];
 }
 
+export interface DappIndexSuiPackage {
+  network: DappIndexSuiNetwork;
+  role: DappIndexSuiPackageRole;
+  /** Canonical Move Registry name, e.g. `@studio/game`. */
+  mvrName: string;
+  /** Published Move package object ID resolved by MVR. */
+  packageId: string;
+  /** MVR PackageInfo object ID for this package on `network`. */
+  packageInfoId: string;
+  /** Move modules surfaced by this dapp package. */
+  modules?: string[];
+  explorerUrl?: string;
+}
+
 /** Sui testnet package page on Suivision (explorer). */
 export function suivisionTestnetPackageUrl(packageId: string): string {
   const id = packageId.trim().toLowerCase();
@@ -142,8 +144,8 @@ export interface DappIndexEntry {
   liveUrl: string;
   repositoryUrl?: string;
   documentationUrl?: string;
-  /** Structured package metadata for each supported Sui network. */
-  suiPackages?: DappIndexSuiPackage[];
+  /** Move Registry verified Sui packages required before public release. */
+  suiPackages: DappIndexSuiPackage[];
   /** Walrus / metadata URI recorded in the on-chain registry. */
   metadataUri?: string;
   /** Hex-encoded SHA-256 metadata hash recorded in the on-chain registry. */
@@ -152,7 +154,6 @@ export interface DappIndexEntry {
   registryOwner?: string;
   /** Frontier server tenant; not Sui devnet/testnet/mainnet. */
   serverTenant: DappIndexServerTenant;
-  maintainer?: DappIndexMaintainer;
   /** Walrus-hosted public gallery for cards, detail pages, and video demos. */
   media?: DappIndexMediaGallery;
   /** Ownership and domain proof records. */
@@ -195,15 +196,10 @@ export function getSmartAssemblyTypeLabel(
   return row?.label ?? id;
 }
 
-const SERVER_TENANT_LABELS: Record<DappIndexServerTenant, string> = {
-  stillness: 'Stillness',
-  utopia: 'Utopia',
-};
-
 /** Human label for directory / detail UI. */
 export function getServerTenantLabel(
   id: DappIndexServerTenant | string | undefined,
 ): string {
   if (id === undefined || id === '') return '';
-  return SERVER_TENANT_LABELS[id as DappIndexServerTenant] ?? String(id);
+  return DAPP_INDEX_SERVER_TENANT_LABELS[id as DappIndexServerTenant] ?? String(id);
 }
