@@ -1,4 +1,8 @@
 import { isValidNamedPackage, normalizeSuiObjectId } from '@mysten/sui/utils';
+import {
+  DAPP_INDEX_CORE_SUI_PACKAGE_ROLE,
+  DAPP_INDEX_SUI_NETWORKS,
+} from '@/constants';
 import type { DappIndexSuiNetwork } from '../types/dapp-index';
 import type {
   MoveRegistryPackageDeclaration,
@@ -153,7 +157,9 @@ export async function verifyMoveRegistryPackagesForRelease(
   entries: MoveRegistryResolvablePackage[],
   resolver: MoveRegistryResolver,
 ): Promise<MoveRegistryReleaseVerification> {
-  const hasCorePackage = entries.some((entry) => entry.role === 'core');
+  const hasCorePackage = entries.some(
+    (entry) => entry.role === DAPP_INDEX_CORE_SUI_PACKAGE_ROLE,
+  );
 
   const results = await Promise.all(
     entries.map((entry) => verifyMoveRegistryPackage(entry, resolver)),
@@ -188,7 +194,7 @@ function declarePackageId(
 }
 
 function isSuiNetwork(value: string): value is DappIndexSuiNetwork {
-  return value === 'mainnet' || value === 'testnet';
+  return (DAPP_INDEX_SUI_NETWORKS as readonly string[]).includes(value);
 }
 
 function declareMoveRegistryPackageResolver(

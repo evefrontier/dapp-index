@@ -1,51 +1,33 @@
-/** Canonical category ids for the Dapp Index (multi-select per dapp). */
-export const DAPP_INDEX_CATEGORIES = [
-  {
-    id: 'money',
-    label: 'Money',
-    subLabel: 'Risk · Finance — insurance, escrow, bounties',
-  },
-  {
-    id: 'logistics',
-    label: 'Logistics',
-    subLabel: 'Trade · Commerce — jobs, hauling, trade routes, marketplaces',
-  },
-  {
-    id: 'infrastructure',
-    label: 'Infrastructure',
-    subLabel: 'Ops — gates, tolls, SSU tools, assembly managers',
-  },
-  {
-    id: 'intel',
-    label: 'Intel',
-    subLabel: 'Maps · Insight — dashboards, trackers, heatmaps',
-  },
-  {
-    id: 'coordination',
-    label: 'Coordination',
-    subLabel: 'Ops · Guilds — tribes, diplomacy, corp ops',
-  },
-  {
-    id: 'build',
-    label: 'Build',
-    subLabel: 'Dev · Extend — low-code Move, templates, dev tooling, education',
-  },
-  {
-    id: 'social',
-    label: 'Social',
-    subLabel: 'Culture · Community — medals, fan sites, community experiments',
-  },
-] as const;
+import {
+  DAPP_INDEX_CATEGORIES,
+  DAPP_INDEX_IMAGE_MIME_TYPES,
+  DAPP_INDEX_MEDIA_ROLES,
+  DAPP_INDEX_METADATA_SCHEMA,
+  DAPP_INDEX_METADATA_SCHEMA_VERSION,
+  DAPP_INDEX_SMART_ASSEMBLY_TYPES,
+  DAPP_INDEX_SERVER_TENANTS,
+  DAPP_INDEX_SERVER_TENANT_LABELS,
+  DAPP_INDEX_SUI_NETWORKS,
+  DAPP_INDEX_SUI_PACKAGE_ROLES,
+  DAPP_INDEX_VIDEO_MIME_TYPE,
+} from '@/constants';
+
+export {
+  DAPP_INDEX_CATEGORIES,
+  DAPP_INDEX_IMAGE_MIME_TYPES,
+  DAPP_INDEX_MEDIA_ROLES,
+  DAPP_INDEX_METADATA_SCHEMA,
+  DAPP_INDEX_METADATA_SCHEMA_VERSION,
+  DAPP_INDEX_SMART_ASSEMBLY_TYPES,
+  DAPP_INDEX_SERVER_TENANTS,
+  DAPP_INDEX_SERVER_TENANT_LABELS,
+  DAPP_INDEX_SUI_NETWORKS,
+  DAPP_INDEX_SUI_PACKAGE_ROLES,
+  DAPP_INDEX_VIDEO_MIME_TYPE,
+} from '@/constants';
 
 export type DappIndexCategoryId =
   (typeof DAPP_INDEX_CATEGORIES)[number]['id'];
-
-/** Smart assembly surfaces (directory table columns; separate from categories). */
-export const DAPP_INDEX_SMART_ASSEMBLY_TYPES = [
-  { id: 'storage-unit', label: 'Storage unit' },
-  { id: 'turret', label: 'Turret' },
-  { id: 'gate', label: 'Gate' },
-] as const;
 
 export type DappIndexSmartAssemblyType =
   (typeof DAPP_INDEX_SMART_ASSEMBLY_TYPES)[number]['id'];
@@ -55,36 +37,25 @@ export type DappIndexSmartAssemblyType =
  * (e.g. Stillness / Utopia). Not Sui chain (devnet / testnet / mainnet)—use
  * `suiPackages` and wallet tooling for chain targeting.
  */
-export type DappIndexServerTenant = 'stillness' | 'utopia';
-
-export const DAPP_INDEX_METADATA_SCHEMA = 'evefrontier.dapp-index.metadata';
-export const DAPP_INDEX_METADATA_SCHEMA_VERSION = 1;
+export type DappIndexServerTenant =
+  (typeof DAPP_INDEX_SERVER_TENANTS)[number];
 
 export type DappIndexMetadataSchema = typeof DAPP_INDEX_METADATA_SCHEMA;
 export type DappIndexMetadataSchemaVersion =
   typeof DAPP_INDEX_METADATA_SCHEMA_VERSION;
 
-export type DappIndexSuiNetwork = 'testnet' | 'mainnet';
+export type DappIndexSuiNetwork = (typeof DAPP_INDEX_SUI_NETWORKS)[number];
 
-export interface DappIndexMaintainer {
-  name: string;
-  url?: string;
-  contact?: string;
-}
+export type DappIndexSuiPackageRole =
+  (typeof DAPP_INDEX_SUI_PACKAGE_ROLES)[number];
 
 export type DappIndexImageMimeType =
-  | 'image/webp'
-  | 'image/png'
-  | 'image/jpeg';
+  (typeof DAPP_INDEX_IMAGE_MIME_TYPES)[number];
 
-export type DappIndexVideoMimeType = 'video/webm';
+export type DappIndexVideoMimeType = typeof DAPP_INDEX_VIDEO_MIME_TYPE;
 
 export type DappIndexMediaRole =
-  | 'thumbnail'
-  | 'hero'
-  | 'gallery'
-  | 'demo'
-  | 'logo';
+  (typeof DAPP_INDEX_MEDIA_ROLES)[number];
 
 export interface DappIndexImageAsset {
   uri: `walrus://blob/${string}`;
@@ -132,8 +103,6 @@ export interface DappIndexMediaGallery {
   hero?: string;
   items: DappIndexMediaItem[];
 }
-
-export type DappIndexSuiPackageRole = 'core' | 'dependency' | 'utility';
 
 export interface DappIndexSuiPackage {
   network: DappIndexSuiNetwork;
@@ -227,15 +196,10 @@ export function getSmartAssemblyTypeLabel(
   return row?.label ?? id;
 }
 
-const SERVER_TENANT_LABELS: Record<DappIndexServerTenant, string> = {
-  stillness: 'Stillness',
-  utopia: 'Utopia',
-};
-
 /** Human label for directory / detail UI. */
 export function getServerTenantLabel(
   id: DappIndexServerTenant | string | undefined,
 ): string {
   if (id === undefined || id === '') return '';
-  return SERVER_TENANT_LABELS[id as DappIndexServerTenant] ?? String(id);
+  return DAPP_INDEX_SERVER_TENANT_LABELS[id as DappIndexServerTenant] ?? String(id);
 }

@@ -2,11 +2,15 @@ import { describe, expect, test } from 'bun:test';
 import { isValidNamedPackage } from '@mysten/sui/utils';
 import registryEntrySchema from '../../registry/schema/registry-entry.schema.json';
 import { isValidMvrName } from '../src/chain/moveRegistry';
+import {
+  DAPP_INDEX_METADATA_SCHEMA,
+  DAPP_INDEX_METADATA_SCHEMA_VERSION,
+} from '../src/constants';
 import { validateRegistryMetadataJson } from '../src/utils/registryMetadata';
 
 const baseEntry = {
-  schema: 'evefrontier.dapp-index.metadata',
-  schemaVersion: 1,
+  schema: DAPP_INDEX_METADATA_SCHEMA,
+  schemaVersion: DAPP_INDEX_METADATA_SCHEMA_VERSION,
   id: 'frontier-map',
   name: 'Frontier Map',
   summary: 'A map for Frontier pilots.',

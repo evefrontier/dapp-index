@@ -1,9 +1,13 @@
 import { describe, expect, test } from 'bun:test';
+import {
+  DAPP_INDEX_METADATA_SCHEMA,
+  DAPP_INDEX_METADATA_SCHEMA_VERSION,
+} from '../src/constants';
 import { validateRegistryMetadataJson } from '../src/utils/registryMetadata';
 
 const validEntry = {
-  schema: 'evefrontier.dapp-index.metadata',
-  schemaVersion: 1,
+  schema: DAPP_INDEX_METADATA_SCHEMA,
+  schemaVersion: DAPP_INDEX_METADATA_SCHEMA_VERSION,
   id: 'frontier-map',
   name: 'Frontier Map',
   summary: 'A map for Frontier pilots.',

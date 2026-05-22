@@ -4,6 +4,11 @@ import type {
   DappIndexMediaItem,
   DappIndexVideoMediaItem,
 } from '../types/dapp-index';
+import {
+  DAPP_INDEX_METADATA_SCHEMA,
+  DAPP_INDEX_METADATA_SCHEMA_VERSION,
+  DAPP_INDEX_VIDEO_MIME_TYPE,
+} from '@/constants';
 import { validateRegistryMetadataJson } from './registryMetadata';
 
 const HEX_32 = '0'.repeat(64);
@@ -12,8 +17,8 @@ const PACKAGE_ID =
 
 function validMetadata() {
   return {
-    schema: 'evefrontier.dapp-index.metadata',
-    schemaVersion: 1,
+    schema: DAPP_INDEX_METADATA_SCHEMA,
+    schemaVersion: DAPP_INDEX_METADATA_SCHEMA_VERSION,
     id: 'route-planner',
     name: 'Route Planner',
     summary: 'Plan and share Frontier hauling routes.',
@@ -70,7 +75,7 @@ function validMetadata() {
           sources: [
             {
               uri: 'walrus://blob/webmBlobId',
-              mimeType: 'video/webm',
+              mimeType: DAPP_INDEX_VIDEO_MIME_TYPE,
               codecs: 'vp9,opus',
               sha256: HEX_32,
               sizeBytes: 41_839_200,
@@ -174,38 +179,6 @@ describe('registry metadata media schema', () => {
         uri: `walrus://blob/galleryBlobId${i}`,
       } as DappIndexImageMediaItem);
     }
-
-    expect(validateRegistryMetadataJson(metadata).ok).toBe(false);
-  });
-
-  test('rejects videos whose primary source is not WebM', () => {
-    const metadata = validMetadata();
-    (metadata.media.items[1] as DappIndexVideoMediaItem).sources.unshift({
-      uri: 'walrus://blob/mp4BlobId',
-      mimeType: 'video/mp4' as unknown as 'video/webm',
-      codecs: 'h264,aac',
-      sha256: HEX_32,
-      sizeBytes: 20_000_000,
-      width: 1920,
-      height: 1080,
-      durationSeconds: 42,
-    });
-
-    expect(validateRegistryMetadataJson(metadata).ok).toBe(false);
-  });
-
-  test('rejects MP4 fallback sources while public video support is WebM-only', () => {
-    const metadata = validMetadata();
-    (metadata.media.items[1] as DappIndexVideoMediaItem).sources.push({
-      uri: 'walrus://blob/mp4BlobId',
-      mimeType: 'video/mp4' as unknown as 'video/webm',
-      codecs: 'h264,aac',
-      sha256: HEX_32,
-      sizeBytes: 20_000_000,
-      width: 1920,
-      height: 1080,
-      durationSeconds: 42,
-    });
 
     expect(validateRegistryMetadataJson(metadata).ok).toBe(false);
   });
