@@ -2,9 +2,11 @@ import { describe, expect, test } from 'bun:test';
 import {
   verifyMoveRegistryPackage,
   verifyMoveRegistryPackagesForRelease,
-  type MoveRegistryResolvablePackage,
-  type MoveRegistryResolver,
 } from '../src/chain/moveRegistry';
+import type {
+  MoveRegistryResolvablePackage,
+  MoveRegistryResolver,
+} from '../src/chain/moveRegistry.types';
 
 const packageId =
   '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
