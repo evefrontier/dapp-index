@@ -4,6 +4,10 @@ import type {
   DappIndexMediaItem,
   DappIndexVideoMediaItem,
 } from '../types/dapp-index';
+import {
+  DAPP_INDEX_METADATA_SCHEMA,
+  DAPP_INDEX_METADATA_SCHEMA_VERSION,
+} from '@/constants';
 import { validateRegistryMetadataJson } from './registryMetadata';
 
 const HEX_32 = '0'.repeat(64);
@@ -12,8 +16,8 @@ const PACKAGE_ID =
 
 function validMetadata() {
   return {
-    schema: 'evefrontier.dapp-index.metadata',
-    schemaVersion: 1,
+    schema: DAPP_INDEX_METADATA_SCHEMA,
+    schemaVersion: DAPP_INDEX_METADATA_SCHEMA_VERSION,
     id: 'route-planner',
     name: 'Route Planner',
     summary: 'Plan and share Frontier hauling routes.',

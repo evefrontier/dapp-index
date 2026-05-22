@@ -1,5 +1,9 @@
 import type { AnySchema, ErrorObject } from 'ajv';
 import Ajv2020 from 'ajv/dist/2020.js';
+import {
+  PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES,
+  PUBLIC_MEDIA_VIDEO_LIMIT,
+} from '@/constants';
 import registryEntrySchema from '../../../registry/schema/registry-entry.schema.json';
 
 /** Draft 2020-12: matches `$schema` on `registry-entry.schema.json`. */
@@ -8,9 +12,6 @@ const ajv = new Ajv2020({ allErrors: true, strict: true });
 const validateRegistryEntry = ajv.compile(
   registryEntrySchema as unknown as AnySchema,
 );
-
-const PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES = 150_000_000;
-const PUBLIC_MEDIA_VIDEO_LIMIT = 2;
 
 export type RegistryMetadataValidation =
   | { ok: true }
