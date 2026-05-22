@@ -95,6 +95,9 @@ copy, screenshots, extended descriptions, integration details, and links that
 are too large or too changeable to keep directly in the registry. Package
 maintainer/contact metadata belongs in Move Registry package metadata.
 
+The concrete JSON structure, Sui registry pointer shape, and public media
+restrictions are documented in [METADATA.md](./METADATA.md).
+
 The Dapp Index frontend queries Sui for listing records, then fetches and
 verifies the referenced Walrus metadata. Any generated local data remains an
 implementation fallback while the Sui package and Walrus read flow are being
@@ -197,6 +200,8 @@ The builder-facing listing data uses the same concepts across Sui and Walrus:
 - `smartAssemblyTypes`: optional assembly facets such as Storage unit, Turret,
   and Gate;
 - `liveUrl`: where users can open the dapp;
+- `media`: Walrus-hosted screenshots, posters, and video sources for the public
+  gallery;
 - `suiPackages`: required Move Registry package identities with at least one
   core package;
 - `serverTenant`: required EVE Frontier game server tenant;

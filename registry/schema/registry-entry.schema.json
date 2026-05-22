@@ -5,6 +5,8 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
+    "schema",
+    "schemaVersion",
     "id",
     "name",
     "summary",
@@ -14,37 +16,34 @@
     "serverTenant"
   ],
   "properties": {
+    "schema": {
+      "type": "string",
+      "const": "evefrontier.dapp-index.metadata"
+    },
+    "schemaVersion": {
+      "type": "integer",
+      "const": 1
+    },
     "id": {
       "type": "string",
       "minLength": 1,
+      "maxLength": 50,
       "pattern": "^[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?$"
     },
-    "name": { "type": "string", "minLength": 1 },
-    "summary": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 180 },
+    "description": { "type": "string", "minLength": 1, "maxLength": 4000 },
     "categories": {
       "type": "array",
       "minItems": 1,
       "maxItems": 5,
       "uniqueItems": true,
-      "items": {
-        "type": "string",
-        "enum": [
-          "money",
-          "logistics",
-          "infrastructure",
-          "intel",
-          "coordination",
-          "build",
-          "social"
-        ]
-      }
+      "items": { "$ref": "#/$defs/category" }
     },
     "smartAssemblyTypes": {
       "type": "array",
-      "items": {
-        "type": "string",
-        "enum": ["storage-unit", "turret", "gate"]
-      }
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/smartAssemblyType" }
     },
     "liveUrl": { "type": "string", "minLength": 1 },
     "repositoryUrl": { "type": "string", "minLength": 1 },
@@ -66,8 +65,9 @@
       "description": "EVE Frontier game server tenant (not Sui devnet/testnet/mainnet).",
       "enum": ["stillness", "utopia"]
     },
+    "media": { "$ref": "#/$defs/mediaGallery" },
+    "documentationUrl": { "$ref": "#/$defs/httpsUrl" },
     "notes": { "type": "string" },
-    "thumbnailUrl": { "type": "string", "minLength": 1 },
     "proofs": {
       "type": "object",
       "additionalProperties": false,
@@ -78,10 +78,229 @@
           "additionalProperties": false,
           "required": ["url"],
           "properties": {
-            "url": { "type": "string", "pattern": "^https://.+" }
+            "url": { "$ref": "#/$defs/httpsUrl" }
           }
         }
       }
+    },
+    "notes": { "type": "string", "maxLength": 2000 }
+  },
+  "$defs": {
+    "category": {
+      "type": "string",
+      "enum": [
+        "money",
+        "logistics",
+        "infrastructure",
+        "intel",
+        "coordination",
+        "build",
+        "social"
+      ]
+    },
+    "smartAssemblyType": {
+      "type": "string",
+      "enum": ["storage-unit", "turret", "gate"]
+    },
+    "httpsUrl": {
+      "type": "string",
+      "pattern": "^https://\\S+"
+    },
+    "walrusBlobUri": {
+      "type": "string",
+      "pattern": "^walrus://blob/[A-Za-z0-9_-]+$"
+    },
+    "sha256Hex": {
+      "type": "string",
+      "pattern": "^[0-9a-fA-F]{64}$"
+    },
+    "suiObjectId": {
+      "type": "string",
+      "pattern": "^0x[0-9a-fA-F]{64}$"
+    },
+    "maintainer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "url": { "$ref": "#/$defs/httpsUrl" },
+        "contact": { "type": "string", "minLength": 1, "maxLength": 160 }
+      }
+    },
+    "suiPackage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["network", "packageId"],
+      "properties": {
+        "network": {
+          "type": "string",
+          "enum": ["testnet", "mainnet", "devnet", "localnet"]
+        },
+        "packageId": { "$ref": "#/$defs/suiObjectId" },
+        "role": {
+          "type": "string",
+          "enum": ["core", "integration", "dependency", "example"]
+        },
+        "modules": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          }
+        },
+        "explorerUrl": { "$ref": "#/$defs/httpsUrl" }
+      }
+    },
+    "mediaGallery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["items"],
+      "properties": {
+        "thumbnail": { "$ref": "#/$defs/mediaId" },
+        "hero": { "$ref": "#/$defs/mediaId" },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": { "$ref": "#/$defs/mediaItem" }
+        }
+      }
+    },
+    "mediaId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?$"
+    },
+    "imageMimeType": {
+      "type": "string",
+      "enum": ["image/webp", "image/png", "image/jpeg"]
+    },
+    "videoMimeType": {
+      "type": "string",
+      "const": "video/webm"
+    },
+    "mediaRole": {
+      "type": "string",
+      "enum": ["thumbnail", "hero", "gallery", "demo", "logo"]
+    },
+    "imageAssetBase": {
+      "type": "object",
+      "required": [
+        "uri",
+        "mimeType",
+        "sha256",
+        "sizeBytes",
+        "width",
+        "height",
+        "alt"
+      ],
+      "properties": {
+        "uri": { "$ref": "#/$defs/walrusBlobUri" },
+        "mimeType": { "$ref": "#/$defs/imageMimeType" },
+        "sha256": { "$ref": "#/$defs/sha256Hex" },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5000000
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3840
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2160
+        },
+        "alt": { "type": "string", "minLength": 1, "maxLength": 240 },
+        "caption": { "type": "string", "minLength": 1, "maxLength": 240 }
+      }
+    },
+    "imageAsset": {
+      "type": "object",
+      "allOf": [{ "$ref": "#/$defs/imageAssetBase" }],
+      "unevaluatedProperties": false
+    },
+    "imageMediaItem": {
+      "allOf": [{ "$ref": "#/$defs/imageAssetBase" }],
+      "type": "object",
+      "required": ["id", "kind", "role"],
+      "properties": {
+        "id": { "$ref": "#/$defs/mediaId" },
+        "kind": { "type": "string", "const": "image" },
+        "role": { "$ref": "#/$defs/mediaRole" }
+      },
+      "unevaluatedProperties": false
+    },
+    "videoSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "uri",
+        "mimeType",
+        "sha256",
+        "sizeBytes",
+        "width",
+        "height",
+        "durationSeconds"
+      ],
+      "properties": {
+        "uri": { "$ref": "#/$defs/walrusBlobUri" },
+        "mimeType": { "$ref": "#/$defs/videoMimeType" },
+        "codecs": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "sha256": { "$ref": "#/$defs/sha256Hex" },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60000000
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1920
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1080
+        },
+        "durationSeconds": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 60
+        }
+      }
+    },
+    "videoMediaItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "role", "poster", "sources"],
+      "properties": {
+        "id": { "$ref": "#/$defs/mediaId" },
+        "kind": { "type": "string", "const": "video" },
+        "role": { "$ref": "#/$defs/mediaRole" },
+        "poster": { "$ref": "#/$defs/imageAsset" },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2,
+          "items": { "$ref": "#/$defs/videoSource" }
+        },
+        "caption": { "type": "string", "minLength": 1, "maxLength": 240 }
+      }
+    },
+    "mediaItem": {
+      "oneOf": [
+        { "$ref": "#/$defs/imageMediaItem" },
+        { "$ref": "#/$defs/videoMediaItem" }
+      ]
     }
   },
   "$defs": {
