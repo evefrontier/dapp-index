@@ -175,8 +175,6 @@ export interface DappIndexEntry {
   liveUrl: string;
   repositoryUrl?: string;
   documentationUrl?: string;
-  /** Published Move package object IDs when known. */
-  packageIds?: string[];
   /** Move Registry verified Sui packages required before public release. */
   suiPackages: DappIndexSuiPackage[];
   /** Walrus / metadata URI recorded in the on-chain registry. */
@@ -187,7 +185,6 @@ export interface DappIndexEntry {
   registryOwner?: string;
   /** Frontier server tenant; not Sui devnet/testnet/mainnet. */
   serverTenant: DappIndexServerTenant;
-  maintainer?: DappIndexMaintainer;
   /** Walrus-hosted public gallery for cards, detail pages, and video demos. */
   media?: DappIndexMediaGallery;
   /** Ownership and domain proof records. */

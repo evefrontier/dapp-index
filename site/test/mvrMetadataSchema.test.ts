@@ -4,6 +4,8 @@ import { MVR_NAME_PATTERN_SOURCE } from '../src/chain/moveRegistry';
 import { validateRegistryMetadataJson } from '../src/utils/registryMetadata';
 
 const baseEntry = {
+  schema: 'evefrontier.dapp-index.metadata',
+  schemaVersion: 1,
   id: 'frontier-map',
   name: 'Frontier Map',
   summary: 'A map for Frontier pilots.',

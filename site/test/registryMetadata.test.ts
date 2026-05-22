@@ -2,6 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import { validateRegistryMetadataJson } from '../src/utils/registryMetadata';
 
 const validEntry = {
+  schema: 'evefrontier.dapp-index.metadata',
+  schemaVersion: 1,
   id: 'frontier-map',
   name: 'Frontier Map',
   summary: 'A map for Frontier pilots.',
