@@ -25,16 +25,14 @@ function validMetadata() {
     liveUrl: 'https://route-planner.example',
     repositoryUrl: 'https://github.com/example/route-planner',
     documentationUrl: 'https://docs.route-planner.example',
-    maintainer: {
-      name: 'Example Builders',
-      url: 'https://builders.example',
-      contact: 'hello@builders.example',
-    },
     suiPackages: [
       {
         network: 'testnet',
         packageId: PACKAGE_ID,
         role: 'core',
+        mvrName: '@example/route-planner',
+        packageInfoId:
+          '0x1111111111111111111111111111111111111111111111111111111111111111',
         modules: ['routes'],
         explorerUrl: `https://testnet.suivision.xyz/package/${PACKAGE_ID}`,
       },

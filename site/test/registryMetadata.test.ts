@@ -2,10 +2,23 @@ import { describe, expect, test } from 'bun:test';
 import { validateRegistryMetadataJson } from '../src/utils/registryMetadata';
 
 const validEntry = {
+  schema: 'evefrontier.dapp-index.metadata',
+  schemaVersion: 1,
   id: 'frontier-map',
   name: 'Frontier Map',
   summary: 'A map for Frontier pilots.',
   categories: ['intel'],
+  suiPackages: [
+    {
+      network: 'mainnet',
+      role: 'core',
+      mvrName: '@frontier/map',
+      packageId:
+        '0x2222222222222222222222222222222222222222222222222222222222222222',
+      packageInfoId:
+        '0x3333333333333333333333333333333333333333333333333333333333333333',
+    },
+  ],
   liveUrl: 'https://example.com',
   serverTenant: 'stillness',
 };

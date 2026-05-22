@@ -64,25 +64,7 @@ export type DappIndexMetadataSchema = typeof DAPP_INDEX_METADATA_SCHEMA;
 export type DappIndexMetadataSchemaVersion =
   typeof DAPP_INDEX_METADATA_SCHEMA_VERSION;
 
-export type DappIndexSuiNetwork =
-  | 'testnet'
-  | 'mainnet'
-  | 'devnet'
-  | 'localnet';
-
-export type DappIndexSuiPackageRole =
-  | 'core'
-  | 'integration'
-  | 'dependency'
-  | 'example';
-
-export interface DappIndexSuiPackage {
-  network: DappIndexSuiNetwork;
-  packageId: string;
-  role?: DappIndexSuiPackageRole;
-  modules?: string[];
-  explorerUrl?: string;
-}
+export type DappIndexSuiNetwork = 'testnet' | 'mainnet';
 
 export interface DappIndexMaintainer {
   name: string;
@@ -151,6 +133,22 @@ export interface DappIndexMediaGallery {
   items: DappIndexMediaItem[];
 }
 
+export type DappIndexSuiPackageRole = 'core' | 'dependency' | 'utility';
+
+export interface DappIndexSuiPackage {
+  network: DappIndexSuiNetwork;
+  role: DappIndexSuiPackageRole;
+  /** Canonical Move Registry name, e.g. `@studio/game`. */
+  mvrName: string;
+  /** Published Move package object ID resolved by MVR. */
+  packageId: string;
+  /** MVR PackageInfo object ID for this package on `network`. */
+  packageInfoId: string;
+  /** Move modules surfaced by this dapp package. */
+  modules?: string[];
+  explorerUrl?: string;
+}
+
 /** Sui testnet package page on Suivision (explorer). */
 export function suivisionTestnetPackageUrl(packageId: string): string {
   const id = packageId.trim().toLowerCase();
@@ -177,8 +175,8 @@ export interface DappIndexEntry {
   liveUrl: string;
   repositoryUrl?: string;
   documentationUrl?: string;
-  /** Structured package metadata for each supported Sui network. */
-  suiPackages?: DappIndexSuiPackage[];
+  /** Move Registry verified Sui packages required before public release. */
+  suiPackages: DappIndexSuiPackage[];
   /** Walrus / metadata URI recorded in the on-chain registry. */
   metadataUri?: string;
   /** Hex-encoded SHA-256 metadata hash recorded in the on-chain registry. */
@@ -187,7 +185,6 @@ export interface DappIndexEntry {
   registryOwner?: string;
   /** Frontier server tenant; not Sui devnet/testnet/mainnet. */
   serverTenant: DappIndexServerTenant;
-  maintainer?: DappIndexMaintainer;
   /** Walrus-hosted public gallery for cards, detail pages, and video demos. */
   media?: DappIndexMediaGallery;
   /** Ownership and domain proof records. */

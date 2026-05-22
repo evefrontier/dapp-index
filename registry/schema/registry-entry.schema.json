@@ -11,6 +11,7 @@
     "name",
     "summary",
     "categories",
+    "suiPackages",
     "liveUrl",
     "serverTenant"
   ],
@@ -44,21 +45,22 @@
       "uniqueItems": true,
       "items": { "$ref": "#/$defs/smartAssemblyType" }
     },
+    "liveUrl": { "$ref": "#/$defs/httpsUrl" },
+    "repositoryUrl": { "$ref": "#/$defs/httpsUrl" },
+    "suiPackages": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "contains": { "$ref": "#/$defs/coreSuiPackage" },
+      "items": { "$ref": "#/$defs/suiPackage" }
+    },
     "serverTenant": {
       "type": "string",
       "description": "EVE Frontier game server tenant (not Sui devnet/testnet/mainnet).",
       "enum": ["stillness", "utopia"]
     },
-    "liveUrl": { "$ref": "#/$defs/httpsUrl" },
-    "repositoryUrl": { "$ref": "#/$defs/httpsUrl" },
-    "documentationUrl": { "$ref": "#/$defs/httpsUrl" },
-    "maintainer": { "$ref": "#/$defs/maintainer" },
-    "suiPackages": {
-      "type": "array",
-      "maxItems": 12,
-      "items": { "$ref": "#/$defs/suiPackage" }
-    },
     "media": { "$ref": "#/$defs/mediaGallery" },
+    "documentationUrl": { "$ref": "#/$defs/httpsUrl" },
     "proofs": {
       "type": "object",
       "additionalProperties": false,
@@ -109,30 +111,23 @@
       "type": "string",
       "pattern": "^0x[0-9a-fA-F]{64}$"
     },
-    "maintainer": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["name"],
-      "properties": {
-        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
-        "url": { "$ref": "#/$defs/httpsUrl" },
-        "contact": { "type": "string", "minLength": 1, "maxLength": 160 }
-      }
+    "mvrName": {
+      "type": "string",
+      "pattern": "^(?:(?!.*(^(?!@)|[-.@])($|[-.@]))(?:[A-Za-z0-9-]{0,63}(?:\\.[A-Za-z0-9-]{0,63})*)?@[A-Za-z0-9-]{0,63}|(?!.*(^|[-.])($|[-.]))(?:[A-Za-z0-9-]{0,63}\\.)+sui)/(?=[a-z0-9-]{1,63}(?:/\\d+)?$)[a-z0-9]+(?:-[a-z0-9]+)*(?:/\\d+)?$"
     },
     "suiPackage": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["network", "packageId"],
+      "required": ["network", "role", "mvrName", "packageId", "packageInfoId"],
       "properties": {
-        "network": {
-          "type": "string",
-          "enum": ["testnet", "mainnet", "devnet", "localnet"]
-        },
-        "packageId": { "$ref": "#/$defs/suiObjectId" },
+        "network": { "type": "string", "enum": ["mainnet", "testnet"] },
         "role": {
           "type": "string",
-          "enum": ["core", "integration", "dependency", "example"]
+          "enum": ["core", "dependency", "utility"]
         },
+        "mvrName": { "$ref": "#/$defs/mvrName" },
+        "packageId": { "$ref": "#/$defs/suiObjectId" },
+        "packageInfoId": { "$ref": "#/$defs/suiObjectId" },
         "modules": {
           "type": "array",
           "maxItems": 32,
@@ -146,6 +141,18 @@
         },
         "explorerUrl": { "$ref": "#/$defs/httpsUrl" }
       }
+    },
+    "coreSuiPackage": {
+      "allOf": [
+        { "$ref": "#/$defs/suiPackage" },
+        {
+          "type": "object",
+          "required": ["role"],
+          "properties": {
+            "role": { "const": "core" }
+          }
+        }
+      ]
     },
     "mediaGallery": {
       "type": "object",
