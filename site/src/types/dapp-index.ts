@@ -1,51 +1,33 @@
-/** Canonical category ids for the Dapp Index (multi-select per dapp). */
-export const DAPP_INDEX_CATEGORIES = [
-  {
-    id: 'money',
-    label: 'Money',
-    subLabel: 'Risk · Finance — insurance, escrow, bounties',
-  },
-  {
-    id: 'logistics',
-    label: 'Logistics',
-    subLabel: 'Trade · Commerce — jobs, hauling, trade routes, marketplaces',
-  },
-  {
-    id: 'infrastructure',
-    label: 'Infrastructure',
-    subLabel: 'Ops — gates, tolls, SSU tools, assembly managers',
-  },
-  {
-    id: 'intel',
-    label: 'Intel',
-    subLabel: 'Maps · Insight — dashboards, trackers, heatmaps',
-  },
-  {
-    id: 'coordination',
-    label: 'Coordination',
-    subLabel: 'Ops · Guilds — tribes, diplomacy, corp ops',
-  },
-  {
-    id: 'build',
-    label: 'Build',
-    subLabel: 'Dev · Extend — low-code Move, templates, dev tooling, education',
-  },
-  {
-    id: 'social',
-    label: 'Social',
-    subLabel: 'Culture · Community — medals, fan sites, community experiments',
-  },
-] as const;
+import {
+  DAPP_INDEX_CATEGORIES,
+  DAPP_INDEX_IMAGE_MIME_TYPES,
+  DAPP_INDEX_MEDIA_ROLES,
+  DAPP_INDEX_METADATA_SCHEMA,
+  DAPP_INDEX_METADATA_SCHEMA_VERSION,
+  DAPP_INDEX_SMART_ASSEMBLY_TYPES,
+  DAPP_INDEX_SERVER_TENANTS,
+  DAPP_INDEX_SERVER_TENANT_LABELS,
+  DAPP_INDEX_SUI_NETWORKS,
+  DAPP_INDEX_SUI_PACKAGE_ROLES,
+  DAPP_INDEX_VIDEO_MIME_TYPE,
+} from '@/constants';
+
+export {
+  DAPP_INDEX_CATEGORIES,
+  DAPP_INDEX_IMAGE_MIME_TYPES,
+  DAPP_INDEX_MEDIA_ROLES,
+  DAPP_INDEX_METADATA_SCHEMA,
+  DAPP_INDEX_METADATA_SCHEMA_VERSION,
+  DAPP_INDEX_SMART_ASSEMBLY_TYPES,
+  DAPP_INDEX_SERVER_TENANTS,
+  DAPP_INDEX_SERVER_TENANT_LABELS,
+  DAPP_INDEX_SUI_NETWORKS,
+  DAPP_INDEX_SUI_PACKAGE_ROLES,
+  DAPP_INDEX_VIDEO_MIME_TYPE,
+} from '@/constants';
 
 export type DappIndexCategoryId =
   (typeof DAPP_INDEX_CATEGORIES)[number]['id'];
-
-/** Smart assembly surfaces (directory table columns; separate from categories). */
-export const DAPP_INDEX_SMART_ASSEMBLY_TYPES = [
-  { id: 'storage-unit', label: 'Storage unit' },
-  { id: 'turret', label: 'Turret' },
-  { id: 'gate', label: 'Gate' },
-] as const;
 
 export type DappIndexSmartAssemblyType =
   (typeof DAPP_INDEX_SMART_ASSEMBLY_TYPES)[number]['id'];
@@ -53,9 +35,88 @@ export type DappIndexSmartAssemblyType =
 /**
  * EVE Frontier **game server tenant** where this dapp is aimed or deployed
  * (e.g. Stillness / Utopia). Not Sui chain (devnet / testnet / mainnet)—use
- * `packageIds` and wallet tooling for chain targeting.
+ * `suiPackages` and wallet tooling for chain targeting.
  */
-export type DappIndexServerTenant = 'stillness' | 'utopia';
+export type DappIndexServerTenant =
+  (typeof DAPP_INDEX_SERVER_TENANTS)[number];
+
+export type DappIndexMetadataSchema = typeof DAPP_INDEX_METADATA_SCHEMA;
+export type DappIndexMetadataSchemaVersion =
+  typeof DAPP_INDEX_METADATA_SCHEMA_VERSION;
+
+export type DappIndexSuiNetwork = (typeof DAPP_INDEX_SUI_NETWORKS)[number];
+
+export type DappIndexSuiPackageRole =
+  (typeof DAPP_INDEX_SUI_PACKAGE_ROLES)[number];
+
+export type DappIndexImageMimeType =
+  (typeof DAPP_INDEX_IMAGE_MIME_TYPES)[number];
+
+export type DappIndexVideoMimeType = typeof DAPP_INDEX_VIDEO_MIME_TYPE;
+
+export type DappIndexMediaRole =
+  (typeof DAPP_INDEX_MEDIA_ROLES)[number];
+
+export interface DappIndexImageAsset {
+  uri: `walrus://blob/${string}`;
+  mimeType: DappIndexImageMimeType;
+  sha256: string;
+  sizeBytes: number;
+  width: number;
+  height: number;
+  alt: string;
+  caption?: string;
+}
+
+export interface DappIndexImageMediaItem extends DappIndexImageAsset {
+  id: string;
+  kind: 'image';
+  role: DappIndexMediaRole;
+}
+
+export interface DappIndexVideoSource {
+  uri: `walrus://blob/${string}`;
+  mimeType: DappIndexVideoMimeType;
+  codecs?: string;
+  sha256: string;
+  sizeBytes: number;
+  width: number;
+  height: number;
+  durationSeconds: number;
+}
+
+export interface DappIndexVideoMediaItem {
+  id: string;
+  kind: 'video';
+  role: DappIndexMediaRole;
+  poster: DappIndexImageAsset;
+  sources: DappIndexVideoSource[];
+  caption?: string;
+}
+
+export type DappIndexMediaItem =
+  | DappIndexImageMediaItem
+  | DappIndexVideoMediaItem;
+
+export interface DappIndexMediaGallery {
+  thumbnail?: string;
+  hero?: string;
+  items: DappIndexMediaItem[];
+}
+
+export interface DappIndexSuiPackage {
+  network: DappIndexSuiNetwork;
+  role: DappIndexSuiPackageRole;
+  /** Canonical Move Registry name, e.g. `@studio/game`. */
+  mvrName: string;
+  /** Published Move package object ID resolved by MVR. */
+  packageId: string;
+  /** MVR PackageInfo object ID for this package on `network`. */
+  packageInfoId: string;
+  /** Move modules surfaced by this dapp package. */
+  modules?: string[];
+  explorerUrl?: string;
+}
 
 /** Sui testnet package page on Suivision (explorer). */
 export function suivisionTestnetPackageUrl(packageId: string): string {
@@ -65,10 +126,13 @@ export function suivisionTestnetPackageUrl(packageId: string): string {
 
 /** One discoverable Frontier ecosystem dapp / tool. */
 export interface DappIndexEntry {
+  schema: DappIndexMetadataSchema;
+  schemaVersion: DappIndexMetadataSchemaVersion;
   /** URL slug for /explore/:id */
   id: string;
   name: string;
   summary: string;
+  description?: string;
   /** Search & filter; dapps can appear under multiple categories. */
   categories: DappIndexCategoryId[];
   /**
@@ -76,11 +140,12 @@ export interface DappIndexEntry {
    * Omitted or empty → em dash in the table.
    */
   smartAssemblyTypes?: DappIndexSmartAssemblyType[];
-  /** Public demo or production site (https or http). */
+  /** Public demo or production site. Public listings require HTTPS. */
   liveUrl: string;
   repositoryUrl?: string;
-  /** Published Move package object IDs when known. */
-  packageIds?: string[];
+  documentationUrl?: string;
+  /** Move Registry verified Sui packages required before public release. */
+  suiPackages: DappIndexSuiPackage[];
   /** Walrus / metadata URI recorded in the on-chain registry. */
   metadataUri?: string;
   /** Hex-encoded SHA-256 metadata hash recorded in the on-chain registry. */
@@ -89,14 +154,16 @@ export interface DappIndexEntry {
   registryOwner?: string;
   /** Frontier server tenant; not Sui devnet/testnet/mainnet. */
   serverTenant: DappIndexServerTenant;
-  maintainer?: string;
+  /** Walrus-hosted public gallery for cards, detail pages, and video demos. */
+  media?: DappIndexMediaGallery;
+  /** Ownership and domain proof records. */
+  proofs?: {
+    domain?: {
+      url: string;
+    };
+  };
   /** Extra context (dependencies, testnet-only, etc.). */
   notes?: string;
-  /**
-   * Card / detail hero image (screenshot, logo, or Open Graph asset).
-   * When omitted, the UI may use the live site favicon or a generated placeholder.
-   */
-  thumbnailUrl?: string;
 }
 
 export function getDappCategoryRow(
@@ -129,15 +196,10 @@ export function getSmartAssemblyTypeLabel(
   return row?.label ?? id;
 }
 
-const SERVER_TENANT_LABELS: Record<DappIndexServerTenant, string> = {
-  stillness: 'Stillness',
-  utopia: 'Utopia',
-};
-
 /** Human label for directory / detail UI. */
 export function getServerTenantLabel(
   id: DappIndexServerTenant | string | undefined,
 ): string {
   if (id === undefined || id === '') return '';
-  return SERVER_TENANT_LABELS[id as DappIndexServerTenant] ?? String(id);
+  return DAPP_INDEX_SERVER_TENANT_LABELS[id as DappIndexServerTenant] ?? String(id);
 }

@@ -1,5 +1,12 @@
 /** Sui / registry env read at runtime (Vite `import.meta.env`). */
 
+import {
+  WALRUS_AGGREGATOR_MAINNET_URL,
+  WALRUS_AGGREGATOR_TESTNET_URL,
+  WALRUS_UPLOAD_RELAY_MAINNET_URL,
+  WALRUS_UPLOAD_RELAY_TESTNET_URL,
+} from '@/constants';
+
 export type SuiNetworkName = 'testnet' | 'mainnet' | 'devnet' | 'localnet';
 
 export function viteSuiNetwork(): SuiNetworkName {
@@ -36,18 +43,16 @@ export function registryConfigured(): boolean {
 function defaultWalrusAggregatorBaseUrl(
   network: SuiNetworkName,
 ): string | undefined {
-  if (network === 'testnet')
-    return 'https://aggregator.walrus-testnet.walrus.space';
-  if (network === 'mainnet')
-    return 'https://aggregator.walrus-mainnet.walrus.space';
+  if (network === 'testnet') return WALRUS_AGGREGATOR_TESTNET_URL;
+  if (network === 'mainnet') return WALRUS_AGGREGATOR_MAINNET_URL;
   return undefined;
 }
 
 function defaultWalrusUploadRelayHost(
   network: SuiNetworkName,
 ): string | undefined {
-  if (network === 'testnet') return 'https://upload-relay.testnet.walrus.space';
-  if (network === 'mainnet') return 'https://upload-relay.mainnet.walrus.space';
+  if (network === 'testnet') return WALRUS_UPLOAD_RELAY_TESTNET_URL;
+  if (network === 'mainnet') return WALRUS_UPLOAD_RELAY_MAINNET_URL;
   return undefined;
 }
 

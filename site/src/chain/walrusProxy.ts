@@ -1,10 +1,14 @@
-/** Official Walrus aggregator hosts (metadata JSON at `/v1/blobs/{blobId}`). */
-const WALRUS_AGGREGATOR_TESTNET_HOST = 'aggregator.walrus-testnet.walrus.space';
-const WALRUS_AGGREGATOR_MAINNET_HOST = 'aggregator.walrus-mainnet.walrus.space';
+import {
+  WALRUS_AGGREGATOR_MAINNET_HOST,
+  WALRUS_AGGREGATOR_PROXY_MAINNET,
+  WALRUS_AGGREGATOR_PROXY_TESTNET,
+  WALRUS_AGGREGATOR_TESTNET_HOST,
+} from '@/constants';
 
-/** Vite dev-server proxy prefixes (see `site/vite.config.ts`). */
-export const WALRUS_AGGREGATOR_PROXY_TESTNET = '/walrus-aggregator-testnet';
-export const WALRUS_AGGREGATOR_PROXY_MAINNET = '/walrus-aggregator-mainnet';
+export {
+  WALRUS_AGGREGATOR_PROXY_MAINNET,
+  WALRUS_AGGREGATOR_PROXY_TESTNET,
+} from '@/constants';
 
 /**
  * Rewrites Walrus aggregator HTTPS URLs to same-origin paths so the dev server

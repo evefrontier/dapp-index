@@ -2,20 +2,30 @@ import path from 'node:path';
 import { tanstackRouter } from '@tanstack/router-plugin/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
+import {
+  WALRUS_AGGREGATOR_MAINNET_URL,
+  WALRUS_AGGREGATOR_PROXY_MAINNET,
+  WALRUS_AGGREGATOR_PROXY_TESTNET,
+  WALRUS_AGGREGATOR_TESTNET_URL,
+} from './src/constants';
 
 /** Dev + `vite preview`: same-origin Walrus metadata (aggregator CORS blocks localhost). */
+function stripProxyPrefix(prefix: string, pathname: string): string {
+  return pathname.startsWith(prefix) ? pathname.slice(prefix.length) : pathname;
+}
+
 const walrusAggregatorDevProxy = {
-  '/walrus-aggregator-testnet': {
-    target: 'https://aggregator.walrus-testnet.walrus.space',
+  [WALRUS_AGGREGATOR_PROXY_TESTNET]: {
+    target: WALRUS_AGGREGATOR_TESTNET_URL,
     changeOrigin: true,
     secure: true,
-    rewrite: (p: string) => p.replace(/^\/walrus-aggregator-testnet/, ''),
+    rewrite: (p: string) => stripProxyPrefix(WALRUS_AGGREGATOR_PROXY_TESTNET, p),
   },
-  '/walrus-aggregator-mainnet': {
-    target: 'https://aggregator.walrus-mainnet.walrus.space',
+  [WALRUS_AGGREGATOR_PROXY_MAINNET]: {
+    target: WALRUS_AGGREGATOR_MAINNET_URL,
     changeOrigin: true,
     secure: true,
-    rewrite: (p: string) => p.replace(/^\/walrus-aggregator-mainnet/, ''),
+    rewrite: (p: string) => stripProxyPrefix(WALRUS_AGGREGATOR_PROXY_MAINNET, p),
   },
 } as const;
 

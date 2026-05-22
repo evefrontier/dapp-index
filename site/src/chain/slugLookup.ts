@@ -5,9 +5,10 @@ import {
   type SuiObjectResponse,
 } from '@mysten/sui/jsonRpc';
 import { registryConfigured, viteRegistryId, viteSuiNetwork } from '@/chain/env';
-
-const RPC_TIMEOUT_MS = 8_000;
-const SLUG_LOOKUP_MAX_PAGES = 50;
+import {
+  REGISTRY_SLUG_LOOKUP_MAX_PAGES,
+  REGISTRY_SLUG_LOOKUP_RPC_TIMEOUT_MS,
+} from '@/constants';
 
 export type OnChainListing = {
   owner: string;
@@ -189,10 +190,10 @@ export async function lookupRegistrySlug(
   let pagesRead = 0;
 
   while (true) {
-    if (pagesRead >= SLUG_LOOKUP_MAX_PAGES) {
+    if (pagesRead >= REGISTRY_SLUG_LOOKUP_MAX_PAGES) {
       return {
         status: 'error',
-        message: `Slug lookup stopped after ${SLUG_LOOKUP_MAX_PAGES} pages (registry very large). Try again later or ask for an indexed slug API.`,
+        message: `Slug lookup stopped after ${REGISTRY_SLUG_LOOKUP_MAX_PAGES} pages (registry very large). Try again later or ask for an indexed slug API.`,
       };
     }
     if (seenCursors.has(cursor ?? null)) {
@@ -211,7 +212,7 @@ export async function lookupRegistrySlug(
           parentId: registryId,
           cursor,
         }),
-        RPC_TIMEOUT_MS,
+        REGISTRY_SLUG_LOOKUP_RPC_TIMEOUT_MS,
         'slug lookup getDynamicFields',
       );
     } catch (e) {
@@ -229,7 +230,7 @@ export async function lookupRegistrySlug(
             parentId: registryId,
             name: df.name,
           }),
-          RPC_TIMEOUT_MS,
+          REGISTRY_SLUG_LOOKUP_RPC_TIMEOUT_MS,
           'slug lookup getDynamicFieldObject',
         );
       } catch {

@@ -9,7 +9,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "test": "bun test",
     "typecheck": "tsc -b",
+    "typecheck:test": "tsc --project tsconfig.test.json",
     "preview": "vite preview",
     "router:generate": "tsr generate"
   },
@@ -36,6 +38,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "autoprefixer": "^10.4.27",
+    "bun-types": "^1.3.14",
     "postcss": "^8.5.10",
     "tailwindcss": "^4.2.2",
     "typescript": "^6.0.3",
