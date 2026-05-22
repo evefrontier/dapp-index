@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import {
   BUILDER_DRAFTS_STORAGE_KEY,
+  BUILDER_DRAFT_STEPS,
   MAX_BUILDER_DRAFT_SCREENSHOT_BYTES,
   MAX_BUILDER_DRAFT_VIDEO_BYTES,
   createBuilderDraftStorage,
@@ -13,6 +14,8 @@ import {
 const draft: BuilderDraft = {
   id: 'draft-1',
   status: 'draft',
+  currentStep: 'profile',
+  completedSteps: [],
   createdAt: '2026-05-18T12:00:00.000Z',
   updatedAt: '2026-05-18T12:00:00.000Z',
   fields: {
@@ -40,6 +43,102 @@ describe('builder draft storage', () => {
     expect(localStorage.getItem(BUILDER_DRAFTS_STORAGE_KEY)).toContain(
       'frontier-map',
     );
+  });
+
+  test('restores legacy drafts with default workflow state', async () => {
+    const localStorage = createMemoryLocalStorage();
+    localStorage.setItem(
+      BUILDER_DRAFTS_STORAGE_KEY,
+      JSON.stringify({
+        'draft-1': {
+          id: 'draft-1',
+          status: 'draft',
+          createdAt: '2026-05-18T12:00:00.000Z',
+          updatedAt: '2026-05-18T12:00:00.000Z',
+          fields: { id: 'frontier-map' },
+          media: [],
+        },
+      }),
+    );
+    const storage = createBuilderDraftStorage({
+      localStorage,
+      mediaStore: createMemoryBuilderDraftMediaStore(),
+    });
+
+    expect(await storage.getDraft('draft-1')).toEqual({
+      id: 'draft-1',
+      status: 'draft',
+      currentStep: 'profile',
+      completedSteps: [],
+      createdAt: '2026-05-18T12:00:00.000Z',
+      updatedAt: '2026-05-18T12:00:00.000Z',
+      fields: { id: 'frontier-map' },
+      media: [],
+    });
+  });
+
+  test('moves drafts between registration steps', async () => {
+    const storage = createBuilderDraftStorage({
+      localStorage: createMemoryLocalStorage(),
+      mediaStore: createMemoryBuilderDraftMediaStore(),
+      now: () => new Date('2026-05-18T12:30:00.000Z'),
+    });
+
+    await storage.saveDraft(draft);
+    const updatedDraft = await storage.setDraftStep('draft-1', 'media');
+
+    expect(BUILDER_DRAFT_STEPS).toContain('media');
+    expect(updatedDraft.currentStep).toBe('media');
+    expect(updatedDraft.completedSteps).toEqual([]);
+    expect(updatedDraft.updatedAt).toBe('2026-05-18T12:30:00.000Z');
+  });
+
+  test('marks steps complete and advances to the next step', async () => {
+    const storage = createBuilderDraftStorage({
+      localStorage: createMemoryLocalStorage(),
+      mediaStore: createMemoryBuilderDraftMediaStore(),
+      now: () => new Date('2026-05-18T12:45:00.000Z'),
+    });
+
+    await storage.saveDraft({
+      ...draft,
+      completedSteps: ['profile'],
+    });
+    const updatedDraft = await storage.completeDraftStep(
+      'draft-1',
+      'metadata',
+      'media',
+    );
+
+    expect(updatedDraft.currentStep).toBe('media');
+    expect(updatedDraft.completedSteps).toEqual(['profile', 'metadata']);
+    expect(updatedDraft.updatedAt).toBe('2026-05-18T12:45:00.000Z');
+  });
+
+  test('stores publish checkpoints on the draft', async () => {
+    const storage = createBuilderDraftStorage({
+      localStorage: createMemoryLocalStorage(),
+      mediaStore: createMemoryBuilderDraftMediaStore(),
+      now: () => new Date('2026-05-18T13:00:00.000Z'),
+    });
+
+    await storage.saveDraft(draft);
+    await storage.savePublishCheckpoint('draft-1', {
+      walrusBlobId: 'blob-1',
+      walrusUrl: 'walrus://blob-1',
+      metadataHash: 'abc123',
+    });
+    const updatedDraft = await storage.savePublishCheckpoint('draft-1', {
+      suiTransactionDigest: 'tx-1',
+    });
+
+    expect(updatedDraft.publish).toEqual({
+      walrusBlobId: 'blob-1',
+      walrusUrl: 'walrus://blob-1',
+      metadataHash: 'abc123',
+      suiTransactionDigest: 'tx-1',
+    });
+    expect(updatedDraft.updatedAt).toBe('2026-05-18T13:00:00.000Z');
   });
 
   test('stores media blobs separately from draft JSON', async () => {

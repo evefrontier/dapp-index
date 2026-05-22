@@ -1,6 +1,16 @@
 export const BUILDER_DRAFTS_STORAGE_KEY = 'dapp-index:builder-drafts:v1';
 export const MAX_BUILDER_DRAFT_SCREENSHOT_BYTES = 10 * 1024 * 1024;
 export const MAX_BUILDER_DRAFT_VIDEO_BYTES = 100 * 1024 * 1024;
+export const BUILDER_DRAFT_STEPS = [
+  'profile',
+  'metadata',
+  'media',
+  'packages',
+  'review',
+  'walrus-upload',
+  'sui-register',
+] as const;
+const DEFAULT_BUILDER_DRAFT_STEP: BuilderDraftStep = 'profile';
 
 const INDEXED_DB_NAME = 'dapp-index-builder-drafts';
 const INDEXED_DB_VERSION = 2;
@@ -8,6 +18,8 @@ const MEDIA_BLOB_STORE = 'mediaBlobs';
 const MEDIA_BLOB_DRAFT_ID_INDEX = 'byDraftId';
 
 export type BuilderDraftStatus = 'draft' | 'ready-to-publish' | 'published';
+
+export type BuilderDraftStep = (typeof BUILDER_DRAFT_STEPS)[number];
 
 export type BuilderDraftMediaKind = 'screenshot' | 'video';
 
@@ -22,9 +34,19 @@ export type BuilderDraftMedia = {
   uploadedUrl?: string;
 };
 
+export type BuilderDraftPublishCheckpoint = {
+  walrusBlobId?: string;
+  walrusUrl?: string;
+  metadataHash?: string;
+  suiTransactionDigest?: string;
+};
+
 export type BuilderDraft = {
   id: string;
   status: BuilderDraftStatus;
+  currentStep: BuilderDraftStep;
+  completedSteps: BuilderDraftStep[];
+  publish?: BuilderDraftPublishCheckpoint;
   createdAt: string;
   updatedAt: string;
   fields: Record<string, unknown>;
@@ -63,6 +85,19 @@ export type BuilderDraftStorage = {
   saveDraft(draft: BuilderDraft): Promise<BuilderDraft>;
   getDraft(draftId: string): Promise<BuilderDraft | null>;
   listDrafts(): Promise<BuilderDraft[]>;
+  setDraftStep(
+    draftId: string,
+    currentStep: BuilderDraftStep,
+  ): Promise<BuilderDraft>;
+  completeDraftStep(
+    draftId: string,
+    completedStep: BuilderDraftStep,
+    nextStep?: BuilderDraftStep,
+  ): Promise<BuilderDraft>;
+  savePublishCheckpoint(
+    draftId: string,
+    checkpoint: BuilderDraftPublishCheckpoint,
+  ): Promise<BuilderDraft>;
   saveMedia(
     draftId: string,
     media: BuilderDraftMediaInput,
@@ -95,7 +130,7 @@ export function createBuilderDraftStorage(
 
       const drafts = createDraftRecord();
       for (const [draftId, draft] of Object.entries(parsed)) {
-        drafts[draftId] = draft as BuilderDraft;
+        drafts[draftId] = normalizeBuilderDraft(draftId, draft);
       }
       return drafts;
     } catch {
@@ -127,6 +162,44 @@ export function createBuilderDraftStorage(
     return Object.values(readDrafts()).sort((a, b) =>
       b.updatedAt.localeCompare(a.updatedAt),
     );
+  }
+
+  async function setDraftStep(
+    draftId: string,
+    currentStep: BuilderDraftStep,
+  ): Promise<BuilderDraft> {
+    return updateDraft(draftId, (draft) => ({
+      ...draft,
+      currentStep,
+      updatedAt: now().toISOString(),
+    }));
+  }
+
+  async function completeDraftStep(
+    draftId: string,
+    completedStep: BuilderDraftStep,
+    nextStep?: BuilderDraftStep,
+  ): Promise<BuilderDraft> {
+    return updateDraft(draftId, (draft) => ({
+      ...draft,
+      currentStep: nextStep ?? draft.currentStep,
+      completedSteps: addCompletedStep(draft.completedSteps, completedStep),
+      updatedAt: now().toISOString(),
+    }));
+  }
+
+  async function savePublishCheckpoint(
+    draftId: string,
+    checkpoint: BuilderDraftPublishCheckpoint,
+  ): Promise<BuilderDraft> {
+    return updateDraft(draftId, (draft) => ({
+      ...draft,
+      publish: {
+        ...draft.publish,
+        ...checkpoint,
+      },
+      updatedAt: now().toISOString(),
+    }));
   }
 
   async function saveMedia(
@@ -220,6 +293,9 @@ export function createBuilderDraftStorage(
     saveDraft,
     getDraft,
     listDrafts,
+    setDraftStep,
+    completeDraftStep,
+    savePublishCheckpoint,
     saveMedia,
     getMediaBlob,
     deleteDraft,
@@ -245,6 +321,24 @@ export function createBuilderDraftStorage(
     } finally {
       release();
     }
+  }
+
+  async function updateDraft(
+    draftId: string,
+    update: (draft: BuilderDraft) => BuilderDraft,
+  ): Promise<BuilderDraft> {
+    return withDraftLock(draftId, async () => {
+      const drafts = readDrafts();
+      const draft = getOwnDraft(drafts, draftId);
+      if (!draft) {
+        throw new Error(`Builder draft not found: ${draftId}`);
+      }
+
+      const updatedDraft = update(draft);
+      drafts[draftId] = updatedDraft;
+      writeDrafts(drafts);
+      return updatedDraft;
+    });
   }
 }
 
@@ -453,6 +547,56 @@ function isIdbRequest<T>(value: unknown): value is IDBRequest<T> {
 
 function createDraftRecord(): Record<string, BuilderDraft> {
   return Object.create(null) as Record<string, BuilderDraft>;
+}
+
+function normalizeBuilderDraft(draftId: string, value: unknown): BuilderDraft {
+  const draft =
+    value && typeof value === 'object'
+      ? (value as Partial<BuilderDraft>)
+      : {};
+
+  return {
+    ...draft,
+    id: typeof draft.id === 'string' ? draft.id : draftId,
+    status: isBuilderDraftStatus(draft.status) ? draft.status : 'draft',
+    currentStep: isBuilderDraftStep(draft.currentStep)
+      ? draft.currentStep
+      : DEFAULT_BUILDER_DRAFT_STEP,
+    completedSteps: Array.isArray(draft.completedSteps)
+      ? draft.completedSteps.filter(isBuilderDraftStep)
+      : [],
+    createdAt: typeof draft.createdAt === 'string' ? draft.createdAt : '',
+    updatedAt: typeof draft.updatedAt === 'string' ? draft.updatedAt : '',
+    fields:
+      draft.fields && typeof draft.fields === 'object' ? draft.fields : {},
+    media: Array.isArray(draft.media) ? draft.media : [],
+  };
+}
+
+function addCompletedStep(
+  completedSteps: BuilderDraftStep[],
+  completedStep: BuilderDraftStep,
+): BuilderDraftStep[] {
+  return completedSteps.includes(completedStep)
+    ? completedSteps
+    : [...completedSteps, completedStep];
+}
+
+function isBuilderDraftStatus(
+  status: unknown,
+): status is BuilderDraftStatus {
+  return (
+    status === 'draft' ||
+    status === 'ready-to-publish' ||
+    status === 'published'
+  );
+}
+
+function isBuilderDraftStep(step: unknown): step is BuilderDraftStep {
+  return (
+    typeof step === 'string' &&
+    BUILDER_DRAFT_STEPS.includes(step as BuilderDraftStep)
+  );
 }
 
 function getOwnDraft(
