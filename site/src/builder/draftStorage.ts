@@ -85,6 +85,10 @@ export type BuilderDraftStorage = {
   saveDraft(draft: BuilderDraft): Promise<BuilderDraft>;
   getDraft(draftId: string): Promise<BuilderDraft | null>;
   listDrafts(): Promise<BuilderDraft[]>;
+  updateDraftFields(
+    draftId: string,
+    fields: Record<string, unknown>,
+  ): Promise<BuilderDraft>;
   setDraftStep(
     draftId: string,
     currentStep: BuilderDraftStep,
@@ -107,6 +111,33 @@ export type BuilderDraftStorage = {
   deleteDraft(draftId: string): Promise<void>;
   clearPublishedDraft(draftId: string): Promise<void>;
   clearDrafts(): Promise<void>;
+};
+
+export type BuilderDraftAutosaveStatus =
+  | 'idle'
+  | 'pending'
+  | 'saving'
+  | 'saved'
+  | 'error';
+
+export type BuilderDraftAutosaveOptions = {
+  storage: BuilderDraftStorage;
+  draftId: string;
+  delayMs?: number;
+  setTimeout?: (
+    callback: () => void | Promise<void>,
+    delayMs: number,
+  ) => unknown;
+  clearTimeout?: (timerId: unknown) => void;
+  onStatusChange?: (status: BuilderDraftAutosaveStatus) => void;
+};
+
+export type BuilderDraftAutosave = {
+  updateFields(fields: Record<string, unknown>): void;
+  flush(): Promise<BuilderDraft | null>;
+  cancel(): void;
+  getStatus(): BuilderDraftAutosaveStatus;
+  getError(): unknown;
 };
 
 export function createBuilderDraftStorage(
@@ -162,6 +193,20 @@ export function createBuilderDraftStorage(
     return Object.values(readDrafts()).sort((a, b) =>
       b.updatedAt.localeCompare(a.updatedAt),
     );
+  }
+
+  async function updateDraftFields(
+    draftId: string,
+    fields: Record<string, unknown>,
+  ): Promise<BuilderDraft> {
+    return updateDraft(draftId, (draft) => ({
+      ...draft,
+      fields: {
+        ...draft.fields,
+        ...fields,
+      },
+      updatedAt: now().toISOString(),
+    }));
   }
 
   async function setDraftStep(
@@ -241,6 +286,7 @@ export function createBuilderDraftStorage(
         createdAt: now().toISOString(),
       };
 
+      const previousDraft = draft;
       drafts[draftId] = {
         ...draft,
         updatedAt: now().toISOString(),
@@ -254,11 +300,7 @@ export function createBuilderDraftStorage(
         const rollbackDrafts = readDrafts();
         const rollbackDraft = getOwnDraft(rollbackDrafts, draftId);
         if (rollbackDraft) {
-          rollbackDrafts[draftId] = {
-            ...rollbackDraft,
-            updatedAt: now().toISOString(),
-            media: rollbackDraft.media.filter((item) => item.id !== media.id),
-          };
+          rollbackDrafts[draftId] = previousDraft;
           writeDrafts(rollbackDrafts);
         }
         throw error;
@@ -285,14 +327,15 @@ export function createBuilderDraftStorage(
   }
 
   async function clearDrafts(): Promise<void> {
-    storage.removeItem(BUILDER_DRAFTS_STORAGE_KEY);
     await mediaStore.clear();
+    storage.removeItem(BUILDER_DRAFTS_STORAGE_KEY);
   }
 
   return {
     saveDraft,
     getDraft,
     listDrafts,
+    updateDraftFields,
     setDraftStep,
     completeDraftStep,
     savePublishCheckpoint,
@@ -340,6 +383,138 @@ export function createBuilderDraftStorage(
       return updatedDraft;
     });
   }
+}
+
+export function createBuilderDraftAutosave(
+  options: BuilderDraftAutosaveOptions,
+): BuilderDraftAutosave {
+  const delayMs = options.delayMs ?? 750;
+  const setTimeoutFn =
+    options.setTimeout ??
+    ((callback: () => void | Promise<void>, timeoutMs: number) =>
+      globalThis.setTimeout(callback, timeoutMs));
+  const clearTimeoutFn =
+    options.clearTimeout ??
+    ((timerId: unknown) => {
+      globalThis.clearTimeout(
+        timerId as ReturnType<typeof globalThis.setTimeout>,
+      );
+    });
+
+  let pendingFields: Record<string, unknown> = {};
+  let timerId: unknown = null;
+  let status: BuilderDraftAutosaveStatus = 'idle';
+  let error: unknown;
+  let savingPromise: Promise<BuilderDraft | null> | null = null;
+
+  function updateFields(fields: Record<string, unknown>): void {
+    if (Object.keys(fields).length === 0) return;
+
+    pendingFields = {
+      ...pendingFields,
+      ...fields,
+    };
+    error = undefined;
+    scheduleSave();
+    setStatus('pending');
+  }
+
+  async function flush(): Promise<BuilderDraft | null> {
+    clearScheduledSave();
+
+    if (savingPromise) {
+      await savingPromise;
+      return hasPendingFields()
+        ? flush()
+        : options.storage.getDraft(options.draftId);
+    }
+
+    if (!hasPendingFields()) {
+      return options.storage.getDraft(options.draftId);
+    }
+
+    const fieldsToSave = pendingFields;
+    pendingFields = {};
+    error = undefined;
+    setStatus('saving');
+
+    savingPromise = options.storage
+      .updateDraftFields(options.draftId, fieldsToSave)
+      .then((draft) => {
+        savingPromise = null;
+        if (hasPendingFields()) {
+          setStatus('pending');
+          return flush();
+        }
+
+        setStatus('saved');
+        return draft;
+      })
+      .catch((caughtError: unknown) => {
+        savingPromise = null;
+        pendingFields = {
+          ...fieldsToSave,
+          ...pendingFields,
+        };
+        error = caughtError;
+        setStatus('error');
+        throw caughtError;
+      });
+
+    return savingPromise;
+  }
+
+  function cancel(): void {
+    clearScheduledSave();
+    pendingFields = {};
+    error = undefined;
+    setStatus('idle');
+  }
+
+  function getStatus(): BuilderDraftAutosaveStatus {
+    return status;
+  }
+
+  function getError(): unknown {
+    return error;
+  }
+
+  function scheduleSave(): void {
+    clearScheduledSave();
+    timerId = setTimeoutFn(async () => {
+      try {
+        await flush();
+      } catch {
+        // Error state and retry fields are recorded by flush().
+      }
+    }, delayMs);
+  }
+
+  function clearScheduledSave(): void {
+    if (timerId === null) return;
+
+    clearTimeoutFn(timerId);
+    timerId = null;
+  }
+
+  function hasPendingFields(): boolean {
+    return Object.keys(pendingFields).length > 0;
+  }
+
+  function setStatus(nextStatus: BuilderDraftAutosaveStatus): void {
+    if (nextStatus === status) return;
+
+    status = nextStatus;
+    options.onStatusChange?.(status);
+  }
+
+  return {
+    updateFields,
+    flush,
+    cancel,
+    getStatus,
+    getError,
+  };
 }
 
 export function validateBuilderDraftMediaFile(input: {
