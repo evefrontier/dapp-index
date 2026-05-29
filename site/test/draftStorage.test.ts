@@ -3,7 +3,7 @@ import {
   DRAFT_STORAGE_KEY,
   DRAFT_STEPS,
   createDraftStorage,
-  createMemoryDraftMediaStore,
+  createMemoryDraftLocalMediaStore,
   createMemoryLocalStorage,
 } from '../src/storage/draftStorage';
 import { draft } from './draftTestUtils';
@@ -13,7 +13,7 @@ describe('draft storage', () => {
     const localStorage = createMemoryLocalStorage();
     const storage = createDraftStorage({
       localStorage,
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
     });
 
     await storage.saveDraft(draft);
@@ -27,7 +27,7 @@ describe('draft storage', () => {
   test('updates draft fields without replacing workflow state or media', async () => {
     const storage = createDraftStorage({
       localStorage: createMemoryLocalStorage(),
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
       now: () => new Date('2026-05-18T12:15:00.000Z'),
     });
 
@@ -80,7 +80,7 @@ describe('draft storage', () => {
     );
     const storage = createDraftStorage({
       localStorage,
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
     });
 
     expect(await storage.getDraft('draft-1')).toEqual({
@@ -114,7 +114,7 @@ describe('draft storage', () => {
     );
     const storage = createDraftStorage({
       localStorage,
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
     });
 
     const restoredDraft = await storage.getDraft('draft-1');
@@ -128,7 +128,7 @@ describe('draft storage', () => {
     const localStorage = createMemoryLocalStorage();
     const storage = createDraftStorage({
       localStorage,
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
     });
     await storage.saveDraft(draft);
     const failingStorage = createDraftStorage({
@@ -139,7 +139,7 @@ describe('draft storage', () => {
           throw new Error('quota exceeded');
         },
       },
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
     });
 
     await expect(
@@ -153,7 +153,7 @@ describe('draft storage', () => {
   test('moves drafts between registration steps', async () => {
     const storage = createDraftStorage({
       localStorage: createMemoryLocalStorage(),
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
       now: () => new Date('2026-05-18T12:30:00.000Z'),
     });
 
@@ -169,7 +169,7 @@ describe('draft storage', () => {
   test('marks steps complete and advances to the next step', async () => {
     const storage = createDraftStorage({
       localStorage: createMemoryLocalStorage(),
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
       now: () => new Date('2026-05-18T12:45:00.000Z'),
     });
 
@@ -191,7 +191,7 @@ describe('draft storage', () => {
   test('stores publish checkpoints on the draft', async () => {
     const storage = createDraftStorage({
       localStorage: createMemoryLocalStorage(),
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
       now: () => new Date('2026-05-18T13:00:00.000Z'),
     });
 
@@ -214,38 +214,38 @@ describe('draft storage', () => {
     expect(updatedDraft.updatedAt).toBe('2026-05-18T13:00:00.000Z');
   });
 
-  test('stores media blobs separately from draft JSON', async () => {
+  test('stores local media content separately from draft JSON', async () => {
     const localStorage = createMemoryLocalStorage();
     const storage = createDraftStorage({
       localStorage,
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
     });
-    const blob = new Blob(['webm-data'], { type: 'video/webm' });
+    const content = new Blob(['webm-data'], { type: 'video/webm' });
 
     await storage.saveDraft(draft);
     const media = await storage.saveMedia('draft-1', {
       id: 'trailer',
       kind: 'video',
       name: 'trailer.webm',
-    }, blob);
+    }, content);
 
     const savedDraft = await storage.getDraft('draft-1');
-    const savedBlob = await storage.getMediaBlob('draft-1', 'trailer');
+    const savedContent = await storage.getLocalMedia('draft-1', 'trailer');
 
     expect(media.mimeType).toBe('video/webm');
     expect(media.size).toBe(9);
     expect(savedDraft?.media).toEqual([media]);
-    expect(savedBlob).toEqual(blob);
+    expect(savedContent).toEqual(content);
     expect(localStorage.getItem(DRAFT_STORAGE_KEY)).not.toContain(
       'webm-data',
     );
   });
 
-  test('restores replaced media metadata when blob storage fails', async () => {
+  test('restores replaced media metadata when local media storage fails', async () => {
     let putCount = 0;
     const storage = createDraftStorage({
       localStorage: createMemoryLocalStorage(),
-      mediaStore: {
+      localMediaStore: {
         put: async () => {
           putCount += 1;
           if (putCount > 1) {
@@ -276,10 +276,10 @@ describe('draft storage', () => {
     expect((await storage.getDraft('draft-1'))?.media).toEqual([originalMedia]);
   });
 
-  test('rejects MIME overrides that do not match the blob type', async () => {
+  test('rejects MIME overrides that do not match the local media content MIME type', async () => {
     const storage = createDraftStorage({
       localStorage: createMemoryLocalStorage(),
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
     });
 
     await storage.saveDraft(draft);
@@ -295,14 +295,14 @@ describe('draft storage', () => {
         },
         new Blob(['image-data'], { type: 'image/png' }),
       ),
-    ).rejects.toThrow('Provided media MIME type does not match the blob MIME type.');
+    ).rejects.toThrow('Provided media MIME type does not match the local media content MIME type.');
   });
 
-  test('clears draft metadata and media after publish succeeds', async () => {
+  test('clears draft metadata and local media after publish succeeds', async () => {
     const localStorage = createMemoryLocalStorage();
     const storage = createDraftStorage({
       localStorage,
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
     });
 
     await storage.saveDraft(draft);
@@ -315,7 +315,7 @@ describe('draft storage', () => {
     await storage.clearPublishedDraft('draft-1');
 
     expect(await storage.getDraft('draft-1')).toBeNull();
-    expect(await storage.getMediaBlob('draft-1', 'screen-1')).toBeNull();
+    expect(await storage.getLocalMedia('draft-1', 'screen-1')).toBeNull();
     expect(localStorage.getItem(DRAFT_STORAGE_KEY)).toBeNull();
   });
 
@@ -323,7 +323,7 @@ describe('draft storage', () => {
     const localStorage = createMemoryLocalStorage();
     const storage = createDraftStorage({
       localStorage,
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
     });
 
     await storage.saveDraft(draft);
@@ -335,7 +335,7 @@ describe('draft storage', () => {
   test('does not lose concurrent media saves for the same draft', async () => {
     const storage = createDraftStorage({
       localStorage: createMemoryLocalStorage(),
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
     });
 
     await storage.saveDraft(draft);
@@ -359,11 +359,11 @@ describe('draft storage', () => {
     ]);
   });
 
-  test('keeps draft metadata when deleting media blobs fails', async () => {
+  test('keeps draft metadata when deleting local media content fails', async () => {
     const localStorage = createMemoryLocalStorage();
     const storage = createDraftStorage({
       localStorage,
-      mediaStore: {
+      localMediaStore: {
         put: async () => {},
         get: async () => null,
         deleteDraft: async () => {
@@ -379,11 +379,11 @@ describe('draft storage', () => {
     expect(await storage.getDraft('draft-1')).toEqual(draft);
   });
 
-  test('keeps draft metadata when clearing media blobs fails', async () => {
+  test('keeps draft metadata when clearing local media content fails', async () => {
     const localStorage = createMemoryLocalStorage();
     const storage = createDraftStorage({
       localStorage,
-      mediaStore: {
+      localMediaStore: {
         put: async () => {},
         get: async () => null,
         deleteDraft: async () => {},
@@ -405,7 +405,7 @@ describe('draft storage', () => {
   test('supports prototype-like draft IDs safely', async () => {
     const storage = createDraftStorage({
       localStorage: createMemoryLocalStorage(),
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
     });
 
     const protoDraft = {

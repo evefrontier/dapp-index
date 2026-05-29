@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   createDraftAutosave,
   createDraftStorage,
-  createMemoryDraftMediaStore,
+  createMemoryDraftLocalMediaStore,
   createMemoryLocalStorage,
   type Draft,
 } from '../src/storage/draftStorage';
@@ -18,7 +18,7 @@ describe('draft autosave', () => {
     const statuses: string[] = [];
     const storage = createDraftStorage({
       localStorage: createMemoryLocalStorage(),
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
       now: () => new Date('2026-05-18T13:15:00.000Z'),
     });
     await storage.saveDraft(draft);
@@ -56,7 +56,7 @@ describe('draft autosave', () => {
     const scheduler = createManualScheduler();
     const storage = createDraftStorage({
       localStorage: createMemoryLocalStorage(),
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
     });
     await storage.saveDraft(draft);
     const autosave = createDraftAutosave({
@@ -78,7 +78,7 @@ describe('draft autosave', () => {
     const scheduler = createManualScheduler();
     const storage = createDraftStorage({
       localStorage: createMemoryLocalStorage(),
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
     });
     await storage.saveDraft(draft);
     let shouldFail = true;
@@ -118,7 +118,7 @@ describe('draft autosave', () => {
     const scheduler = createManualScheduler();
     const storage = createDraftStorage({
       localStorage: createMemoryLocalStorage(),
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
     });
     await storage.saveDraft(draft);
     const deferredSave = createDeferred<Draft>();
@@ -162,7 +162,7 @@ describe('draft autosave', () => {
     const scheduler = createManualScheduler();
     const storage = createDraftStorage({
       localStorage: createMemoryLocalStorage(),
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
     });
     await storage.saveDraft(draft);
     const autosave = createDraftAutosave({
@@ -187,7 +187,7 @@ describe('draft autosave', () => {
     const scheduler = createManualScheduler();
     const storage = createDraftStorage({
       localStorage: createMemoryLocalStorage(),
-      mediaStore: createMemoryDraftMediaStore(),
+      localMediaStore: createMemoryDraftLocalMediaStore(),
     });
     const autosave = createDraftAutosave({
       storage,

@@ -14,7 +14,7 @@ export const draft: Draft = {
   media: [],
 };
 
-export function blobLike(input: { size: number; type: string }): Blob {
+export function fileLike(input: { size: number; type: string }): Blob {
   return input as Blob;
 }
 

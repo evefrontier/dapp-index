@@ -4,7 +4,7 @@ import {
   MAX_DRAFT_VIDEO_BYTES,
   validateDraftMediaFile,
 } from '../src/storage/draftStorage';
-import { blobLike } from './draftTestUtils';
+import { fileLike } from './draftTestUtils';
 
 describe('draft media validation', () => {
   test('keeps only supported MIME types and sizes eligible for draft media', () => {
@@ -25,7 +25,7 @@ describe('draft media validation', () => {
     expect(
       validateDraftMediaFile({
         kind: 'video',
-        file: blobLike({
+        file: fileLike({
           size: MAX_DRAFT_VIDEO_BYTES + 1,
           type: 'video/webm',
         }),
@@ -42,7 +42,7 @@ describe('draft media validation', () => {
     expect(
       validateDraftMediaFile({
         kind: 'screenshot',
-        file: blobLike({
+        file: fileLike({
           size: MAX_DRAFT_SCREENSHOT_BYTES + 1,
           type: 'image/png',
         }),

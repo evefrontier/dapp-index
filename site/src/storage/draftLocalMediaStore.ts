@@ -1,27 +1,27 @@
-import type { DraftMediaStore } from './draftTypes';
+import type { DraftLocalMediaStore } from './draftTypes';
 
 const INDEXED_DB_NAME = 'dapp-index-drafts';
 const INDEXED_DB_VERSION = 1;
-const MEDIA_BLOB_STORE = 'mediaBlobs';
-const MEDIA_BLOB_DRAFT_ID_INDEX = 'byDraftId';
+const LOCAL_MEDIA_STORE = 'localMedia';
+const LOCAL_MEDIA_DRAFT_ID_INDEX = 'byDraftId';
 
-type MediaBlobRecord = {
+type LocalMediaRecord = {
   key: string;
   draftId: string;
   mediaId: string;
-  blob: Blob;
+  content: Blob;
 };
 
-export function createIndexedDbDraftMediaStore(
+export function createIndexedDbDraftLocalMediaStore(
   indexedDb: IDBFactory = globalThis.indexedDB,
-): DraftMediaStore {
+): DraftLocalMediaStore {
   async function withStore<T>(
     mode: IDBTransactionMode,
     work: (store: IDBObjectStore) => IDBRequest<T> | Promise<T>,
   ): Promise<T> {
     const db = await openDraftDb(indexedDb);
-    const tx = db.transaction(MEDIA_BLOB_STORE, mode);
-    const store = tx.objectStore(MEDIA_BLOB_STORE);
+    const tx = db.transaction(LOCAL_MEDIA_STORE, mode);
+    const store = tx.objectStore(LOCAL_MEDIA_STORE);
     const result = await work(store);
 
     if (isIdbRequest<T>(result)) {
@@ -35,21 +35,26 @@ export function createIndexedDbDraftMediaStore(
   }
 
   return {
-    put: async ({ draftId, mediaId, blob }) => {
+    put: async ({ draftId, mediaId, content }) => {
       await withStore('readwrite', (store) =>
-        store.put({ key: mediaKey(draftId, mediaId), draftId, mediaId, blob }),
+        store.put({
+          key: mediaKey(draftId, mediaId),
+          draftId,
+          mediaId,
+          content,
+        }),
       );
     },
     get: async (draftId, mediaId) => {
-      const record = await withStore<MediaBlobRecord | undefined>(
+      const record = await withStore<LocalMediaRecord | undefined>(
         'readonly',
         (store) => store.get(mediaKey(draftId, mediaId)),
       );
-      return record?.blob ?? null;
+      return record?.content ?? null;
     },
     deleteDraft: async (draftId) => {
       await withStore('readwrite', (store) =>
-        deleteDraftMediaBlobs(store, draftId),
+        deleteDraftLocalMedia(store, draftId),
       );
     },
     clear: async () => {
@@ -58,25 +63,25 @@ export function createIndexedDbDraftMediaStore(
   };
 }
 
-export function createMemoryDraftMediaStore(): DraftMediaStore {
-  const blobs = new Map<string, Blob>();
+export function createMemoryDraftLocalMediaStore(): DraftLocalMediaStore {
+  const localMedia = new Map<string, Blob>();
 
   return {
-    put: async ({ draftId, mediaId, blob }) => {
-      blobs.set(mediaKey(draftId, mediaId), blob);
+    put: async ({ draftId, mediaId, content }) => {
+      localMedia.set(mediaKey(draftId, mediaId), content);
     },
     get: async (draftId, mediaId) =>
-      blobs.get(mediaKey(draftId, mediaId)) ?? null,
+      localMedia.get(mediaKey(draftId, mediaId)) ?? null,
     deleteDraft: async (draftId) => {
       const draftPrefix = `${encodeURIComponent(draftId)}:`;
-      for (const key of blobs.keys()) {
+      for (const key of localMedia.keys()) {
         if (key.startsWith(draftPrefix)) {
-          blobs.delete(key);
+          localMedia.delete(key);
         }
       }
     },
     clear: async () => {
-      blobs.clear();
+      localMedia.clear();
     },
   };
 }
@@ -92,14 +97,14 @@ function openDraftDb(indexedDb: IDBFactory): Promise<IDBDatabase> {
     request.onupgradeneeded = () => {
       const db = request.result;
       let store: IDBObjectStore;
-      if (!db.objectStoreNames.contains(MEDIA_BLOB_STORE)) {
-        store = db.createObjectStore(MEDIA_BLOB_STORE, { keyPath: 'key' });
+      if (!db.objectStoreNames.contains(LOCAL_MEDIA_STORE)) {
+        store = db.createObjectStore(LOCAL_MEDIA_STORE, { keyPath: 'key' });
       } else {
-        store = request.transaction!.objectStore(MEDIA_BLOB_STORE);
+        store = request.transaction!.objectStore(LOCAL_MEDIA_STORE);
       }
 
-      if (!store.indexNames.contains(MEDIA_BLOB_DRAFT_ID_INDEX)) {
-        store.createIndex(MEDIA_BLOB_DRAFT_ID_INDEX, 'draftId', {
+      if (!store.indexNames.contains(LOCAL_MEDIA_DRAFT_ID_INDEX)) {
+        store.createIndex(LOCAL_MEDIA_DRAFT_ID_INDEX, 'draftId', {
           unique: false,
         });
       }
@@ -109,12 +114,12 @@ function openDraftDb(indexedDb: IDBFactory): Promise<IDBDatabase> {
   });
 }
 
-function deleteDraftMediaBlobs(
+function deleteDraftLocalMedia(
   store: IDBObjectStore,
   draftId: string,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    const index = store.index(MEDIA_BLOB_DRAFT_ID_INDEX);
+    const index = store.index(LOCAL_MEDIA_DRAFT_ID_INDEX);
     const request = index.openCursor(IDBKeyRange.only(draftId));
 
     request.onerror = () => reject(request.error);

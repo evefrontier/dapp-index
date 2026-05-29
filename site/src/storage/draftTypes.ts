@@ -27,8 +27,8 @@ export type DraftMedia = {
   mimeType: string;
   size: number;
   createdAt: string;
-  uploadedBlobId?: string;
-  uploadedUrl?: string;
+  walrusBlobId?: string;
+  walrusUrl?: string;
 };
 
 export type DraftPublishCheckpoint = {
@@ -61,11 +61,11 @@ export type DraftMediaValidation =
   | { ok: true }
   | { ok: false; reason: string };
 
-export type DraftMediaStore = {
+export type DraftLocalMediaStore = {
   put(input: {
     draftId: string;
     mediaId: string;
-    blob: Blob;
+    content: Blob;
   }): Promise<void>;
   get(draftId: string, mediaId: string): Promise<Blob | null>;
   deleteDraft(draftId: string): Promise<void>;
@@ -74,7 +74,7 @@ export type DraftMediaStore = {
 
 export type DraftStorageOptions = {
   localStorage?: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
-  mediaStore?: DraftMediaStore;
+  localMediaStore?: DraftLocalMediaStore;
   now?: () => Date;
 };
 
@@ -102,9 +102,9 @@ export type DraftStorage = {
   saveMedia(
     draftId: string,
     media: DraftMediaInput,
-    blob: Blob,
+    content: Blob,
   ): Promise<DraftMedia>;
-  getMediaBlob(draftId: string, mediaId: string): Promise<Blob | null>;
+  getLocalMedia(draftId: string, mediaId: string): Promise<Blob | null>;
   deleteDraft(draftId: string): Promise<void>;
   clearPublishedDraft(draftId: string): Promise<void>;
   clearDrafts(): Promise<void>;

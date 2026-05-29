@@ -11,15 +11,15 @@ import {
   type DraftStorage,
   type DraftStorageOptions,
 } from './draftTypes';
-import { createIndexedDbDraftMediaStore } from './draftMediaStore';
+import { createIndexedDbDraftLocalMediaStore } from './draftLocalMediaStore';
 import { validateDraftMediaFile } from './draftMediaValidation';
 
 export function createDraftStorage(
   options: DraftStorageOptions = {},
 ): DraftStorage {
   const storage = options.localStorage ?? globalThis.localStorage;
-  const mediaStore =
-    options.mediaStore ?? createIndexedDbDraftMediaStore();
+  const localMediaStore =
+    options.localMediaStore ?? createIndexedDbDraftLocalMediaStore();
   const now = options.now ?? (() => new Date());
   const draftLocks = new Map<string, Promise<void>>();
 
@@ -124,7 +124,7 @@ export function createDraftStorage(
   async function saveMedia(
     draftId: string,
     input: DraftMediaInput,
-    blob: Blob,
+    content: Blob,
   ): Promise<DraftMedia> {
     return withDraftLock(draftId, async () => {
       const drafts = readDrafts();
@@ -133,18 +133,18 @@ export function createDraftStorage(
         throw new Error(`Draft not found: ${draftId}`);
       }
 
-      const blobMimeType = blob.type.toLowerCase();
+      const contentMimeType = content.type.toLowerCase();
       const inputMimeType = input.mimeType?.toLowerCase();
-      if (blobMimeType && inputMimeType && blobMimeType !== inputMimeType) {
+      if (contentMimeType && inputMimeType && contentMimeType !== inputMimeType) {
         throw new Error(
-          'Provided media MIME type does not match the blob MIME type.',
+          'Provided media MIME type does not match the local media content MIME type.',
         );
       }
 
-      const mimeType = blobMimeType || inputMimeType || '';
+      const mimeType = contentMimeType || inputMimeType || '';
       const validation = validateDraftMediaFile({
         kind: input.kind,
-        file: blob,
+        file: content,
         mimeType,
       });
       if (!validation.ok) {
@@ -156,7 +156,7 @@ export function createDraftStorage(
         kind: input.kind,
         name: input.name,
         mimeType,
-        size: blob.size,
+        size: content.size,
         createdAt: now().toISOString(),
       };
 
@@ -169,7 +169,11 @@ export function createDraftStorage(
       writeDrafts(drafts);
 
       try {
-        await mediaStore.put({ draftId, mediaId: media.id, blob });
+        await localMediaStore.put({
+          draftId,
+          mediaId: media.id,
+          content,
+        });
       } catch (error) {
         const rollbackDrafts = readDrafts();
         const rollbackDraft = getOwnDraft(rollbackDrafts, draftId);
@@ -184,16 +188,16 @@ export function createDraftStorage(
     });
   }
 
-  async function getMediaBlob(
+  async function getLocalMedia(
     draftId: string,
     mediaId: string,
   ): Promise<Blob | null> {
-    return mediaStore.get(draftId, mediaId);
+    return localMediaStore.get(draftId, mediaId);
   }
 
   async function deleteDraft(draftId: string): Promise<void> {
     await withDraftLock(draftId, async () => {
-      await mediaStore.deleteDraft(draftId);
+      await localMediaStore.deleteDraft(draftId);
       const drafts = readDrafts();
       delete drafts[draftId];
       writeDrafts(drafts);
@@ -201,7 +205,7 @@ export function createDraftStorage(
   }
 
   async function clearDrafts(): Promise<void> {
-    await mediaStore.clear();
+    await localMediaStore.clear();
     storage.removeItem(DRAFT_STORAGE_KEY);
   }
 
@@ -214,7 +218,7 @@ export function createDraftStorage(
     completeDraftStep,
     savePublishCheckpoint,
     saveMedia,
-    getMediaBlob,
+    getLocalMedia,
     deleteDraft,
     clearPublishedDraft: deleteDraft,
     clearDrafts,
