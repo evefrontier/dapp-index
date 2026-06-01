@@ -1,4 +1,11 @@
-import type { Draft } from '../src/storage/draftStorage';
+import {
+  createDraftStorage,
+  createMemoryDraftLocalMediaStore,
+  createMemoryLocalStorage,
+  type Draft,
+  type DraftStorage,
+  type DraftStorageOptions,
+} from '../src/storage/draftStorage';
 
 export const draft: Draft = {
   id: 'draft-1',
@@ -13,6 +20,23 @@ export const draft: Draft = {
   },
   media: [],
 };
+
+export function createTestDraftStorage(
+  options: DraftStorageOptions = {},
+): {
+  storage: DraftStorage;
+  localStorage: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
+} {
+  const localStorage = options.localStorage ?? createMemoryLocalStorage();
+  const storage = createDraftStorage({
+    ...options,
+    localStorage,
+    localMediaStore:
+      options.localMediaStore ?? createMemoryDraftLocalMediaStore(),
+  });
+
+  return { storage, localStorage };
+}
 
 export function fileLike(input: { size: number; type: string }): Blob {
   return input as Blob;

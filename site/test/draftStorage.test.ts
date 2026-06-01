@@ -2,19 +2,12 @@ import { describe, expect, test } from 'bun:test';
 import {
   DRAFT_STORAGE_KEY,
   DRAFT_STEPS,
-  createDraftStorage,
-  createMemoryDraftLocalMediaStore,
-  createMemoryLocalStorage,
 } from '../src/storage/draftStorage';
-import { draft } from './draftTestUtils';
+import { createTestDraftStorage, draft } from './draftTestUtils';
 
 describe('draft storage', () => {
   test('stores draft fields in local storage', async () => {
-    const localStorage = createMemoryLocalStorage();
-    const storage = createDraftStorage({
-      localStorage,
-      localMediaStore: createMemoryDraftLocalMediaStore(),
-    });
+    const { localStorage, storage } = createTestDraftStorage();
 
     await storage.saveDraft(draft);
 
@@ -25,9 +18,7 @@ describe('draft storage', () => {
   });
 
   test('updates draft fields without replacing workflow state or media', async () => {
-    const storage = createDraftStorage({
-      localStorage: createMemoryLocalStorage(),
-      localMediaStore: createMemoryDraftLocalMediaStore(),
+    const { storage } = createTestDraftStorage({
       now: () => new Date('2026-05-18T12:15:00.000Z'),
     });
 
@@ -64,7 +55,7 @@ describe('draft storage', () => {
   });
 
   test('restores legacy drafts with default workflow state', async () => {
-    const localStorage = createMemoryLocalStorage();
+    const { localStorage, storage } = createTestDraftStorage();
     localStorage.setItem(
       DRAFT_STORAGE_KEY,
       JSON.stringify({
@@ -78,10 +69,6 @@ describe('draft storage', () => {
         },
       }),
     );
-    const storage = createDraftStorage({
-      localStorage,
-      localMediaStore: createMemoryDraftLocalMediaStore(),
-    });
 
     expect(await storage.getDraft('draft-1')).toEqual({
       id: 'draft-1',
@@ -96,7 +83,7 @@ describe('draft storage', () => {
   });
 
   test('normalizes invalid persisted workflow state', async () => {
-    const localStorage = createMemoryLocalStorage();
+    const { localStorage, storage } = createTestDraftStorage();
     localStorage.setItem(
       DRAFT_STORAGE_KEY,
       JSON.stringify({
@@ -112,11 +99,6 @@ describe('draft storage', () => {
         },
       }),
     );
-    const storage = createDraftStorage({
-      localStorage,
-      localMediaStore: createMemoryDraftLocalMediaStore(),
-    });
-
     const restoredDraft = await storage.getDraft('draft-1');
 
     expect(restoredDraft?.status).toBe('draft');
@@ -125,13 +107,9 @@ describe('draft storage', () => {
   });
 
   test('keeps existing draft metadata when field persistence fails', async () => {
-    const localStorage = createMemoryLocalStorage();
-    const storage = createDraftStorage({
-      localStorage,
-      localMediaStore: createMemoryDraftLocalMediaStore(),
-    });
+    const { localStorage, storage } = createTestDraftStorage();
     await storage.saveDraft(draft);
-    const failingStorage = createDraftStorage({
+    const { storage: failingStorage } = createTestDraftStorage({
       localStorage: {
         getItem: localStorage.getItem,
         removeItem: localStorage.removeItem,
@@ -139,7 +117,6 @@ describe('draft storage', () => {
           throw new Error('quota exceeded');
         },
       },
-      localMediaStore: createMemoryDraftLocalMediaStore(),
     });
 
     await expect(
@@ -151,9 +128,7 @@ describe('draft storage', () => {
   });
 
   test('moves drafts between registration steps', async () => {
-    const storage = createDraftStorage({
-      localStorage: createMemoryLocalStorage(),
-      localMediaStore: createMemoryDraftLocalMediaStore(),
+    const { storage } = createTestDraftStorage({
       now: () => new Date('2026-05-18T12:30:00.000Z'),
     });
 
@@ -167,9 +142,7 @@ describe('draft storage', () => {
   });
 
   test('marks steps complete and advances to the next step', async () => {
-    const storage = createDraftStorage({
-      localStorage: createMemoryLocalStorage(),
-      localMediaStore: createMemoryDraftLocalMediaStore(),
+    const { storage } = createTestDraftStorage({
       now: () => new Date('2026-05-18T12:45:00.000Z'),
     });
 
@@ -189,9 +162,7 @@ describe('draft storage', () => {
   });
 
   test('stores publish checkpoints on the draft', async () => {
-    const storage = createDraftStorage({
-      localStorage: createMemoryLocalStorage(),
-      localMediaStore: createMemoryDraftLocalMediaStore(),
+    const { storage } = createTestDraftStorage({
       now: () => new Date('2026-05-18T13:00:00.000Z'),
     });
 
@@ -215,11 +186,7 @@ describe('draft storage', () => {
   });
 
   test('stores local media content separately from draft JSON', async () => {
-    const localStorage = createMemoryLocalStorage();
-    const storage = createDraftStorage({
-      localStorage,
-      localMediaStore: createMemoryDraftLocalMediaStore(),
-    });
+    const { localStorage, storage } = createTestDraftStorage();
     const content = new Blob(['webm-data'], { type: 'video/webm' });
 
     await storage.saveDraft(draft);
@@ -243,8 +210,7 @@ describe('draft storage', () => {
 
   test('restores replaced media metadata when local media storage fails', async () => {
     let putCount = 0;
-    const storage = createDraftStorage({
-      localStorage: createMemoryLocalStorage(),
+    const { storage } = createTestDraftStorage({
       localMediaStore: {
         put: async () => {
           putCount += 1;
@@ -277,10 +243,7 @@ describe('draft storage', () => {
   });
 
   test('rejects MIME overrides that do not match the local media content MIME type', async () => {
-    const storage = createDraftStorage({
-      localStorage: createMemoryLocalStorage(),
-      localMediaStore: createMemoryDraftLocalMediaStore(),
-    });
+    const { storage } = createTestDraftStorage();
 
     await storage.saveDraft(draft);
 
@@ -299,11 +262,7 @@ describe('draft storage', () => {
   });
 
   test('clears draft metadata and local media after publish succeeds', async () => {
-    const localStorage = createMemoryLocalStorage();
-    const storage = createDraftStorage({
-      localStorage,
-      localMediaStore: createMemoryDraftLocalMediaStore(),
-    });
+    const { localStorage, storage } = createTestDraftStorage();
 
     await storage.saveDraft(draft);
     await storage.saveMedia('draft-1', {
@@ -320,11 +279,7 @@ describe('draft storage', () => {
   });
 
   test('removes local draft storage key when the last draft is deleted', async () => {
-    const localStorage = createMemoryLocalStorage();
-    const storage = createDraftStorage({
-      localStorage,
-      localMediaStore: createMemoryDraftLocalMediaStore(),
-    });
+    const { localStorage, storage } = createTestDraftStorage();
 
     await storage.saveDraft(draft);
     await storage.deleteDraft('draft-1');
@@ -333,10 +288,7 @@ describe('draft storage', () => {
   });
 
   test('does not lose concurrent media saves for the same draft', async () => {
-    const storage = createDraftStorage({
-      localStorage: createMemoryLocalStorage(),
-      localMediaStore: createMemoryDraftLocalMediaStore(),
-    });
+    const { storage } = createTestDraftStorage();
 
     await storage.saveDraft(draft);
     await Promise.all([
@@ -360,9 +312,7 @@ describe('draft storage', () => {
   });
 
   test('keeps draft metadata when deleting local media content fails', async () => {
-    const localStorage = createMemoryLocalStorage();
-    const storage = createDraftStorage({
-      localStorage,
+    const { storage } = createTestDraftStorage({
       localMediaStore: {
         put: async () => {},
         get: async () => null,
@@ -380,9 +330,7 @@ describe('draft storage', () => {
   });
 
   test('keeps draft metadata when clearing local media content fails', async () => {
-    const localStorage = createMemoryLocalStorage();
-    const storage = createDraftStorage({
-      localStorage,
+    const { localStorage, storage } = createTestDraftStorage({
       localMediaStore: {
         put: async () => {},
         get: async () => null,
@@ -403,10 +351,7 @@ describe('draft storage', () => {
   });
 
   test('supports prototype-like draft IDs safely', async () => {
-    const storage = createDraftStorage({
-      localStorage: createMemoryLocalStorage(),
-      localMediaStore: createMemoryDraftLocalMediaStore(),
-    });
+    const { storage } = createTestDraftStorage();
 
     const protoDraft = {
       ...draft,

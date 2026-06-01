@@ -127,62 +127,11 @@ export function createDraftStorage(
     content: Blob,
   ): Promise<DraftMedia> {
     return withDraftLock(draftId, async () => {
-      const drafts = readDrafts();
-      const draft = getOwnDraft(drafts, draftId);
-      if (!draft) {
-        throw new Error(`Draft not found: ${draftId}`);
-      }
+      const { drafts, draft } = readRequiredDraft(draftId);
+      const media = createDraftMedia(input, content);
 
-      const contentMimeType = content.type.toLowerCase();
-      const inputMimeType = input.mimeType?.toLowerCase();
-      if (contentMimeType && inputMimeType && contentMimeType !== inputMimeType) {
-        throw new Error(
-          'Provided media MIME type does not match the local media content MIME type.',
-        );
-      }
-
-      const mimeType = contentMimeType || inputMimeType || '';
-      const validation = validateDraftMediaFile({
-        kind: input.kind,
-        file: content,
-        mimeType,
-      });
-      if (!validation.ok) {
-        throw new Error(validation.reason);
-      }
-
-      const media: DraftMedia = {
-        id: input.id,
-        kind: input.kind,
-        name: input.name,
-        mimeType,
-        size: content.size,
-        createdAt: now().toISOString(),
-      };
-
-      const previousDraft = draft;
-      drafts[draftId] = {
-        ...draft,
-        updatedAt: now().toISOString(),
-        media: [...draft.media.filter((item) => item.id !== media.id), media],
-      };
-      writeDrafts(drafts);
-
-      try {
-        await localMediaStore.put({
-          draftId,
-          mediaId: media.id,
-          content,
-        });
-      } catch (error) {
-        const rollbackDrafts = readDrafts();
-        const rollbackDraft = getOwnDraft(rollbackDrafts, draftId);
-        if (rollbackDraft) {
-          rollbackDrafts[draftId] = previousDraft;
-          writeDrafts(rollbackDrafts);
-        }
-        throw error;
-      }
+      writeDraftWithMedia(drafts, draftId, draft, media);
+      await putLocalMediaOrRollback(draftId, media.id, content, draft);
 
       return media;
     });
@@ -264,6 +213,95 @@ export function createDraftStorage(
       writeDrafts(drafts);
       return updatedDraft;
     });
+  }
+
+  function readRequiredDraft(draftId: string): {
+    drafts: Record<string, Draft>;
+    draft: Draft;
+  } {
+    const drafts = readDrafts();
+    const draft = getOwnDraft(drafts, draftId);
+    if (!draft) {
+      throw new Error(`Draft not found: ${draftId}`);
+    }
+
+    return { drafts, draft };
+  }
+
+  function createDraftMedia(
+    input: DraftMediaInput,
+    content: Blob,
+  ): DraftMedia {
+    const mimeType = resolveMediaMimeType(input, content);
+    const validation = validateDraftMediaFile({
+      kind: input.kind,
+      file: content,
+      mimeType,
+    });
+    if (!validation.ok) {
+      throw new Error(validation.reason);
+    }
+
+    return {
+      id: input.id,
+      kind: input.kind,
+      name: input.name,
+      mimeType,
+      size: content.size,
+      createdAt: now().toISOString(),
+    };
+  }
+
+  function resolveMediaMimeType(
+    input: DraftMediaInput,
+    content: Blob,
+  ): string {
+    const contentMimeType = content.type.toLowerCase();
+    const inputMimeType = input.mimeType?.toLowerCase();
+    if (contentMimeType && inputMimeType && contentMimeType !== inputMimeType) {
+      throw new Error(
+        'Provided media MIME type does not match the local media content MIME type.',
+      );
+    }
+
+    return contentMimeType || inputMimeType || '';
+  }
+
+  function writeDraftWithMedia(
+    drafts: Record<string, Draft>,
+    draftId: string,
+    draft: Draft,
+    media: DraftMedia,
+  ): void {
+    drafts[draftId] = {
+      ...draft,
+      updatedAt: now().toISOString(),
+      media: [...draft.media.filter((item) => item.id !== media.id), media],
+    };
+    writeDrafts(drafts);
+  }
+
+  async function putLocalMediaOrRollback(
+    draftId: string,
+    mediaId: string,
+    content: Blob,
+    previousDraft: Draft,
+  ): Promise<void> {
+    try {
+      await localMediaStore.put({ draftId, mediaId, content });
+    } catch (error) {
+      rollbackDraft(draftId, previousDraft);
+      throw error;
+    }
+  }
+
+  function rollbackDraft(draftId: string, previousDraft: Draft): void {
+    const rollbackDrafts = readDrafts();
+    const rollbackDraft = getOwnDraft(rollbackDrafts, draftId);
+    if (!rollbackDraft) return;
+
+    rollbackDrafts[draftId] = previousDraft;
+    writeDrafts(rollbackDrafts);
   }
 }
 

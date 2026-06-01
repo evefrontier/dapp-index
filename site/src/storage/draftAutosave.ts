@@ -63,47 +63,80 @@ export function createDraftAutosave(
 
   async function flush(): Promise<Draft | null> {
     clearScheduledSave();
+    return flushPendingFields();
+  }
 
+  async function flushPendingFields(): Promise<Draft | null> {
     if (savingPromise) {
-      await savingPromise;
-      return hasPendingFields()
-        ? flush()
-        : options.storage.getDraft(options.draftId);
+      return waitForInFlightSave();
     }
 
     if (!hasPendingFields()) {
       return options.storage.getDraft(options.draftId);
     }
 
-    const fieldsToSave = pendingFields;
-    pendingFields = {};
+    return startPendingSave();
+  }
+
+  async function waitForInFlightSave(): Promise<Draft | null> {
+    await savingPromise;
+    return hasPendingFields()
+      ? flush()
+      : options.storage.getDraft(options.draftId);
+  }
+
+  function startPendingSave(): Promise<Draft | null> {
+    const fieldsToSave = takePendingFields();
     error = undefined;
     setStatus('saving');
 
-    savingPromise = options.storage
-      .updateDraftFields(options.draftId, fieldsToSave)
-      .then((draft) => {
-        savingPromise = null;
-        if (hasPendingFields()) {
-          setStatus('pending');
-          return flush();
-        }
-
-        setStatus('saved');
-        return draft;
-      })
-      .catch((caughtError: unknown) => {
-        savingPromise = null;
-        pendingFields = {
-          ...fieldsToSave,
-          ...pendingFields,
-        };
-        error = caughtError;
-        setStatus('error');
-        throw caughtError;
-      });
-
+    savingPromise = saveFields(fieldsToSave);
     return savingPromise;
+  }
+
+  function takePendingFields(): Record<string, unknown> {
+    const fieldsToSave = pendingFields;
+    pendingFields = {};
+    return fieldsToSave;
+  }
+
+  async function saveFields(
+    fieldsToSave: Record<string, unknown>,
+  ): Promise<Draft | null> {
+    try {
+      const draft = await options.storage.updateDraftFields(
+        options.draftId,
+        fieldsToSave,
+      );
+      savingPromise = null;
+      return finishSuccessfulSave(draft);
+    } catch (caughtError) {
+      savingPromise = null;
+      restoreFailedFields(fieldsToSave, caughtError);
+      throw caughtError;
+    }
+  }
+
+  async function finishSuccessfulSave(draft: Draft): Promise<Draft | null> {
+    if (hasPendingFields()) {
+      setStatus('pending');
+      return flush();
+    }
+
+    setStatus('saved');
+    return draft;
+  }
+
+  function restoreFailedFields(
+    fieldsToSave: Record<string, unknown>,
+    caughtError: unknown,
+  ): void {
+    pendingFields = {
+      ...fieldsToSave,
+      ...pendingFields,
+    };
+    error = caughtError;
+    setStatus('error');
   }
 
   function cancel(): void {
