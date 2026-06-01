@@ -3,15 +3,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BuilderHomeView } from '@/builder/BuilderHomeView';
 import { createBuilderHomeDraftItem } from '@/builder/builderHomeModel';
 import { createRegistrationDraft } from '@/builder/registrationDraft';
-import {
-  getBuilderTutorialSkipped,
-  setBuilderTutorialSkipped,
-} from '@/builder/tutorialStorage';
+import { builderTutorialPreference } from '@/builder/tutorialStorage';
 import {
   createDraftStorage,
   type Draft,
   type DraftStorage,
 } from '@/storage/draftStorage';
+
+type RefreshDraftsOptions = {
+  shouldCommit?: () => boolean;
+};
 
 export const Route = createFileRoute('/builder')({
   component: BuilderPage,
@@ -24,30 +25,51 @@ function BuilderPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tutorialSkipped, setTutorialSkippedState] = useState(() =>
-    getBuilderTutorialSkipped(),
+    builderTutorialPreference.read().skipped,
   );
   const draftItems = useMemo(
     () => drafts.map(createBuilderHomeDraftItem),
     [drafts],
   );
 
-  const refreshDrafts = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      setDrafts(await storage.listDrafts());
-    } catch (caughtError) {
-      setError(getErrorMessage(caughtError, 'Could not load drafts.'));
-    } finally {
-      setLoading(false);
-    }
-  }, [storage]);
+  const refreshDrafts = useCallback(
+    async (options: RefreshDraftsOptions = {}) => {
+      const shouldCommit = options.shouldCommit ?? (() => true);
+      setLoading(true);
+      setError(null);
+      try {
+        const nextDrafts = await storage.listDrafts();
+        if (!shouldCommit()) return;
+
+        setDrafts(nextDrafts);
+      } catch (caughtError) {
+        if (!shouldCommit()) return;
+
+        setError(getErrorMessage(caughtError, 'Could not load drafts.'));
+      } finally {
+        if (!shouldCommit()) return;
+
+        setLoading(false);
+      }
+    },
+    [storage],
+  );
 
   useEffect(() => {
-    void refreshDrafts();
+    let mounted = true;
+
+    void refreshDrafts({ shouldCommit: () => mounted });
+
+    return () => {
+      mounted = false;
+    };
   }, [refreshDrafts]);
 
-  async function handleCreateDraft() {
+  function handleCreateDraft() {
+    void createDraft();
+  }
+
+  async function createDraft() {
     setError(null);
     try {
       const draft = await storage.saveDraft(createRegistrationDraft());
@@ -60,7 +82,11 @@ function BuilderPage() {
     }
   }
 
-  async function handleDeleteDraft(draftId: string) {
+  function handleDeleteDraft(draftId: string) {
+    void deleteDraft(draftId);
+  }
+
+  async function deleteDraft(draftId: string) {
     const confirmed = window.confirm('Delete this draft?');
     if (!confirmed) return;
 
@@ -78,12 +104,12 @@ function BuilderPage() {
   }
 
   function handleShowTutorial() {
-    setBuilderTutorialSkipped(false);
+    builderTutorialPreference.show();
     setTutorialSkippedState(false);
   }
 
   function handleSkipTutorial() {
-    setBuilderTutorialSkipped(true);
+    builderTutorialPreference.skip();
     setTutorialSkippedState(true);
   }
 

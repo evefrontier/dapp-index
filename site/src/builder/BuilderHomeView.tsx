@@ -8,8 +8,8 @@ export type BuilderHomeViewProps = {
   error: string | null;
   loading: boolean;
   tutorialSkipped: boolean;
-  onCreateDraft: () => Promise<void>;
-  onDeleteDraft: (draftId: string) => Promise<void>;
+  onCreateDraft: () => void;
+  onDeleteDraft: (draftId: string) => void;
   onRefreshDrafts: () => void;
   onShowTutorial: () => void;
   onSkipTutorial: () => void;
@@ -48,7 +48,7 @@ export function BuilderHomeView({
 function BuilderPageHeader({
   onCreateDraft,
 }: {
-  onCreateDraft: () => Promise<void>;
+  onCreateDraft: () => void;
 }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
@@ -135,7 +135,7 @@ function DraftListSection({
   loading: boolean;
   drafts: BuilderHomeDraftItem[];
   onRefresh: () => void;
-  onDeleteDraft: (draftId: string) => Promise<void>;
+  onDeleteDraft: (draftId: string) => void;
 }) {
   let content: ReactNode;
 
@@ -178,7 +178,7 @@ function DraftList({
   onDeleteDraft,
 }: {
   drafts: BuilderHomeDraftItem[];
-  onDeleteDraft: (draftId: string) => Promise<void>;
+  onDeleteDraft: (draftId: string) => void;
 }) {
   const draftCards = drafts.map((draft) => (
     <DraftListCard
@@ -196,12 +196,12 @@ function DraftListCard({
   onDeleteDraft,
 }: {
   draft: BuilderHomeDraftItem;
-  onDeleteDraft: (draftId: string) => Promise<void>;
+  onDeleteDraft: (draftId: string) => void;
 }) {
   const resumeParams = { draftId: draft.id, step: draft.currentStep };
 
   function handleDeleteClick() {
-    void onDeleteDraft(draft.id);
+    onDeleteDraft(draft.id);
   }
 
   return (

@@ -2,8 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { createRegistrationDraft } from '../src/builder/registrationDraft';
 import {
   BUILDER_TUTORIAL_STORAGE_KEY,
-  getBuilderTutorialSkipped,
-  setBuilderTutorialSkipped,
+  builderTutorialPreference,
 } from '../src/builder/tutorialStorage';
 import { createMemoryLocalStorage } from '../src/storage/draftStorage';
 
@@ -36,18 +35,45 @@ describe('builder draft helpers', () => {
   });
 
   test('stores the builder tutorial skip flag separately from drafts', () => {
-    const localStorage = createMemoryLocalStorage();
+    const storage = createMemoryLocalStorage();
 
-    expect(getBuilderTutorialSkipped({ localStorage })).toBe(false);
+    expect(builderTutorialPreference.read({ storage }).skipped).toBe(false);
 
-    setBuilderTutorialSkipped(true, { localStorage });
+    builderTutorialPreference.skip({ storage });
 
-    expect(getBuilderTutorialSkipped({ localStorage })).toBe(true);
-    expect(localStorage.getItem(BUILDER_TUTORIAL_STORAGE_KEY)).toBe('true');
+    expect(builderTutorialPreference.read({ storage }).skipped).toBe(true);
+    expect(storage.getItem(BUILDER_TUTORIAL_STORAGE_KEY)).toBe('true');
 
-    setBuilderTutorialSkipped(false, { localStorage });
+    builderTutorialPreference.show({ storage });
 
-    expect(getBuilderTutorialSkipped({ localStorage })).toBe(false);
-    expect(localStorage.getItem(BUILDER_TUTORIAL_STORAGE_KEY)).toBeNull();
+    expect(builderTutorialPreference.read({ storage }).skipped).toBe(false);
+    expect(storage.getItem(BUILDER_TUTORIAL_STORAGE_KEY)).toBeNull();
+  });
+
+  test('fails closed when tutorial storage reads are unavailable', () => {
+    const storage = {
+      getItem: () => {
+        throw new Error('storage denied');
+      },
+      setItem: () => {},
+      removeItem: () => {},
+    };
+
+    expect(builderTutorialPreference.read({ storage }).skipped).toBe(false);
+  });
+
+  test('ignores tutorial storage write failures', () => {
+    const storage = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error('storage denied');
+      },
+      removeItem: () => {
+        throw new Error('storage denied');
+      },
+    };
+
+    expect(() => builderTutorialPreference.skip({ storage })).not.toThrow();
+    expect(() => builderTutorialPreference.show({ storage })).not.toThrow();
   });
 });
