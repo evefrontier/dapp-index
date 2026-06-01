@@ -1,7 +1,7 @@
 import {
   DRAFT_STORAGE_KEY,
-  DRAFT_STEPS,
   DEFAULT_DRAFT_STEP,
+  parseDraftStep,
   type Draft,
   type DraftMedia,
   type DraftMediaInput,
@@ -329,16 +329,15 @@ function normalizeDraft(draftId: string, value: unknown): Draft {
     value && typeof value === 'object'
       ? (value as Partial<Draft>)
       : {};
+  const currentStep = parseDraftStep(draft.currentStep);
 
   return {
     ...draft,
     id: typeof draft.id === 'string' ? draft.id : draftId,
     status: isDraftStatus(draft.status) ? draft.status : 'draft',
-    currentStep: isDraftStep(draft.currentStep)
-      ? draft.currentStep
-      : DEFAULT_DRAFT_STEP,
+    currentStep: currentStep ?? DEFAULT_DRAFT_STEP,
     completedSteps: Array.isArray(draft.completedSteps)
-      ? draft.completedSteps.filter(isDraftStep)
+      ? normalizeCompletedDraftSteps(draft.completedSteps)
       : [],
     createdAt: typeof draft.createdAt === 'string' ? draft.createdAt : '',
     updatedAt: typeof draft.updatedAt === 'string' ? draft.updatedAt : '',
@@ -367,11 +366,14 @@ function isDraftStatus(
   );
 }
 
-function isDraftStep(step: unknown): step is DraftStep {
-  return (
-    typeof step === 'string' &&
-    DRAFT_STEPS.includes(step as DraftStep)
-  );
+function normalizeCompletedDraftSteps(steps: readonly unknown[]): DraftStep[] {
+  const completedSteps: DraftStep[] = [];
+  for (const step of steps) {
+    const normalizedStep = parseDraftStep(step);
+    if (!normalizedStep || completedSteps.includes(normalizedStep)) continue;
+    completedSteps.push(normalizedStep);
+  }
+  return completedSteps;
 }
 
 function getOwnDraft(
