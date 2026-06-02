@@ -1,9 +1,11 @@
 import type { Draft, DraftStep } from '@/storage/draftStorage';
+import { getBuilderWizardStepLabel } from './builderWizardModel';
 
 export type BuilderHomeDraftItem = {
   id: string;
   title: string;
   currentStep: DraftStep;
+  currentStepLabel: string;
   updatedAtLabel: string;
 };
 
@@ -14,6 +16,7 @@ export function createBuilderHomeDraftItem(
     id: draft.id,
     title: getDraftTitle(draft),
     currentStep: draft.currentStep,
+    currentStepLabel: getBuilderWizardStepLabel(draft.currentStep),
     updatedAtLabel: formatDraftDate(draft.updatedAt),
   };
 }

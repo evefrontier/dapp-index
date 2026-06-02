@@ -50,7 +50,7 @@ export function createBuilderWizardStepItems(
 }
 
 export function resolveBuilderWizardRouteStep(
-  routeStep: unknown,
+  routeStep: string,
   storedStep: DraftStep,
 ): {
   step: DraftStep;

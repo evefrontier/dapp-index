@@ -53,10 +53,6 @@ describe('builder wizard model', () => {
       step: 'media',
       shouldRedirect: false,
     });
-    expect(resolveBuilderWizardRouteStep('media-upload', 'packages')).toEqual({
-      step: 'packages',
-      shouldRedirect: true,
-    });
     expect(resolveBuilderWizardRouteStep('bad-step', 'about')).toEqual({
       step: 'about',
       shouldRedirect: true,

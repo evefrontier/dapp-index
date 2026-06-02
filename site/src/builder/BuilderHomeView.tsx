@@ -8,9 +8,9 @@ export type BuilderHomeViewProps = {
   error: string | null;
   loading: boolean;
   tutorialSkipped: boolean;
-  onCreateDraft: () => void;
-  onDeleteDraft: (draftId: string) => void;
-  onRefreshDrafts: () => void;
+  onCreateDraft: () => Promise<void>;
+  onDeleteDraft: (draftId: string) => Promise<void>;
+  onRefreshDrafts: () => Promise<void>;
   onShowTutorial: () => void;
   onSkipTutorial: () => void;
 };
@@ -48,7 +48,7 @@ export function BuilderHomeView({
 function BuilderPageHeader({
   onCreateDraft,
 }: {
-  onCreateDraft: () => void;
+  onCreateDraft: () => Promise<void>;
 }) {
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
@@ -60,11 +60,17 @@ function BuilderPageHeader({
           Dapp listings
         </h1>
         <p className="text-sm text-[var(--color-neutral-70)]">
-          Create or resume a local listing draft. Publish steps come later in
-          the wizard.
+          Create or resume a local listing draft. Publish comes later in the
+          wizard.
         </p>
       </div>
-      <Button variant="primary" size="medium" onClick={onCreateDraft}>
+      <Button
+        variant="primary"
+        size="medium"
+        onClick={() => {
+          void onCreateDraft();
+        }}
+      >
         New draft
       </Button>
     </div>
@@ -101,7 +107,7 @@ function BuilderTutorial({
           </h2>
           <ol className="list-decimal space-y-2 pl-5 text-sm text-[var(--color-neutral-70)]">
             <li>Drafts stay in this browser until publish succeeds.</li>
-            <li>Media stays local until the Walrus step.</li>
+            <li>Media stays local until publish.</li>
             <li>Wallet connection is only required for publish.</li>
           </ol>
         </div>
@@ -134,8 +140,8 @@ function DraftListSection({
 }: {
   loading: boolean;
   drafts: BuilderHomeDraftItem[];
-  onRefresh: () => void;
-  onDeleteDraft: (draftId: string) => void;
+  onRefresh: () => Promise<void>;
+  onDeleteDraft: (draftId: string) => Promise<void>;
 }) {
   let content: ReactNode;
 
@@ -162,7 +168,9 @@ function DraftListSection({
         <button
           type="button"
           className="text-sm font-bold uppercase text-[var(--color-primary)]"
-          onClick={onRefresh}
+          onClick={() => {
+            void onRefresh();
+          }}
         >
           Refresh
         </button>
@@ -178,7 +186,7 @@ function DraftList({
   onDeleteDraft,
 }: {
   drafts: BuilderHomeDraftItem[];
-  onDeleteDraft: (draftId: string) => void;
+  onDeleteDraft: (draftId: string) => Promise<void>;
 }) {
   const draftCards = drafts.map((draft) => (
     <DraftListCard
@@ -196,12 +204,12 @@ function DraftListCard({
   onDeleteDraft,
 }: {
   draft: BuilderHomeDraftItem;
-  onDeleteDraft: (draftId: string) => void;
+  onDeleteDraft: (draftId: string) => Promise<void>;
 }) {
   const resumeParams = { draftId: draft.id, step: draft.currentStep };
 
   function handleDeleteClick() {
-    onDeleteDraft(draft.id);
+    void onDeleteDraft(draft.id);
   }
 
   return (
@@ -211,7 +219,7 @@ function DraftListCard({
           {draft.title}
         </h3>
         <p className="text-sm text-[var(--color-neutral-70)]">
-          Step: {draft.currentStep} · Updated: {draft.updatedAtLabel}
+          Step: {draft.currentStepLabel} · Updated: {draft.updatedAtLabel}
         </p>
         <p className="break-all text-xs text-[var(--color-neutral-60)]">
           {draft.id}

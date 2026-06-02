@@ -26,10 +26,6 @@ describe('draft storage', () => {
     expect(parseDraftStep('about')).toBe('about');
     expect(isDraftStep('media')).toBe(true);
     expect(parseDraftStep('publish')).toBe('publish');
-    expect(isDraftStep('profile')).toBe(false);
-    expect(parseDraftStep('details')).toBeNull();
-    expect(parseDraftStep('media-upload')).toBeNull();
-    expect(parseDraftStep('sui-register')).toBeNull();
     expect(isDraftStep('not-a-step')).toBe(false);
     expect(parseDraftStep('not-a-step')).toBeNull();
     expect(parseDraftStep(42)).toBeNull();

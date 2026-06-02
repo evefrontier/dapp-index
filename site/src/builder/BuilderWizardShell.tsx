@@ -57,7 +57,6 @@ export function BuilderWizardShell({
           onNavigateStep={onNavigateStep}
         />
         <WizardStepPanel
-          activeStep={activeStep}
           draft={draft}
           nextStep={nextStep}
           previousStep={previousStep}
@@ -169,7 +168,6 @@ function WizardStepNav({
 }
 
 function WizardStepPanel({
-  activeStep,
   draft,
   nextStep,
   navigationPending,
@@ -178,7 +176,6 @@ function WizardStepPanel({
   onExitWizard,
   onNavigateStep,
 }: {
-  activeStep: DraftStep;
   draft: Draft;
   nextStep: DraftStep | null;
   navigationPending: boolean;
@@ -210,7 +207,7 @@ function WizardStepPanel({
             <dt className="font-bold uppercase text-[var(--color-neutral-60)]">
               Step
             </dt>
-            <dd className="text-[var(--color-foreground)]">{activeStep}</dd>
+            <dd className="text-[var(--color-foreground)]">{title}</dd>
           </dl>
         </div>
       </section>
