@@ -1,9 +1,15 @@
-import { createFileRoute, Link } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useEffect, useMemo, useState } from 'react';
 import {
+  BuilderWizardMessage,
+  BuilderWizardShell,
+} from '@/builder/BuilderWizardShell';
+import { resolveBuilderWizardRouteStep } from '@/builder/builderWizardModel';
+import {
+  createDraftAutosave,
   createDraftStorage,
-  parseDraftStep,
   type Draft,
+  type DraftAutosaveStatus,
   type DraftStep,
   type DraftStorage,
 } from '@/storage/draftStorage';
@@ -13,12 +19,35 @@ export const Route = createFileRoute('/builder_/listings/$draftId/$step')({
 });
 
 function BuilderListingStepPage() {
+  const navigate = useNavigate();
   const { draftId, step } = Route.useParams();
   const [storage] = useState<DraftStorage>(() => createDraftStorage());
   const [draft, setDraft] = useState<Draft | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const validStep = parseDraftStep(step);
+  const [autosaveStatus, setAutosaveStatus] =
+    useState<DraftAutosaveStatus>('idle');
+  const [navigationError, setNavigationError] = useState<string | null>(null);
+  const [navigationPending, setNavigationPending] = useState(false);
+  const storedStep = draft?.currentStep ?? null;
+  const autosave = useMemo(
+    () =>
+      createDraftAutosave({
+        storage,
+        draftId,
+        onStatusChange: setAutosaveStatus,
+      }),
+    [draftId, storage],
+  );
+  const routeStep = useMemo(
+    () =>
+      storedStep ? resolveBuilderWizardRouteStep(step, storedStep) : null,
+    [step, storedStep],
+  );
+  const autosaveError =
+    autosaveStatus === 'error'
+      ? getErrorMessage(autosave.getError(), 'Could not save draft.')
+      : null;
 
   useEffect(() => {
     let canceled = false;
@@ -26,16 +55,13 @@ function BuilderListingStepPage() {
     async function loadDraft() {
       setLoading(true);
       setError(null);
+      setNavigationError(null);
       try {
         const loadedDraft = await storage.getDraft(draftId);
         if (!canceled) setDraft(loadedDraft);
       } catch (caughtError) {
         if (!canceled) {
-          setError(
-            caughtError instanceof Error
-              ? caughtError.message
-              : 'Could not load draft.',
-          );
+          setError(getErrorMessage(caughtError, 'Could not load draft.'));
         }
       } finally {
         if (!canceled) setLoading(false);
@@ -49,105 +75,148 @@ function BuilderListingStepPage() {
     };
   }, [draftId, storage]);
 
-  if (!validStep) {
-    return (
-      <BuilderStepMessage
-        title="Unknown step"
-        body="This wizard step is not available."
-      />
-    );
+  useEffect(() => {
+    setAutosaveStatus(autosave.getStatus());
+
+    return () => {
+      autosave.cancel();
+    };
+  }, [autosave]);
+
+  useEffect(() => {
+    if (!draft || !routeStep) return;
+
+    if (routeStep.shouldRedirect) {
+      void navigate({
+        to: '/builder/listings/$draftId/$step',
+        params: { draftId: draft.id, step: routeStep.step },
+        replace: true,
+      });
+      return;
+    }
+
+    const routeDraftId = draft.id;
+    const nextStep = routeStep.step;
+
+    if (nextStep === draft.currentStep) return;
+
+    let canceled = false;
+
+    async function syncRouteStep() {
+      setNavigationError(null);
+      try {
+        const updatedDraft = await storage.setDraftStep(routeDraftId, nextStep);
+        if (!canceled) setDraft(updatedDraft);
+      } catch (caughtError) {
+        if (!canceled) {
+          setNavigationError(
+            getErrorMessage(caughtError, 'Could not open this step.'),
+          );
+        }
+      }
+    }
+
+    void syncRouteStep();
+
+    return () => {
+      canceled = true;
+    };
+  }, [draft, navigate, routeStep, storage]);
+
+  async function handleNavigateStep(nextStep: DraftStep) {
+    if (!draft || navigationPending) return;
+
+    setNavigationPending(true);
+    setNavigationError(null);
+    try {
+      const savedDraft = await getSavedDraftBeforeNavigation();
+      const updatedDraft =
+        savedDraft.currentStep === nextStep
+          ? savedDraft
+          : await storage.setDraftStep(savedDraft.id, nextStep);
+
+      await navigate({
+        to: '/builder/listings/$draftId/$step',
+        params: { draftId: updatedDraft.id, step: nextStep },
+      });
+      setDraft(updatedDraft);
+    } catch (caughtError) {
+      setNavigationError(
+        getErrorMessage(caughtError, 'Could not save before navigation.'),
+      );
+    } finally {
+      setNavigationPending(false);
+    }
+  }
+
+  async function handleExitWizard() {
+    if (!draft || navigationPending) return;
+
+    setNavigationPending(true);
+    setNavigationError(null);
+    try {
+      const savedDraft = await getSavedDraftBeforeNavigation();
+      setDraft(savedDraft);
+      await navigate({ to: '/builder' });
+    } catch (caughtError) {
+      setNavigationError(
+        getErrorMessage(caughtError, 'Could not save before leaving.'),
+      );
+    } finally {
+      setNavigationPending(false);
+    }
+  }
+
+  async function getSavedDraftBeforeNavigation(): Promise<Draft> {
+    const savedDraft = await autosave.flush();
+    if (!savedDraft) {
+      throw new Error('Draft not found.');
+    }
+    return savedDraft;
   }
 
   if (loading) {
     return (
-      <BuilderStepMessage title="Loading draft" body="Opening local draft." />
+      <BuilderWizardMessage title="Loading draft" body="Opening local draft." />
     );
   }
 
   if (error) {
-    return <BuilderStepMessage title="Draft error" body={error} />;
+    return <BuilderWizardMessage title="Draft error" body={error} />;
   }
 
   if (!draft) {
     return (
-      <BuilderStepMessage
+      <BuilderWizardMessage
         title="Draft not found"
         body="This local draft is not available in this browser."
       />
     );
   }
 
+  if (!routeStep || routeStep.shouldRedirect) {
+    return (
+      <BuilderWizardMessage
+        title="Opening step"
+        body="Returning to the saved draft step."
+      />
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <p className="text-xs font-bold uppercase text-[var(--color-neutral-60)]">
-          Listing draft
-        </p>
-        <h1 className="text-2xl font-bold uppercase tracking-wider text-[var(--color-foreground)]">
-          {stepLabel(validStep)}
-        </h1>
-        <p className="text-sm text-[var(--color-neutral-70)]">
-          Wizard shell and form fields land in the next PR.
-        </p>
-      </div>
-
-      <section className="border border-[var(--color-neutral-20)] p-4">
-        <dl className="grid gap-3 text-sm sm:grid-cols-[10rem_minmax(0,1fr)]">
-          <dt className="font-bold uppercase text-[var(--color-neutral-60)]">
-            Draft
-          </dt>
-          <dd className="break-all text-[var(--color-foreground)]">{draft.id}</dd>
-          <dt className="font-bold uppercase text-[var(--color-neutral-60)]">
-            Stored step
-          </dt>
-          <dd className="text-[var(--color-foreground)]">
-            {draft.currentStep}
-          </dd>
-          <dt className="font-bold uppercase text-[var(--color-neutral-60)]">
-            Route step
-          </dt>
-          <dd className="text-[var(--color-foreground)]">{validStep}</dd>
-        </dl>
-      </section>
-
-      <Link
-        to="/builder"
-        className="text-sm font-bold uppercase text-[var(--color-primary)]"
-      >
-        Back to drafts
-      </Link>
-    </div>
+    <BuilderWizardShell
+      activeStep={routeStep.step}
+      autosaveError={autosaveError}
+      autosaveStatus={autosaveStatus}
+      draft={draft}
+      navigationError={navigationError}
+      navigationPending={navigationPending}
+      onExitWizard={handleExitWizard}
+      onNavigateStep={handleNavigateStep}
+    />
   );
 }
 
-function BuilderStepMessage({
-  title,
-  body,
-}: {
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold uppercase tracking-wider text-[var(--color-foreground)]">
-          {title}
-        </h1>
-        <p className="text-sm text-[var(--color-neutral-70)]">{body}</p>
-      </div>
-      <Link
-        to="/builder"
-        className="text-sm font-bold uppercase text-[var(--color-primary)]"
-      >
-        Back to drafts
-      </Link>
-    </div>
-  );
-}
-
-function stepLabel(step: DraftStep): string {
-  return step
-    .split('-')
-    .map((part) => part[0]?.toUpperCase() + part.slice(1))
-    .join(' ');
+function getErrorMessage(caughtError: unknown, fallback: string): string {
+  return caughtError instanceof Error ? caughtError.message : fallback;
 }

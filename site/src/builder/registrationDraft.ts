@@ -15,7 +15,7 @@ export function createRegistrationDraft(
   return {
     id: options.id ?? createDraftId(options.randomUUID),
     status: 'draft',
-    currentStep: 'profile',
+    currentStep: 'basics',
     completedSteps: [],
     createdAt: timestamp,
     updatedAt: timestamp,

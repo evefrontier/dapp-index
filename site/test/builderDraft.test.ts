@@ -16,7 +16,7 @@ describe('builder draft helpers', () => {
     expect(draft).toEqual({
       id: 'draft-123',
       status: 'draft',
-      currentStep: 'profile',
+      currentStep: 'basics',
       completedSteps: [],
       createdAt: '2026-05-19T09:00:00.000Z',
       updatedAt: '2026-05-19T09:00:00.000Z',

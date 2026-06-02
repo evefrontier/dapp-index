@@ -3,24 +3,21 @@ export const MAX_DRAFT_SCREENSHOT_BYTES = 10 * 1024 * 1024;
 export const MAX_DRAFT_VIDEO_BYTES = 100 * 1024 * 1024;
 
 export const DRAFT_STEPS = [
-  'profile',
-  'details',
+  'basics',
+  'about',
   'discovery',
   'packages',
-  'package-verification',
-  'media-upload',
-  'media-details',
+  'media',
   'proofs',
   'review',
-  'walrus-publish',
-  'sui-register',
+  'publish',
 ] as const;
 
 export type DraftStatus = 'draft' | 'ready-to-publish' | 'published';
 
 export type DraftStep = (typeof DRAFT_STEPS)[number];
 
-export const DEFAULT_DRAFT_STEP: DraftStep = 'profile';
+export const DEFAULT_DRAFT_STEP: DraftStep = 'basics';
 
 const DRAFT_STEP_VALUES: ReadonlySet<string> = new Set(DRAFT_STEPS);
 
