@@ -16,6 +16,12 @@ function RootLayout() {
           EVE Frontier Dapps Index
         </Link>
         <nav className="flex flex-wrap items-center gap-3" aria-label="Main">
+          <Link
+            to="/builder"
+            className="text-sm font-bold uppercase text-[var(--color-foreground)] hover:text-[var(--color-primary)]"
+          >
+            Builder
+          </Link>
           <ConnectButton />
         </nav>
       </header>

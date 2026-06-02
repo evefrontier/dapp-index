@@ -4,11 +4,15 @@ export const MAX_DRAFT_VIDEO_BYTES = 100 * 1024 * 1024;
 
 export const DRAFT_STEPS = [
   'profile',
-  'metadata',
-  'media',
+  'details',
+  'discovery',
   'packages',
+  'package-verification',
+  'media-upload',
+  'media-details',
+  'proofs',
   'review',
-  'walrus-upload',
+  'walrus-publish',
   'sui-register',
 ] as const;
 
@@ -17,6 +21,16 @@ export type DraftStatus = 'draft' | 'ready-to-publish' | 'published';
 export type DraftStep = (typeof DRAFT_STEPS)[number];
 
 export const DEFAULT_DRAFT_STEP: DraftStep = 'profile';
+
+const DRAFT_STEP_VALUES: ReadonlySet<string> = new Set(DRAFT_STEPS);
+
+export function isDraftStep(value: unknown): value is DraftStep {
+  return typeof value === 'string' && DRAFT_STEP_VALUES.has(value);
+}
+
+export function parseDraftStep(value: unknown): DraftStep | null {
+  return isDraftStep(value) ? value : null;
+}
 
 export type DraftMediaKind = 'screenshot' | 'video';
 
