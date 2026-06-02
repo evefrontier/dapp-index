@@ -55,12 +55,12 @@ export function useBuilderHomeController(): BuilderHomeViewProps {
   );
 
   useEffect(() => {
-    let mounted = true;
+    let canceled = false;
 
-    void refreshDrafts({ shouldCommit: () => mounted });
+    void refreshDrafts({ shouldCommit: () => !canceled });
 
     return () => {
-      mounted = false;
+      canceled = true;
     };
   }, [refreshDrafts]);
 
