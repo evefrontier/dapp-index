@@ -7,6 +7,11 @@ import {
   type DappIndexServerTenant,
   type DappIndexSmartAssemblyType,
 } from '@/types/dapp-index';
+import {
+  readRegistrationDraftPackages,
+  validateRegistrationDraftPackages,
+  type RegistrationDraftPackage,
+} from './registrationDraftPackages';
 
 export type RegistrationDraftFields = {
   name: string;
@@ -19,6 +24,7 @@ export type RegistrationDraftFields = {
   categories: DappIndexCategoryId[];
   smartAssemblyTypes: DappIndexSmartAssemblyType[];
   serverTenant: DappIndexServerTenant | '';
+  suiPackages: RegistrationDraftPackage[];
   domainProofUrl: string;
   notes: string;
 };
@@ -40,6 +46,7 @@ export const REGISTRATION_DRAFT_FIELD_KEYS = [
   'categories',
   'smartAssemblyTypes',
   'serverTenant',
+  'suiPackages',
   'domainProofUrl',
   'notes',
 ] as const satisfies readonly RegistrationDraftFieldName[];
@@ -48,6 +55,7 @@ export const REGISTRATION_DRAFT_FIELD_STEPS = [
   'basics',
   'about',
   'discovery',
+  'packages',
   'proofs',
 ] as const satisfies readonly DraftStep[];
 
@@ -70,6 +78,7 @@ const STEP_FIELD_GROUPS = {
   basics: ['name', 'slug', 'summary'],
   about: ['description', 'liveUrl', 'repositoryUrl', 'documentationUrl'],
   discovery: ['categories', 'smartAssemblyTypes', 'serverTenant'],
+  packages: ['suiPackages'],
   proofs: ['domainProofUrl', 'notes'],
 } satisfies Record<
   RegistrationDraftFieldStep,
@@ -88,6 +97,7 @@ export function createRegistrationDraftFields(): RegistrationDraftFields {
     categories: [],
     smartAssemblyTypes: [],
     serverTenant: '',
+    suiPackages: [],
     domainProofUrl: '',
     notes: '',
   };
@@ -112,6 +122,7 @@ export function readRegistrationDraftFields(
     serverTenant: isDappIndexServerTenant(fields.serverTenant)
       ? fields.serverTenant
       : '',
+    suiPackages: readRegistrationDraftPackages(fields),
     domainProofUrl: readString(fields.domainProofUrl),
     notes: readString(fields.notes),
   };
@@ -139,6 +150,7 @@ export function validateRegistrationDraftFields(
     ...validateBasicsFields(fields),
     ...validateAboutFields(fields),
     ...validateDiscoveryFields(fields),
+    ...validateRegistrationDraftPackages(fields.suiPackages).fieldErrors,
     ...validateProofsFields(fields),
   };
 }

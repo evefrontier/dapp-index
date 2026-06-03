@@ -1,4 +1,4 @@
-import type { ComponentType, ReactNode } from 'react';
+import type { ComponentType } from 'react';
 import type { DraftStep } from '@/storage/draftStorage';
 import {
   DAPP_INDEX_CATEGORIES,
@@ -10,17 +10,28 @@ import {
   type DappIndexSmartAssemblyType,
 } from '@/types/dapp-index';
 import {
+  BuilderFieldError,
+  BuilderSelectField,
+  BuilderTextAreaField,
+  BuilderTextField,
+  getBuilderFieldErrorId,
+} from './BuilderFormFields';
+import { BuilderPackageStepScreen } from './BuilderPackageStepScreen';
+import {
   isRegistrationDraftFieldStep,
   type RegistrationDraftFieldErrors,
   type RegistrationDraftFields,
   type RegistrationDraftFieldStep,
 } from './registrationDraftFields';
+import type { RegistrationDraftPackageVerificationState } from './registrationDraftPackages';
 
 type RegistrationStepScreenProps = {
   activeStep: DraftStep;
   errors: RegistrationDraftFieldErrors;
   fields: RegistrationDraftFields;
+  packageVerification: RegistrationDraftPackageVerificationState;
   onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
+  onVerifyPackages: () => Promise<void>;
 };
 
 type RegistrationStepFieldsProps = Omit<
@@ -28,22 +39,13 @@ type RegistrationStepFieldsProps = Omit<
   'activeStep'
 >;
 
-type RegistrationFieldProps = {
-  error?: string;
-  id: string;
-  label: string;
-};
-
-const FIELD_INPUT_CLASS_NAME =
-  'w-full border border-[var(--color-neutral-30)] bg-[var(--color-background-elevated)] px-3 py-2 text-sm text-[var(--color-foreground)] outline-none transition-colors focus:border-[var(--color-primary)]';
-const FIELD_ERROR_INPUT_CLASS_NAME =
-  'border-[var(--color-error)] focus:border-[var(--color-error)]';
-
 export function BuilderRegistrationStepScreen({
   activeStep,
   errors,
   fields,
+  packageVerification,
   onUpdateFields,
+  onVerifyPackages,
 }: RegistrationStepScreenProps) {
   const StepScreen = isRegistrationDraftFieldStep(activeStep)
     ? REGISTRATION_DRAFT_STEP_SCREENS[activeStep]
@@ -54,7 +56,9 @@ export function BuilderRegistrationStepScreen({
       <StepScreen
         errors={errors}
         fields={fields}
+        packageVerification={packageVerification}
         onUpdateFields={onUpdateFields}
+        onVerifyPackages={onVerifyPackages}
       />
     );
   }
@@ -70,6 +74,7 @@ const REGISTRATION_DRAFT_STEP_SCREENS = {
   basics: BasicsScreen,
   about: AboutScreen,
   discovery: DiscoveryScreen,
+  packages: PackagesScreen,
   proofs: ProofsScreen,
 } satisfies Record<
   RegistrationDraftFieldStep,
@@ -83,7 +88,7 @@ function BasicsScreen({
 }: RegistrationStepFieldsProps) {
   return (
     <div className="grid gap-4">
-      <TextField
+      <BuilderTextField
         error={errors.name}
         id="builder-name"
         label="Name"
@@ -91,7 +96,7 @@ function BasicsScreen({
         value={fields.name}
         onChange={(name) => onUpdateFields({ name })}
       />
-      <TextField
+      <BuilderTextField
         error={errors.slug}
         id="builder-slug"
         label="Slug"
@@ -99,7 +104,7 @@ function BasicsScreen({
         value={fields.slug}
         onChange={(slug) => onUpdateFields({ slug })}
       />
-      <TextAreaField
+      <BuilderTextAreaField
         error={errors.summary}
         id="builder-summary"
         label="Summary"
@@ -119,7 +124,7 @@ function AboutScreen({
 }: RegistrationStepFieldsProps) {
   return (
     <div className="grid gap-4">
-      <TextAreaField
+      <BuilderTextAreaField
         error={errors.description}
         id="builder-description"
         label="Description"
@@ -128,7 +133,7 @@ function AboutScreen({
         value={fields.description}
         onChange={(description) => onUpdateFields({ description })}
       />
-      <TextField
+      <BuilderTextField
         error={errors.liveUrl}
         id="builder-live-url"
         label="Live URL"
@@ -136,7 +141,7 @@ function AboutScreen({
         value={fields.liveUrl}
         onChange={(liveUrl) => onUpdateFields({ liveUrl })}
       />
-      <TextField
+      <BuilderTextField
         error={errors.repositoryUrl}
         id="builder-repository-url"
         label="Repo URL"
@@ -144,7 +149,7 @@ function AboutScreen({
         value={fields.repositoryUrl}
         onChange={(repositoryUrl) => onUpdateFields({ repositoryUrl })}
       />
-      <TextField
+      <BuilderTextField
         error={errors.documentationUrl}
         id="builder-documentation-url"
         label="Docs URL"
@@ -173,7 +178,7 @@ function DiscoveryScreen({
         selectedValues={fields.smartAssemblyTypes}
         onChange={(smartAssemblyTypes) => onUpdateFields({ smartAssemblyTypes })}
       />
-      <SelectField
+      <BuilderSelectField
         error={errors.serverTenant}
         id="builder-server-tenant"
         label="Server tenant"
@@ -190,7 +195,7 @@ function DiscoveryScreen({
             {DAPP_INDEX_SERVER_TENANT_LABELS[tenant]}
           </option>
         ))}
-      </SelectField>
+      </BuilderSelectField>
     </div>
   );
 }
@@ -202,7 +207,7 @@ function ProofsScreen({
 }: RegistrationStepFieldsProps) {
   return (
     <div className="grid gap-4">
-      <TextField
+      <BuilderTextField
         error={errors.domainProofUrl}
         id="builder-domain-proof-url"
         label="Domain proof URL"
@@ -210,7 +215,7 @@ function ProofsScreen({
         value={fields.domainProofUrl}
         onChange={(domainProofUrl) => onUpdateFields({ domainProofUrl })}
       />
-      <TextAreaField
+      <BuilderTextAreaField
         error={errors.notes}
         id="builder-notes"
         label="Notes"
@@ -223,113 +228,19 @@ function ProofsScreen({
   );
 }
 
-function TextField({
-  error,
-  id,
-  label,
-  maxLength,
-  type = 'text',
-  value,
-  onChange,
-}: RegistrationFieldProps & {
-  maxLength?: number;
-  type?: 'text' | 'url';
-  value: string;
-  onChange: (value: string) => void;
-}) {
+function PackagesScreen({
+  fields,
+  packageVerification,
+  onUpdateFields,
+  onVerifyPackages,
+}: RegistrationStepFieldsProps) {
   return (
-    <FieldShell error={error} id={id} label={label}>
-      <input
-        aria-describedby={getErrorId(id, error)}
-        aria-invalid={error ? true : undefined}
-        className={getFieldInputClassName(error)}
-        id={id}
-        maxLength={maxLength}
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.currentTarget.value)}
-      />
-    </FieldShell>
-  );
-}
-
-function TextAreaField({
-  error,
-  id,
-  label,
-  maxLength,
-  rows,
-  value,
-  onChange,
-}: RegistrationFieldProps & {
-  maxLength?: number;
-  rows: number;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <FieldShell error={error} id={id} label={label}>
-      <textarea
-        aria-describedby={getErrorId(id, error)}
-        aria-invalid={error ? true : undefined}
-        className={getFieldInputClassName(error)}
-        id={id}
-        maxLength={maxLength}
-        rows={rows}
-        value={value}
-        onChange={(event) => onChange(event.currentTarget.value)}
-      />
-    </FieldShell>
-  );
-}
-
-function SelectField({
-  children,
-  error,
-  id,
-  label,
-  value,
-  onChange,
-}: RegistrationFieldProps & {
-  children: ReactNode;
-  value: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <FieldShell error={error} id={id} label={label}>
-      <select
-        aria-describedby={getErrorId(id, error)}
-        aria-invalid={error ? true : undefined}
-        className={getFieldInputClassName(error)}
-        id={id}
-        value={value}
-        onChange={(event) => onChange(event.currentTarget.value)}
-      >
-        {children}
-      </select>
-    </FieldShell>
-  );
-}
-
-function FieldShell({
-  children,
-  error,
-  id,
-  label,
-}: RegistrationFieldProps & {
-  children: ReactNode;
-}) {
-  return (
-    <div className="grid gap-2">
-      <label
-        className="text-xs font-bold uppercase text-[var(--color-neutral-60)]"
-        htmlFor={id}
-      >
-        {label}
-      </label>
-      {children}
-      <FieldError id={id} message={error} />
-    </div>
+    <BuilderPackageStepScreen
+      packageVerification={packageVerification}
+      packages={fields.suiPackages}
+      onChange={(suiPackages) => onUpdateFields({ suiPackages })}
+      onVerifyPackages={onVerifyPackages}
+    />
   );
 }
 
@@ -342,7 +253,7 @@ function CategoryFieldset({
   selectedValues: DappIndexCategoryId[];
   onChange: (values: DappIndexCategoryId[]) => void;
 }) {
-  const errorId = getErrorId('builder-categories', error);
+  const errorId = getBuilderFieldErrorId('builder-categories', error);
 
   return (
     <fieldset
@@ -368,7 +279,7 @@ function CategoryFieldset({
           />
         ))}
       </div>
-      <FieldError id="builder-categories" message={error} />
+      <BuilderFieldError id="builder-categories" message={error} />
     </fieldset>
   );
 }
@@ -382,7 +293,7 @@ function SmartAssemblyFieldset({
   selectedValues: DappIndexSmartAssemblyType[];
   onChange: (values: DappIndexSmartAssemblyType[]) => void;
 }) {
-  const errorId = getErrorId('builder-smart-assemblies', error);
+  const errorId = getBuilderFieldErrorId('builder-smart-assemblies', error);
 
   return (
     <fieldset
@@ -407,7 +318,7 @@ function SmartAssemblyFieldset({
           />
         ))}
       </div>
-      <FieldError id="builder-smart-assemblies" message={error} />
+      <BuilderFieldError id="builder-smart-assemblies" message={error} />
     </fieldset>
   );
 }
@@ -447,26 +358,6 @@ function CheckboxOption({
       </span>
     </label>
   );
-}
-
-function FieldError({ id, message }: { id: string; message?: string }) {
-  if (!message) return null;
-
-  return (
-    <p className="text-xs text-[var(--color-error)]" id={`${id}-error`}>
-      {message}
-    </p>
-  );
-}
-
-function getFieldInputClassName(error?: string): string {
-  return error
-    ? `${FIELD_INPUT_CLASS_NAME} ${FIELD_ERROR_INPUT_CLASS_NAME}`
-    : FIELD_INPUT_CLASS_NAME;
-}
-
-function getErrorId(id: string, error?: string): string | undefined {
-  return error ? `${id}-error` : undefined;
 }
 
 function toggleArrayValue<T extends string>(values: T[], value: T): T[] {

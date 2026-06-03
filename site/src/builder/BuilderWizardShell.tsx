@@ -19,6 +19,7 @@ import {
   type RegistrationDraftFieldErrors,
   type RegistrationDraftFields,
 } from './registrationDraftFields';
+import type { RegistrationDraftPackageVerificationState } from './registrationDraftPackages';
 
 export type BuilderWizardShellProps = {
   activeStep: DraftStep;
@@ -29,9 +30,11 @@ export type BuilderWizardShellProps = {
   fields: RegistrationDraftFields;
   navigationError: string | null;
   navigationPending: boolean;
+  packageVerification: RegistrationDraftPackageVerificationState;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
   onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
+  onVerifyPackages: () => Promise<void>;
 };
 
 export function BuilderWizardShell({
@@ -43,9 +46,11 @@ export function BuilderWizardShell({
   fields,
   navigationError,
   navigationPending,
+  packageVerification,
   onExitWizard,
   onNavigateStep,
   onUpdateFields,
+  onVerifyPackages,
 }: BuilderWizardShellProps) {
   const stepItems = createBuilderWizardStepItems(
     activeStep,
@@ -84,6 +89,8 @@ export function BuilderWizardShell({
           onExitWizard={onExitWizard}
           onNavigateStep={onNavigateStep}
           onUpdateFields={onUpdateFields}
+          packageVerification={packageVerification}
+          onVerifyPackages={onVerifyPackages}
         />
       </div>
     </div>
@@ -195,11 +202,13 @@ function WizardStepPanel({
   fields,
   nextStep,
   navigationPending,
+  packageVerification,
   previousStep,
   title,
   onExitWizard,
   onNavigateStep,
   onUpdateFields,
+  onVerifyPackages,
 }: {
   activeStep: DraftStep;
   canNavigateNext: boolean;
@@ -208,11 +217,13 @@ function WizardStepPanel({
   fields: RegistrationDraftFields;
   nextStep: DraftStep | null;
   navigationPending: boolean;
+  packageVerification: RegistrationDraftPackageVerificationState;
   previousStep: DraftStep | null;
   title: string;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
   onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
+  onVerifyPackages: () => Promise<void>;
 }) {
   const isPlaceholderStep = isBuilderWizardPlaceholderStep(activeStep);
 
@@ -229,7 +240,9 @@ function WizardStepPanel({
             activeStep={activeStep}
             errors={fieldErrors}
             fields={fields}
+            packageVerification={packageVerification}
             onUpdateFields={onUpdateFields}
+            onVerifyPackages={onVerifyPackages}
           />
         </div>
       </section>

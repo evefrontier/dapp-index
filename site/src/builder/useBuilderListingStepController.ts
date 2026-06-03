@@ -1,5 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { verifyMoveRegistryPackage } from '@/chain/moveRegistry';
+import { createMoveRegistryResolver } from '@/chain/moveRegistryResolver';
 import type { BuilderWizardShellProps } from './BuilderWizardShell';
 import { getBuilderErrorMessage } from './builderErrors';
 import { resolveBuilderWizardRouteStep } from './builderWizardModel';
@@ -10,6 +12,12 @@ import {
   validateRegistrationDraftFields,
   type RegistrationDraftFields,
 } from './registrationDraftFields';
+import {
+  getRegistrationDraftPackageVerificationBlocker,
+  INITIAL_REGISTRATION_DRAFT_PACKAGE_VERIFICATION,
+  toMoveRegistryResolvablePackages,
+  type RegistrationDraftPackageVerificationState,
+} from './registrationDraftPackages';
 import {
   createDraftAutosave,
   createDraftStorage,
@@ -48,6 +56,10 @@ export function useBuilderListingStepController({
     useState<DraftAutosaveStatus>('idle');
   const [navigationError, setNavigationError] = useState<string | null>(null);
   const [navigationPending, setNavigationPending] = useState(false);
+  const [packageVerification, setPackageVerification] =
+    useState<RegistrationDraftPackageVerificationState>(
+      INITIAL_REGISTRATION_DRAFT_PACKAGE_VERIFICATION,
+    );
   const loadedDraftId = draft?.id ?? null;
   const storedStep = draft?.currentStep ?? null;
   const fields = useMemo(
@@ -75,6 +87,7 @@ export function useBuilderListingStepController({
       }),
     [draftId, storage],
   );
+  const moveRegistryResolver = useMemo(() => createMoveRegistryResolver(), []);
   const autosaveError =
     autosaveStatus === 'error'
       ? getBuilderErrorMessage(autosave.getError(), 'Could not save draft.')
@@ -170,6 +183,9 @@ export function useBuilderListingStepController({
 
       autosave.updateFields(fieldPatch);
       setAutosaveStatus(autosave.getStatus());
+      if (Object.hasOwn(nextFields, 'suiPackages')) {
+        setPackageVerification(INITIAL_REGISTRATION_DRAFT_PACKAGE_VERIFICATION);
+      }
       setDraft((currentDraft) =>
         currentDraft
           ? {
@@ -184,6 +200,50 @@ export function useBuilderListingStepController({
     },
     [autosave],
   );
+
+  const handleVerifyPackages = useCallback(async () => {
+    const verificationBlocker = getRegistrationDraftPackageVerificationBlocker(
+      fields.suiPackages,
+    );
+    if (verificationBlocker) {
+      setPackageVerification({
+        status: 'error',
+        result: null,
+        errorMessage: verificationBlocker,
+      });
+      return;
+    }
+
+    setPackageVerification({
+      status: 'verifying',
+      result: null,
+      errorMessage: null,
+    });
+
+    try {
+      const results = await Promise.all(
+        toMoveRegistryResolvablePackages(fields.suiPackages).map(
+          (entry) => verifyMoveRegistryPackage(entry, moveRegistryResolver),
+        ),
+      );
+      const ok = results.every((result) => result.status === 'verified');
+
+      setPackageVerification({
+        status: ok ? 'ready' : 'not-ready',
+        result: { ok, results },
+        errorMessage: null,
+      });
+    } catch (caughtError) {
+      setPackageVerification({
+        status: 'error',
+        result: null,
+        errorMessage: getBuilderErrorMessage(
+          caughtError,
+          'Could not verify packages.',
+        ),
+      });
+    }
+  }, [fields.suiPackages, moveRegistryResolver]);
 
   const handleNavigateStep = useCallback(
     async (nextStep: DraftStep) => {
@@ -289,9 +349,11 @@ export function useBuilderListingStepController({
       fields,
       navigationError,
       navigationPending,
+      packageVerification,
       onExitWizard: handleExitWizard,
       onNavigateStep: handleNavigateStep,
       onUpdateFields: handleUpdateFields,
+      onVerifyPackages: handleVerifyPackages,
     },
   };
 }

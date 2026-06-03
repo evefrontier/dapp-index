@@ -125,6 +125,7 @@ export async function verifyMoveRegistryPackage(
     }
 
     if (
+      packageInfoId !== undefined &&
       resolvedPackageInfoId !== undefined &&
       resolvedPackageInfoId !== packageInfoId
     ) {
@@ -276,11 +277,7 @@ function declareMoveRegistryPackage(
     'missing-package-id',
     'invalid-package-id',
   );
-  const packageInfoId = declarePackageId(
-    entry.packageInfoId,
-    'missing-package-info-id',
-    'invalid-package-info-id',
-  );
+  let packageInfoId: string | undefined;
 
   if (!isSuiNetwork(network)) {
     return rejectMoveRegistryPackageDeclaration({ entry }, 'invalid-network');
@@ -307,11 +304,21 @@ function declareMoveRegistryPackage(
     );
   }
 
-  if (!packageInfoId.ok) {
-    return rejectMoveRegistryPackageDeclaration(
-      { entry, network, mvrName, packageId: packageId.value },
-      packageInfoId.reason,
+  if (entry.packageInfoId?.trim()) {
+    const packageInfoIdDeclaration = declarePackageId(
+      entry.packageInfoId,
+      'missing-package-info-id',
+      'invalid-package-info-id',
     );
+
+    if (!packageInfoIdDeclaration.ok) {
+      return rejectMoveRegistryPackageDeclaration(
+        { entry, network, mvrName, packageId: packageId.value },
+        packageInfoIdDeclaration.reason,
+      );
+    }
+
+    packageInfoId = packageInfoIdDeclaration.value;
   }
 
   return {
@@ -321,7 +328,7 @@ function declareMoveRegistryPackage(
       network,
       mvrName,
       packageId: packageId.value,
-      packageInfoId: packageInfoId.value,
+      packageInfoId,
     },
   };
 }

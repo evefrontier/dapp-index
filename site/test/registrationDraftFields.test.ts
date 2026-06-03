@@ -9,6 +9,11 @@ import {
 } from '../src/builder/registrationDraftFields';
 
 describe('registration draft fields', () => {
+  const packageId =
+    '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+  const packageInfoId =
+    '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+
   test('reads typed registration fields from generic draft storage values', () => {
     expect(
       readRegistrationDraftFields({
@@ -22,6 +27,16 @@ describe('registration draft fields', () => {
         categories: ['logistics', 'bad-category', 'logistics', 'intel'],
         smartAssemblyTypes: ['gate', 'not-real', 'storage-unit'],
         serverTenant: 'stillness',
+        suiPackages: [
+          {
+            draftPackageId: 'package-1',
+            network: 'mainnet',
+            role: 'core',
+            mvrName: '@frontier/map',
+            packageId,
+            packageInfoId,
+          },
+        ],
         domainProofUrl: 'https://frontier-map.example/.well-known/dapp-index',
         notes: 'Owned by the Frontier Map team.',
       }),
@@ -36,6 +51,16 @@ describe('registration draft fields', () => {
       categories: ['logistics', 'intel'],
       smartAssemblyTypes: ['gate', 'storage-unit'],
       serverTenant: 'stillness',
+      suiPackages: [
+        {
+          draftPackageId: 'package-1',
+          network: 'mainnet',
+          role: 'core',
+          mvrName: '@frontier/map',
+          packageId,
+          packageInfoId,
+        },
+      ],
       domainProofUrl: 'https://frontier-map.example/.well-known/dapp-index',
       notes: 'Owned by the Frontier Map team.',
     });
@@ -60,6 +85,7 @@ describe('registration draft fields', () => {
       categories: ['logistics'],
       smartAssemblyTypes: [],
       serverTenant: '',
+      suiPackages: [],
       domainProofUrl: '',
       notes: '',
     });
@@ -101,6 +127,16 @@ describe('registration draft fields', () => {
       liveUrl: 'https://frontier-map.example',
       categories: ['logistics'],
       serverTenant: 'stillness',
+      suiPackages: [
+        {
+          draftPackageId: 'package-1',
+          network: 'mainnet',
+          role: 'core',
+          mvrName: '@frontier/map',
+          packageId,
+          packageInfoId,
+        },
+      ],
     };
 
     expect(isRegistrationDraftStepValid('basics', validFields)).toBe(true);
@@ -127,6 +163,12 @@ describe('registration draft fields', () => {
         categories: [],
       }),
     ).toBe(false);
+    expect(
+      isRegistrationDraftStepValid('packages', {
+        ...validFields,
+        suiPackages: [],
+      }),
+    ).toBe(true);
   });
 
   test('identifies wizard steps backed by registration fields', () => {
@@ -134,7 +176,7 @@ describe('registration draft fields', () => {
     expect(isRegistrationDraftFieldStep('about')).toBe(true);
     expect(isRegistrationDraftFieldStep('discovery')).toBe(true);
     expect(isRegistrationDraftFieldStep('proofs')).toBe(true);
-    expect(isRegistrationDraftFieldStep('packages')).toBe(false);
+    expect(isRegistrationDraftFieldStep('packages')).toBe(true);
     expect(isRegistrationDraftFieldStep('media')).toBe(false);
     expect(isRegistrationDraftFieldStep('review')).toBe(false);
     expect(isRegistrationDraftFieldStep('publish')).toBe(false);
