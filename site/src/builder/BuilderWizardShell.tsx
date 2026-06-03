@@ -5,23 +5,33 @@ import type {
   DraftAutosaveStatus,
   DraftStep,
 } from '@/storage/draftStorage';
+import { BuilderRegistrationStepScreen } from './BuilderRegistrationStepScreens';
 import {
   createBuilderWizardStepItems,
   getBuilderWizardAdjacentStep,
   getBuilderWizardStatusLabel,
   getBuilderWizardStepLabel,
+  isBuilderWizardPlaceholderStep,
   type BuilderWizardStepItem,
 } from './builderWizardModel';
+import {
+  isRegistrationDraftStepValid,
+  type RegistrationDraftFieldErrors,
+  type RegistrationDraftFields,
+} from './registrationDraftFields';
 
 export type BuilderWizardShellProps = {
   activeStep: DraftStep;
   autosaveError: string | null;
   autosaveStatus: DraftAutosaveStatus;
   draft: Draft;
+  fieldErrors: RegistrationDraftFieldErrors;
+  fields: RegistrationDraftFields;
   navigationError: string | null;
   navigationPending: boolean;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
+  onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
 };
 
 export function BuilderWizardShell({
@@ -29,10 +39,13 @@ export function BuilderWizardShell({
   autosaveError,
   autosaveStatus,
   draft,
+  fieldErrors,
+  fields,
   navigationError,
   navigationPending,
   onExitWizard,
   onNavigateStep,
+  onUpdateFields,
 }: BuilderWizardShellProps) {
   const stepItems = createBuilderWizardStepItems(
     activeStep,
@@ -43,6 +56,8 @@ export function BuilderWizardShell({
   const nextStep = getBuilderWizardAdjacentStep(activeStep, 'next');
   const statusLabel = getBuilderWizardStatusLabel(autosaveStatus);
   const errorMessage = navigationError ?? autosaveError;
+  const canNavigateNext =
+    !nextStep || isRegistrationDraftStepValid(activeStep, fields);
 
   return (
     <div className="space-y-6">
@@ -58,12 +73,17 @@ export function BuilderWizardShell({
         />
         <WizardStepPanel
           draft={draft}
+          fieldErrors={fieldErrors}
+          fields={fields}
           nextStep={nextStep}
           previousStep={previousStep}
           title={title}
+          activeStep={activeStep}
+          canNavigateNext={canNavigateNext}
           navigationPending={navigationPending}
           onExitWizard={onExitWizard}
           onNavigateStep={onNavigateStep}
+          onUpdateFields={onUpdateFields}
         />
       </div>
     </div>
@@ -168,47 +188,49 @@ function WizardStepNav({
 }
 
 function WizardStepPanel({
+  activeStep,
+  canNavigateNext,
   draft,
+  fieldErrors,
+  fields,
   nextStep,
   navigationPending,
   previousStep,
   title,
   onExitWizard,
   onNavigateStep,
+  onUpdateFields,
 }: {
+  activeStep: DraftStep;
+  canNavigateNext: boolean;
   draft: Draft;
+  fieldErrors: RegistrationDraftFieldErrors;
+  fields: RegistrationDraftFields;
   nextStep: DraftStep | null;
   navigationPending: boolean;
   previousStep: DraftStep | null;
   title: string;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
+  onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
 }) {
+  const isPlaceholderStep = isBuilderWizardPlaceholderStep(activeStep);
+
   return (
     <main className="min-w-0 space-y-5">
       <section className="border border-[var(--color-neutral-20)] p-4">
         <div className="space-y-4">
-          <div className="space-y-1">
-            <h2 className="text-lg font-bold uppercase text-[var(--color-foreground)]">
-              {title}
-            </h2>
-            <p className="text-sm text-[var(--color-neutral-70)]">
-              Screen content lands in the next builder PR.
-            </p>
-          </div>
-
-          <dl className="grid gap-3 text-sm sm:grid-cols-[8rem_minmax(0,1fr)]">
-            <dt className="font-bold uppercase text-[var(--color-neutral-60)]">
-              Draft
-            </dt>
-            <dd className="break-all text-[var(--color-foreground)]">
-              {draft.id}
-            </dd>
-            <dt className="font-bold uppercase text-[var(--color-neutral-60)]">
-              Step
-            </dt>
-            <dd className="text-[var(--color-foreground)]">{title}</dd>
-          </dl>
+          <WizardStepPanelHeader
+            draftId={draft.id}
+            showDraftMeta={isPlaceholderStep}
+            title={title}
+          />
+          <BuilderRegistrationStepScreen
+            activeStep={activeStep}
+            errors={fieldErrors}
+            fields={fields}
+            onUpdateFields={onUpdateFields}
+          />
         </div>
       </section>
 
@@ -237,7 +259,7 @@ function WizardStepPanel({
           <Button
             variant="primary"
             size="small"
-            disabled={navigationPending || !nextStep}
+            disabled={navigationPending || !nextStep || !canNavigateNext}
             onClick={() => {
               if (nextStep) void onNavigateStep(nextStep);
             }}
@@ -247,6 +269,38 @@ function WizardStepPanel({
         </div>
       </div>
     </main>
+  );
+}
+
+function WizardStepPanelHeader({
+  draftId,
+  showDraftMeta,
+  title,
+}: {
+  draftId: string;
+  showDraftMeta: boolean;
+  title: string;
+}) {
+  return (
+    <div className="space-y-3">
+      <h2 className="text-lg font-bold uppercase text-[var(--color-foreground)]">
+        {title}
+      </h2>
+      {showDraftMeta ? (
+        <dl className="grid gap-3 text-sm sm:grid-cols-[8rem_minmax(0,1fr)]">
+          <dt className="font-bold uppercase text-[var(--color-neutral-60)]">
+            Draft
+          </dt>
+          <dd className="break-all text-[var(--color-foreground)]">
+            {draftId}
+          </dd>
+          <dt className="font-bold uppercase text-[var(--color-neutral-60)]">
+            Step
+          </dt>
+          <dd className="text-[var(--color-foreground)]">{title}</dd>
+        </dl>
+      ) : null}
+    </div>
   );
 }
 

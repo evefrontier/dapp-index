@@ -4,6 +4,13 @@ import type { BuilderWizardShellProps } from './BuilderWizardShell';
 import { getBuilderErrorMessage } from './builderErrors';
 import { resolveBuilderWizardRouteStep } from './builderWizardModel';
 import {
+  createRegistrationDraftFieldPatch,
+  createRegistrationDraftFields,
+  readRegistrationDraftFields,
+  validateRegistrationDraftFields,
+  type RegistrationDraftFields,
+} from './registrationDraftFields';
+import {
   createDraftAutosave,
   createDraftStorage,
   type Draft,
@@ -43,6 +50,17 @@ export function useBuilderListingStepController({
   const [navigationPending, setNavigationPending] = useState(false);
   const loadedDraftId = draft?.id ?? null;
   const storedStep = draft?.currentStep ?? null;
+  const fields = useMemo(
+    () =>
+      draft
+        ? readRegistrationDraftFields(draft.fields)
+        : createRegistrationDraftFields(),
+    [draft],
+  );
+  const fieldErrors = useMemo(
+    () => validateRegistrationDraftFields(fields),
+    [fields],
+  );
   const routeStep = useMemo(
     () =>
       storedStep ? resolveBuilderWizardRouteStep(step, storedStep) : null,
@@ -146,6 +164,27 @@ export function useBuilderListingStepController({
     return savedDraft;
   }, [autosave]);
 
+  const handleUpdateFields = useCallback(
+    (nextFields: Partial<RegistrationDraftFields>) => {
+      const fieldPatch = createRegistrationDraftFieldPatch(nextFields);
+
+      autosave.updateFields(fieldPatch);
+      setAutosaveStatus(autosave.getStatus());
+      setDraft((currentDraft) =>
+        currentDraft
+          ? {
+              ...currentDraft,
+              fields: {
+                ...currentDraft.fields,
+                ...fieldPatch,
+              },
+            }
+          : currentDraft,
+      );
+    },
+    [autosave],
+  );
+
   const handleNavigateStep = useCallback(
     async (nextStep: DraftStep) => {
       if (!loadedDraftId || navigationPending) return;
@@ -246,10 +285,13 @@ export function useBuilderListingStepController({
       autosaveError,
       autosaveStatus,
       draft,
+      fieldErrors,
+      fields,
       navigationError,
       navigationPending,
       onExitWizard: handleExitWizard,
       onNavigateStep: handleNavigateStep,
+      onUpdateFields: handleUpdateFields,
     },
   };
 }
