@@ -29,7 +29,6 @@ describe('builder wizard model', () => {
       'discovery',
       'packages',
       'media',
-      'proofs',
       'review',
       'publish',
     ]);

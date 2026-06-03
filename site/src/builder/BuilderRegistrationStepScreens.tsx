@@ -75,7 +75,6 @@ const REGISTRATION_DRAFT_STEP_SCREENS = {
   about: AboutScreen,
   discovery: DiscoveryScreen,
   packages: PackagesScreen,
-  proofs: ProofsScreen,
 } satisfies Record<
   RegistrationDraftFieldStep,
   ComponentType<RegistrationStepFieldsProps>
@@ -196,34 +195,6 @@ function DiscoveryScreen({
           </option>
         ))}
       </BuilderSelectField>
-    </div>
-  );
-}
-
-function ProofsScreen({
-  errors,
-  fields,
-  onUpdateFields,
-}: RegistrationStepFieldsProps) {
-  return (
-    <div className="grid gap-4">
-      <BuilderTextField
-        error={errors.domainProofUrl}
-        id="builder-domain-proof-url"
-        label="Domain proof URL"
-        type="url"
-        value={fields.domainProofUrl}
-        onChange={(domainProofUrl) => onUpdateFields({ domainProofUrl })}
-      />
-      <BuilderTextAreaField
-        error={errors.notes}
-        id="builder-notes"
-        label="Notes"
-        maxLength={2000}
-        rows={6}
-        value={fields.notes}
-        onChange={(notes) => onUpdateFields({ notes })}
-      />
     </div>
   );
 }

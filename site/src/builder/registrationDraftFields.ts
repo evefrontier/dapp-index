@@ -25,8 +25,6 @@ export type RegistrationDraftFields = {
   smartAssemblyTypes: DappIndexSmartAssemblyType[];
   serverTenant: DappIndexServerTenant | '';
   suiPackages: RegistrationDraftPackage[];
-  domainProofUrl: string;
-  notes: string;
 };
 
 export type RegistrationDraftFieldName = keyof RegistrationDraftFields;
@@ -47,8 +45,6 @@ export const REGISTRATION_DRAFT_FIELD_KEYS = [
   'smartAssemblyTypes',
   'serverTenant',
   'suiPackages',
-  'domainProofUrl',
-  'notes',
 ] as const satisfies readonly RegistrationDraftFieldName[];
 
 export const REGISTRATION_DRAFT_FIELD_STEPS = [
@@ -56,7 +52,6 @@ export const REGISTRATION_DRAFT_FIELD_STEPS = [
   'about',
   'discovery',
   'packages',
-  'proofs',
 ] as const satisfies readonly DraftStep[];
 
 export type RegistrationDraftFieldStep =
@@ -79,7 +74,6 @@ const STEP_FIELD_GROUPS = {
   about: ['description', 'liveUrl', 'repositoryUrl', 'documentationUrl'],
   discovery: ['categories', 'smartAssemblyTypes', 'serverTenant'],
   packages: ['suiPackages'],
-  proofs: ['domainProofUrl', 'notes'],
 } satisfies Record<
   RegistrationDraftFieldStep,
   readonly RegistrationDraftFieldName[]
@@ -98,8 +92,6 @@ export function createRegistrationDraftFields(): RegistrationDraftFields {
     smartAssemblyTypes: [],
     serverTenant: '',
     suiPackages: [],
-    domainProofUrl: '',
-    notes: '',
   };
 }
 
@@ -123,8 +115,6 @@ export function readRegistrationDraftFields(
       ? fields.serverTenant
       : '',
     suiPackages: readRegistrationDraftPackages(fields),
-    domainProofUrl: readString(fields.domainProofUrl),
-    notes: readString(fields.notes),
   };
 }
 
@@ -151,7 +141,6 @@ export function validateRegistrationDraftFields(
     ...validateAboutFields(fields),
     ...validateDiscoveryFields(fields),
     ...validateRegistrationDraftPackages(fields.suiPackages).fieldErrors,
-    ...validateProofsFields(fields),
   };
 }
 
@@ -252,22 +241,6 @@ function validateDiscoveryFields(
     errors.serverTenant = 'Choose a server tenant.';
   } else if (!isDappIndexServerTenant(fields.serverTenant)) {
     errors.serverTenant = 'Choose a valid server tenant.';
-  }
-
-  return errors;
-}
-
-function validateProofsFields(
-  fields: RegistrationDraftFields,
-): RegistrationDraftFieldErrors {
-  const errors: RegistrationDraftFieldErrors = {};
-
-  if (hasText(fields.domainProofUrl) && !isHttpsUrl(fields.domainProofUrl)) {
-    errors.domainProofUrl = 'Use an HTTPS URL.';
-  }
-
-  if (fields.notes.length > 2000) {
-    errors.notes = 'Notes must be 2000 characters or fewer.';
   }
 
   return errors;

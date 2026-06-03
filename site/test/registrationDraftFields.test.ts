@@ -37,8 +37,6 @@ describe('registration draft fields', () => {
             packageInfoId,
           },
         ],
-        domainProofUrl: 'https://frontier-map.example/.well-known/dapp-index',
-        notes: 'Owned by the Frontier Map team.',
       }),
     ).toEqual({
       name: 'Frontier Map',
@@ -61,8 +59,6 @@ describe('registration draft fields', () => {
           packageInfoId,
         },
       ],
-      domainProofUrl: 'https://frontier-map.example/.well-known/dapp-index',
-      notes: 'Owned by the Frontier Map team.',
     });
   });
 
@@ -86,8 +82,6 @@ describe('registration draft fields', () => {
       smartAssemblyTypes: [],
       serverTenant: '',
       suiPackages: [],
-      domainProofUrl: '',
-      notes: '',
     });
   });
 
@@ -102,8 +96,6 @@ describe('registration draft fields', () => {
       documentationUrl: 'https://',
       categories: [],
       serverTenant: '',
-      domainProofUrl: 'http://frontier-map.example/proof',
-      notes: 'a'.repeat(2001),
     });
 
     expect(errors.name).toBe('Name is required.');
@@ -114,8 +106,6 @@ describe('registration draft fields', () => {
     expect(errors.documentationUrl).toBe('Use an HTTPS URL.');
     expect(errors.categories).toBe('Choose at least one category.');
     expect(errors.serverTenant).toBe('Choose a server tenant.');
-    expect(errors.domainProofUrl).toBe('Use an HTTPS URL.');
-    expect(errors.notes).toBe('Notes must be 2000 characters or fewer.');
   });
 
   test('reports validity per wizard step', () => {
@@ -142,7 +132,6 @@ describe('registration draft fields', () => {
     expect(isRegistrationDraftStepValid('basics', validFields)).toBe(true);
     expect(isRegistrationDraftStepValid('about', validFields)).toBe(true);
     expect(isRegistrationDraftStepValid('discovery', validFields)).toBe(true);
-    expect(isRegistrationDraftStepValid('proofs', validFields)).toBe(true);
     expect(isRegistrationDraftStepValid('packages', validFields)).toBe(true);
 
     expect(
@@ -175,7 +164,6 @@ describe('registration draft fields', () => {
     expect(isRegistrationDraftFieldStep('basics')).toBe(true);
     expect(isRegistrationDraftFieldStep('about')).toBe(true);
     expect(isRegistrationDraftFieldStep('discovery')).toBe(true);
-    expect(isRegistrationDraftFieldStep('proofs')).toBe(true);
     expect(isRegistrationDraftFieldStep('packages')).toBe(true);
     expect(isRegistrationDraftFieldStep('media')).toBe(false);
     expect(isRegistrationDraftFieldStep('review')).toBe(false);

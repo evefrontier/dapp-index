@@ -20,7 +20,6 @@ const BUILDER_WIZARD_STEP_LABELS = {
   discovery: 'Discovery',
   packages: 'Packages',
   media: 'Media',
-  proofs: 'Proofs',
   review: 'Review',
   publish: 'Publish',
 } satisfies Record<DraftStep, string>;
