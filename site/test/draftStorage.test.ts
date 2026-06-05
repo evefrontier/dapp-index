@@ -55,6 +55,7 @@ describe('draft storage', () => {
         {
           id: 'screen-1',
           kind: 'screenshot',
+          role: 'gallery',
           name: 'screen.png',
           mimeType: 'image/png',
           size: 10,
@@ -225,18 +226,100 @@ describe('draft storage', () => {
       id: 'trailer',
       kind: 'video',
       name: 'trailer.webm',
+      role: 'demo',
+      caption: 'Launch trailer',
     }, content);
 
     const savedDraft = await storage.getDraft('draft-1');
     const savedContent = await storage.getLocalMedia('draft-1', 'trailer');
 
     expect(media.mimeType).toBe('video/webm');
+    expect(media.role).toBe('demo');
+    expect(media.caption).toBe('Launch trailer');
     expect(media.size).toBe(9);
     expect(savedDraft?.media).toEqual([media]);
     expect(savedContent).toEqual(content);
     expect(localStorage.getItem(DRAFT_STORAGE_KEY)).not.toContain(
       'webm-data',
     );
+  });
+
+  test('updates media metadata without replacing local content', async () => {
+    const { storage } = createTestDraftStorage({
+      now: () => new Date('2026-05-18T13:15:00.000Z'),
+    });
+    const content = new Blob(['image-data'], { type: 'image/png' });
+
+    await storage.saveDraft(draft);
+    await storage.saveMedia('draft-1', {
+      id: 'screen-1',
+      kind: 'screenshot',
+      name: 'screen.png',
+    }, content);
+    const updatedDraft = await storage.updateMedia('draft-1', 'screen-1', {
+      role: 'thumbnail',
+      alt: 'Route planner dashboard',
+      caption: 'Live route planning view',
+    });
+
+    expect(updatedDraft.media).toEqual([
+      expect.objectContaining({
+        id: 'screen-1',
+        role: 'thumbnail',
+        alt: 'Route planner dashboard',
+        caption: 'Live route planning view',
+      }),
+    ]);
+    expect(updatedDraft.updatedAt).toBe('2026-05-18T13:15:00.000Z');
+    expect(await storage.getLocalMedia('draft-1', 'screen-1')).toEqual(
+      content,
+    );
+  });
+
+  test('keeps thumbnail and hero media roles exclusive', async () => {
+    const { storage } = createTestDraftStorage();
+
+    await storage.saveDraft(draft);
+    await storage.saveMedia('draft-1', {
+      id: 'screen-1',
+      kind: 'screenshot',
+      name: 'screen-1.png',
+      role: 'thumbnail',
+    }, new Blob(['image-data-1'], { type: 'image/png' }));
+    await storage.saveMedia('draft-1', {
+      id: 'screen-2',
+      kind: 'screenshot',
+      name: 'screen-2.png',
+    }, new Blob(['image-data-2'], { type: 'image/png' }));
+
+    const updatedDraft = await storage.updateMedia('draft-1', 'screen-2', {
+      role: 'thumbnail',
+    });
+
+    expect(
+      updatedDraft.media.map(({ id, role }) => ({ id, role })).sort((a, b) =>
+        a.id.localeCompare(b.id),
+      ),
+    ).toEqual([
+      { id: 'screen-1', role: 'gallery' },
+      { id: 'screen-2', role: 'thumbnail' },
+    ]);
+  });
+
+  test('deletes draft media metadata and local content together', async () => {
+    const { storage } = createTestDraftStorage();
+
+    await storage.saveDraft(draft);
+    await storage.saveMedia('draft-1', {
+      id: 'screen-1',
+      kind: 'screenshot',
+      name: 'screen.png',
+    }, new Blob(['image-data'], { type: 'image/png' }));
+
+    const updatedDraft = await storage.deleteMedia('draft-1', 'screen-1');
+
+    expect(updatedDraft.media).toEqual([]);
+    expect(await storage.getLocalMedia('draft-1', 'screen-1')).toBeNull();
   });
 
   test('restores replaced media metadata when local media storage fails', async () => {
@@ -250,6 +333,7 @@ describe('draft storage', () => {
           }
         },
         get: async () => null,
+        delete: async () => {},
         deleteDraft: async () => {},
         clear: async () => {},
       },
@@ -347,6 +431,7 @@ describe('draft storage', () => {
       localMediaStore: {
         put: async () => {},
         get: async () => null,
+        delete: async () => {},
         deleteDraft: async () => {
           throw new Error('delete failed');
         },
@@ -365,6 +450,7 @@ describe('draft storage', () => {
       localMediaStore: {
         put: async () => {},
         get: async () => null,
+        delete: async () => {},
         deleteDraft: async () => {},
         clear: async () => {
           throw new Error('clear failed');

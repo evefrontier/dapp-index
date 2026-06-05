@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router';
 import type {
   Draft,
   DraftAutosaveStatus,
+  DraftMediaUpdate,
   DraftStep,
 } from '@/storage/draftStorage';
 import { BuilderRegistrationStepScreen } from './BuilderRegistrationStepScreens';
@@ -28,12 +29,21 @@ export type BuilderWizardShellProps = {
   draft: Draft;
   fieldErrors: RegistrationDraftFieldErrors;
   fields: RegistrationDraftFields;
+  mediaError: string | null;
+  mediaPending: boolean;
+  mediaPreviewUrls: Record<string, string>;
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
+  onUpdateMedia: (
+    mediaId: string,
+    update: DraftMediaUpdate,
+  ) => Promise<void>;
   onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
+  onUploadMedia: (files: File[]) => Promise<void>;
   onVerifyPackages: () => Promise<void>;
 };
 
@@ -44,12 +54,18 @@ export function BuilderWizardShell({
   draft,
   fieldErrors,
   fields,
+  mediaError,
+  mediaPending,
+  mediaPreviewUrls,
   navigationError,
   navigationPending,
   packageVerification,
+  onDeleteMedia,
   onExitWizard,
   onNavigateStep,
+  onUpdateMedia,
   onUpdateFields,
+  onUploadMedia,
   onVerifyPackages,
 }: BuilderWizardShellProps) {
   const stepItems = createBuilderWizardStepItems(
@@ -87,8 +103,14 @@ export function BuilderWizardShell({
           canNavigateNext={canNavigateNext}
           navigationPending={navigationPending}
           onExitWizard={onExitWizard}
+          onDeleteMedia={onDeleteMedia}
           onNavigateStep={onNavigateStep}
+          onUpdateMedia={onUpdateMedia}
           onUpdateFields={onUpdateFields}
+          onUploadMedia={onUploadMedia}
+          mediaError={mediaError}
+          mediaPending={mediaPending}
+          mediaPreviewUrls={mediaPreviewUrls}
           packageVerification={packageVerification}
           onVerifyPackages={onVerifyPackages}
         />
@@ -200,14 +222,20 @@ function WizardStepPanel({
   draft,
   fieldErrors,
   fields,
+  mediaError,
+  mediaPending,
+  mediaPreviewUrls,
   nextStep,
   navigationPending,
   packageVerification,
   previousStep,
   title,
+  onDeleteMedia,
   onExitWizard,
   onNavigateStep,
+  onUpdateMedia,
   onUpdateFields,
+  onUploadMedia,
   onVerifyPackages,
 }: {
   activeStep: DraftStep;
@@ -215,14 +243,23 @@ function WizardStepPanel({
   draft: Draft;
   fieldErrors: RegistrationDraftFieldErrors;
   fields: RegistrationDraftFields;
+  mediaError: string | null;
+  mediaPending: boolean;
+  mediaPreviewUrls: Record<string, string>;
   nextStep: DraftStep | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
   previousStep: DraftStep | null;
   title: string;
+  onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
+  onUpdateMedia: (
+    mediaId: string,
+    update: DraftMediaUpdate,
+  ) => Promise<void>;
   onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
+  onUploadMedia: (files: File[]) => Promise<void>;
   onVerifyPackages: () => Promise<void>;
 }) {
   const isPlaceholderStep = isBuilderWizardPlaceholderStep(activeStep);
@@ -240,8 +277,15 @@ function WizardStepPanel({
             activeStep={activeStep}
             errors={fieldErrors}
             fields={fields}
+            media={draft.media}
+            mediaError={mediaError}
+            mediaPending={mediaPending}
+            mediaPreviewUrls={mediaPreviewUrls}
             packageVerification={packageVerification}
+            onDeleteMedia={onDeleteMedia}
+            onUpdateMedia={onUpdateMedia}
             onUpdateFields={onUpdateFields}
+            onUploadMedia={onUploadMedia}
             onVerifyPackages={onVerifyPackages}
           />
         </div>

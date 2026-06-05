@@ -1,5 +1,9 @@
 import type { ComponentType } from 'react';
-import type { DraftStep } from '@/storage/draftStorage';
+import type {
+  DraftMedia,
+  DraftMediaUpdate,
+  DraftStep,
+} from '@/storage/draftStorage';
 import {
   DAPP_INDEX_CATEGORIES,
   DAPP_INDEX_SERVER_TENANTS,
@@ -16,6 +20,7 @@ import {
   BuilderTextField,
   getBuilderFieldErrorId,
 } from './BuilderFormFields';
+import { BuilderMediaStepScreen } from './BuilderMediaStepScreen';
 import { BuilderPackageStepScreen } from './BuilderPackageStepScreen';
 import {
   isRegistrationDraftFieldStep,
@@ -29,24 +34,59 @@ type RegistrationStepScreenProps = {
   activeStep: DraftStep;
   errors: RegistrationDraftFieldErrors;
   fields: RegistrationDraftFields;
+  media: DraftMedia[];
+  mediaError: string | null;
+  mediaPending: boolean;
+  mediaPreviewUrls: Record<string, string>;
   packageVerification: RegistrationDraftPackageVerificationState;
+  onDeleteMedia: (mediaId: string) => Promise<void>;
+  onUpdateMedia: (
+    mediaId: string,
+    update: DraftMediaUpdate,
+  ) => Promise<void>;
   onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
+  onUploadMedia: (files: File[]) => Promise<void>;
   onVerifyPackages: () => Promise<void>;
 };
 
-type RegistrationStepFieldsProps = Omit<
+type RegistrationStepFieldsProps = Pick<
   RegistrationStepScreenProps,
-  'activeStep'
+  | 'errors'
+  | 'fields'
+  | 'packageVerification'
+  | 'onUpdateFields'
+  | 'onVerifyPackages'
 >;
 
 export function BuilderRegistrationStepScreen({
   activeStep,
   errors,
   fields,
+  media,
+  mediaError,
+  mediaPending,
+  mediaPreviewUrls,
   packageVerification,
+  onDeleteMedia,
+  onUpdateMedia,
   onUpdateFields,
+  onUploadMedia,
   onVerifyPackages,
 }: RegistrationStepScreenProps) {
+  if (activeStep === 'media') {
+    return (
+      <BuilderMediaStepScreen
+        errorMessage={mediaError}
+        media={media}
+        pending={mediaPending}
+        previewUrls={mediaPreviewUrls}
+        onDeleteMedia={onDeleteMedia}
+        onUpdateMedia={onUpdateMedia}
+        onUploadMedia={onUploadMedia}
+      />
+    );
+  }
+
   const StepScreen = isRegistrationDraftFieldStep(activeStep)
     ? REGISTRATION_DRAFT_STEP_SCREENS[activeStep]
     : null;
