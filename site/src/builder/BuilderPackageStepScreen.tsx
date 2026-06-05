@@ -12,7 +12,6 @@ import {
   BuilderTextField,
 } from './BuilderFormFields';
 import {
-  createRegistrationDraftPackage,
   getRegistrationDraftPackageVerificationBlocker,
   validateRegistrationDraftPackages,
   type RegistrationDraftPackage,
@@ -42,21 +41,10 @@ export function BuilderPackageStepScreen({
 
   return (
     <div className="grid gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <BuilderFieldError
-            id="builder-sui-packages"
-            message={packageValidation.fieldErrors.suiPackages}
-          />
-        </div>
-        <Button
-          variant="secondary"
-          size="small"
-          onClick={() => onChange(addPackage(packages))}
-        >
-          Add package
-        </Button>
-      </div>
+      <BuilderFieldError
+        id="builder-sui-packages"
+        message={packageValidation.fieldErrors.suiPackages}
+      />
 
       {packages.length === 0 ? (
         <EmptyPackageList />
@@ -272,18 +260,6 @@ function PackageVerificationSummary({
   );
 }
 
-function addPackage(
-  packages: readonly RegistrationDraftPackage[],
-): RegistrationDraftPackage[] {
-  return [
-    ...packages,
-    createRegistrationDraftPackage({
-      draftPackageId: crypto.randomUUID(),
-      role: getNewPackageDefaultRole(packages),
-    }),
-  ];
-}
-
 function updatePackage(
   packages: readonly RegistrationDraftPackage[],
   nextPackage: RegistrationDraftPackage,
@@ -293,14 +269,6 @@ function updatePackage(
       ? nextPackage
       : draftPackage,
   );
-}
-
-function getNewPackageDefaultRole(
-  packages: readonly RegistrationDraftPackage[],
-): DappIndexSuiPackageRole {
-  return packages.some((draftPackage) => draftPackage.role === 'core')
-    ? 'dependency'
-    : 'core';
 }
 
 function getVerificationResultLabel(

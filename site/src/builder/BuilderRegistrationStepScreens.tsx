@@ -307,14 +307,14 @@ function ServerTenantFilter({
       <legend className="mb-2 text-xs font-bold uppercase text-(--color-neutral-60)">
         Server tenant
       </legend>
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center gap-2">
         {DAPP_INDEX_SERVER_TENANTS.map((tenant) => {
           const selected = value === tenant;
 
           return (
             <Button
               key={tenant}
-              size="medium"
+              size="small"
               type="button"
               variant={selected ? 'primary' : 'secondary'}
               onClick={() => onChange(tenant)}

@@ -84,6 +84,18 @@ export function createRegistrationDraftPackage({
   };
 }
 
+export function addRegistrationDraftPackage(
+  packages: readonly RegistrationDraftPackage[],
+): RegistrationDraftPackage[] {
+  return [
+    ...packages,
+    createRegistrationDraftPackage({
+      draftPackageId: crypto.randomUUID(),
+      role: getNewRegistrationDraftPackageDefaultRole(packages),
+    }),
+  ];
+}
+
 export function readRegistrationDraftPackages(
   fields: Record<string, unknown>,
 ): RegistrationDraftPackage[] {
@@ -239,6 +251,14 @@ function uniqueDraftPackageId(
 
   usedIds.add(nextId);
   return nextId;
+}
+
+function getNewRegistrationDraftPackageDefaultRole(
+  packages: readonly RegistrationDraftPackage[],
+): DappIndexSuiPackageRole {
+  return packages.some((draftPackage) => draftPackage.role === 'core')
+    ? 'dependency'
+    : 'core';
 }
 
 function isDappIndexSuiNetwork(value: unknown): value is DappIndexSuiNetwork {

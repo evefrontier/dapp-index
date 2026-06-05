@@ -1,5 +1,6 @@
 import { Button } from '@evefrontier/ui';
 import { Link } from '@tanstack/react-router';
+import type { ReactNode } from 'react';
 import type {
   Draft,
   DraftAutosaveStatus,
@@ -19,7 +20,10 @@ import {
   type RegistrationDraftFieldErrors,
   type RegistrationDraftFields,
 } from './registrationDraftFields';
-import type { RegistrationDraftPackageVerificationState } from './registrationDraftPackages';
+import {
+  addRegistrationDraftPackage,
+  type RegistrationDraftPackageVerificationState,
+} from './registrationDraftPackages';
 
 export type BuilderWizardShellProps = {
   activeStep: DraftStep;
@@ -226,12 +230,27 @@ function WizardStepPanel({
   onVerifyPackages: () => Promise<void>;
 }) {
   const isPlaceholderStep = isBuilderWizardPlaceholderStep(activeStep);
+  const panelAction =
+    activeStep === 'packages' ? (
+      <Button
+        variant="secondary"
+        size="small"
+        onClick={() =>
+          onUpdateFields({
+            suiPackages: addRegistrationDraftPackage(fields.suiPackages),
+          })
+        }
+      >
+        Add package
+      </Button>
+    ) : null;
 
   return (
     <main className="min-w-0 space-y-5">
       <section className="border border-(--color-neutral-20) p-4">
         <div className="space-y-4">
           <WizardStepPanelHeader
+            action={panelAction}
             draftId={draft.id}
             showDraftMeta={isPlaceholderStep}
             title={title}
@@ -286,19 +305,24 @@ function WizardStepPanel({
 }
 
 function WizardStepPanelHeader({
+  action,
   draftId,
   showDraftMeta,
   title,
 }: {
+  action?: ReactNode;
   draftId: string;
   showDraftMeta: boolean;
   title: string;
 }) {
   return (
     <div className="space-y-3">
-      <h2 className="text-lg font-bold uppercase text-(--color-neutral)">
-        {title}
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-bold uppercase text-(--color-neutral)">
+          {title}
+        </h2>
+        {action ? <div className="shrink-0">{action}</div> : null}
+      </div>
       {showDraftMeta ? (
         <dl className="grid gap-3 text-sm sm:grid-cols-[8rem_minmax(0,1fr)]">
           <dt className="font-bold uppercase text-(--color-neutral-60)">
