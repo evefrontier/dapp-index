@@ -15,7 +15,6 @@ describe('draft storage', () => {
       'discovery',
       'packages',
       'media',
-      'proofs',
       'review',
       'publish',
     ]);
@@ -25,6 +24,7 @@ describe('draft storage', () => {
     expect(isDraftStep('about')).toBe(true);
     expect(parseDraftStep('about')).toBe('about');
     expect(isDraftStep('media')).toBe(true);
+    expect(isDraftStep('proofs')).toBe(false);
     expect(parseDraftStep('publish')).toBe('publish');
     expect(isDraftStep('not-a-step')).toBe(false);
     expect(parseDraftStep('not-a-step')).toBeNull();

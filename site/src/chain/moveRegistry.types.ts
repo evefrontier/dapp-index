@@ -82,7 +82,7 @@ export type DeclaredMoveRegistryPackage = {
   network: DappIndexSuiNetwork;
   mvrName: string;
   packageId: string;
-  packageInfoId: string;
+  packageInfoId?: string;
 };
 
 export type MoveRegistryPackageDeclaration =

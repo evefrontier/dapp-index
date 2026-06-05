@@ -4,6 +4,7 @@ import {
   type DraftStep,
   type DraftAutosaveStatus,
 } from '@/storage/draftStorage';
+import { isRegistrationDraftFieldStep } from './registrationDraftFields';
 
 type BuilderWizardStepState = 'complete' | 'active' | 'available';
 
@@ -19,7 +20,6 @@ const BUILDER_WIZARD_STEP_LABELS = {
   discovery: 'Discovery',
   packages: 'Packages',
   media: 'Media',
-  proofs: 'Proofs',
   review: 'Review',
   publish: 'Publish',
 } satisfies Record<DraftStep, string>;
@@ -78,6 +78,10 @@ export function getBuilderWizardStatusLabel(
   status: DraftAutosaveStatus,
 ): string {
   return BUILDER_WIZARD_STATUS_LABELS[status];
+}
+
+export function isBuilderWizardPlaceholderStep(step: DraftStep): boolean {
+  return !isRegistrationDraftFieldStep(step);
 }
 
 function getBuilderWizardStepState(
