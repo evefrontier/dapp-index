@@ -15,15 +15,79 @@ type RefreshDraftsOptions = {
   shouldCommit?: () => boolean;
 };
 
+type DraftListLoadResult =
+  | {
+      kind: 'success';
+      drafts: Draft[];
+    }
+  | {
+      kind: 'error';
+      message: string;
+    };
+
 export function useBuilderHomeController(): BuilderHomeViewProps {
   const navigate = useNavigate();
   const [storage] = useState<DraftStorage>(() => createDraftStorage());
+  const {
+    drafts,
+    error,
+    loading,
+    refreshDrafts,
+    setError: setDraftListError,
+  } = useDraftList(storage);
+  const { tutorialSkipped, showTutorial, skipTutorial } =
+    useBuilderTutorialPreference();
+
+  const createDraft = useCallback(async () => {
+    setDraftListError(null);
+    try {
+      const draft = await storage.saveDraft(createRegistrationDraft());
+      await navigate({
+        to: '/builder/listings/$draftId/$step',
+        params: { draftId: draft.id, step: draft.currentStep },
+      });
+    } catch (caughtError) {
+      setDraftListError(
+        getBuilderErrorMessage(caughtError, 'Could not create draft.'),
+      );
+    }
+  }, [navigate, setDraftListError, storage]);
+
+  const deleteDraft = useCallback(
+    async (draftId: string) => {
+      const confirmed = window.confirm('Delete this draft?');
+      if (!confirmed) return;
+
+      setDraftListError(null);
+      try {
+        await storage.deleteDraft(draftId);
+        await refreshDrafts();
+      } catch (caughtError) {
+        setDraftListError(
+          getBuilderErrorMessage(caughtError, 'Could not delete draft.'),
+        );
+      }
+    },
+    [refreshDrafts, setDraftListError, storage],
+  );
+
+  return {
+    drafts,
+    error,
+    loading,
+    tutorialSkipped,
+    onCreateDraft: createDraft,
+    onDeleteDraft: deleteDraft,
+    onRefreshDrafts: refreshDrafts,
+    onShowTutorial: showTutorial,
+    onSkipTutorial: skipTutorial,
+  };
+}
+
+function useDraftList(storage: DraftStorage) {
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tutorialSkipped, setTutorialSkippedState] = useState(
-    () => builderTutorialPreference.read().skipped,
-  );
   const draftItems = useMemo(
     () => drafts.map(createBuilderHomeDraftItem),
     [drafts],
@@ -34,22 +98,17 @@ export function useBuilderHomeController(): BuilderHomeViewProps {
       const shouldCommit = options.shouldCommit ?? (() => true);
       setLoading(true);
       setError(null);
-      try {
-        const nextDrafts = await storage.listDrafts();
-        if (!shouldCommit()) return;
+      const result = await loadDraftList(storage);
 
-        setDrafts(nextDrafts);
-      } catch (caughtError) {
-        if (!shouldCommit()) return;
+      if (!shouldCommit()) return;
 
-        setError(
-          getBuilderErrorMessage(caughtError, 'Could not load drafts.'),
-        );
-      } finally {
-        if (!shouldCommit()) return;
-
-        setLoading(false);
+      if (result.kind === 'success') {
+        setDrafts(result.drafts);
+      } else {
+        setError(result.message);
       }
+
+      setLoading(false);
     },
     [storage],
   );
@@ -64,56 +123,49 @@ export function useBuilderHomeController(): BuilderHomeViewProps {
     };
   }, [refreshDrafts]);
 
-  const createDraft = useCallback(async () => {
-    setError(null);
-    try {
-      const draft = await storage.saveDraft(createRegistrationDraft());
-      await navigate({
-        to: '/builder/listings/$draftId/$step',
-        params: { draftId: draft.id, step: draft.currentStep },
-      });
-    } catch (caughtError) {
-      setError(getBuilderErrorMessage(caughtError, 'Could not create draft.'));
-    }
-  }, [navigate, storage]);
+  return {
+    drafts: draftItems,
+    error,
+    loading,
+    refreshDrafts,
+    setError,
+  };
+}
 
-  const deleteDraft = useCallback(
-    async (draftId: string) => {
-      const confirmed = window.confirm('Delete this draft?');
-      if (!confirmed) return;
-
-      setError(null);
-      try {
-        await storage.deleteDraft(draftId);
-        await refreshDrafts();
-      } catch (caughtError) {
-        setError(
-          getBuilderErrorMessage(caughtError, 'Could not delete draft.'),
-        );
-      }
-    },
-    [refreshDrafts, storage],
+function useBuilderTutorialPreference() {
+  const [tutorialSkipped, setTutorialSkippedState] = useState(
+    () => builderTutorialPreference.read().skipped,
   );
 
-  const handleShowTutorial = useCallback(() => {
+  const showTutorial = useCallback(() => {
     builderTutorialPreference.show();
     setTutorialSkippedState(false);
   }, []);
 
-  const handleSkipTutorial = useCallback(() => {
+  const skipTutorial = useCallback(() => {
     builderTutorialPreference.skip();
     setTutorialSkippedState(true);
   }, []);
 
   return {
-    drafts: draftItems,
-    error,
-    loading,
     tutorialSkipped,
-    onCreateDraft: createDraft,
-    onDeleteDraft: deleteDraft,
-    onRefreshDrafts: refreshDrafts,
-    onShowTutorial: handleShowTutorial,
-    onSkipTutorial: handleSkipTutorial,
+    showTutorial,
+    skipTutorial,
   };
+}
+
+async function loadDraftList(
+  storage: DraftStorage,
+): Promise<DraftListLoadResult> {
+  try {
+    return {
+      kind: 'success',
+      drafts: await storage.listDrafts(),
+    };
+  } catch (caughtError) {
+    return {
+      kind: 'error',
+      message: getBuilderErrorMessage(caughtError, 'Could not load drafts.'),
+    };
+  }
 }
