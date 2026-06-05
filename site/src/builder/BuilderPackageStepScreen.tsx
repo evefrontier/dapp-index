@@ -44,10 +44,10 @@ export function BuilderPackageStepScreen({
     <div className="grid gap-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <h3 className="text-sm font-bold uppercase text-[var(--color-foreground)]">
+          <h3 className="text-sm font-bold uppercase text-(--color-neutral)">
             Sui packages
           </h3>
-          <p className="text-xs text-[var(--color-neutral-60)]">
+          <p className="text-xs text-(--color-neutral-60)">
             Optional Move Registry identities for this listing.
           </p>
         </div>
@@ -92,7 +92,7 @@ export function BuilderPackageStepScreen({
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border border-[var(--color-neutral-20)] p-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border border-(--color-neutral-20) p-3">
         <PackageVerificationSummary
           packageCount={packages.length}
           verificationBlocker={verificationBlocker}
@@ -115,9 +115,9 @@ export function BuilderPackageStepScreen({
 
 function EmptyPackageList() {
   return (
-    <div className="space-y-1 border border-[var(--color-neutral-20)] p-4 text-sm text-[var(--color-neutral-70)]">
+    <div className="space-y-1 border border-(--color-neutral-20) p-4 text-sm text-(--color-neutral-60)">
       <p>No packages added.</p>
-      <p className="text-xs text-[var(--color-neutral-60)]">
+      <p className="text-xs text-(--color-neutral-60)">
         Add one only if this dapp publishes Move code.
       </p>
     </div>
@@ -142,17 +142,17 @@ function PackageCard({
   const packageNumber = index + 1;
 
   return (
-    <section className="grid gap-4 border border-[var(--color-neutral-20)] p-4">
+    <section className="grid gap-4 border border-(--color-neutral-20) p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <h4 className="text-sm font-bold uppercase text-[var(--color-foreground)]">
+          <h4 className="text-sm font-bold uppercase text-(--color-neutral)">
             Package {packageNumber}
           </h4>
           <VerificationBadge result={verificationResult} />
         </div>
         <button
           type="button"
-          className="text-xs font-bold uppercase text-[var(--color-error)]"
+          className="text-xs font-bold uppercase text-(--color-alert)"
           onClick={onRemove}
         >
           Remove
@@ -235,7 +235,7 @@ function VerificationBadge({
   const label = getVerificationResultLabel(result);
 
   return (
-    <span className="border border-[var(--color-neutral-20)] px-2 py-1 text-[0.6875rem] font-bold uppercase text-[var(--color-neutral-70)]">
+    <span className="border border-(--color-neutral-20) px-2 py-1 text-[0.6875rem] font-bold uppercase text-(--color-neutral-60)">
       {label}
     </span>
   );
@@ -251,7 +251,7 @@ function VerificationDetails({
   const details = getVerificationResultDetails(result);
   if (!details) return null;
 
-  return <p className="text-xs text-[var(--color-neutral-60)]">{details}</p>;
+  return <p className="text-xs text-(--color-neutral-60)">{details}</p>;
 }
 
 function PackageVerificationSummary({
@@ -271,10 +271,10 @@ function PackageVerificationSummary({
 
   return (
     <div className="space-y-1 text-sm">
-      <p className="font-bold uppercase text-[var(--color-foreground)]">
+      <p className="font-bold uppercase text-(--color-neutral)">
         {summary.title}
       </p>
-      <p className="text-xs text-[var(--color-neutral-60)]">{summary.body}</p>
+      <p className="text-xs text-(--color-neutral-60)">{summary.body}</p>
     </div>
   );
 }

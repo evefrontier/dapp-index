@@ -29,11 +29,11 @@ Open the URL Vite prints (default `http://localhost:5173`).
 
 Styles are loaded via `@evefrontier/ui` (vendored), which provides:
 
-- **CSS custom properties** — `--color-foreground`, `--color-background`, `--color-muted`, `--font-family-mono`, etc.
+- **CSS custom properties** — Figma-named color tokens such as `--color-neutral`, `--color-crude`, `--color-martian-red`, `--color-alert`, plus typography tokens such as `--font-family-mono`.
 - **Typography roles** — `.ds-type-label`, `.ds-type-caption`, `.ds-type-caption-error`, etc.
 - **Tailwind v4** — utility classes available app-wide via `postcss.config.mjs`
 
-`src/index.css` sets `body` using DS token variables. Use `var(--color-*)` and `.ds-type-*` classes for consistent theming.
+`src/index.css` sets `body` using DS token variables. In app-owned Tailwind utilities, prefer Figma-named color tokens with Tailwind v4 custom-property shorthand, such as `text-(--color-neutral)`, `bg-(--color-crude-20)`, and `border-(--color-neutral-20)`. Use `.ds-type-*` classes for consistent typography roles.
 
 The `vendor/@evefrontier/ui` folder is a pre-built snapshot committed to this repo — no external repo access needed. See `vendor/@evefrontier/ui/README.md` for how to update it or switch to the published package.
 
