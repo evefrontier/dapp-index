@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import type {
   DraftMedia,
   DraftMediaUpdate,
@@ -7,12 +7,10 @@ import {
   DAPP_INDEX_MEDIA_ROLES,
   type DappIndexMediaRole,
 } from '@/types/dapp-index';
-import {
-  BuilderSelectField,
-  BuilderTextAreaField,
-} from './BuilderFormFields';
 
 const ACCEPTED_MEDIA_TYPES = 'image/png,image/jpeg,image/webp,video/webm';
+const MEDIA_FIELD_CLASS_NAME =
+  'h-10 w-full border-0 border-b border-[var(--color-neutral-30)] bg-transparent px-0 py-2 text-sm text-[var(--color-foreground)] outline-none transition-colors focus:border-[var(--color-primary)]';
 
 export type BuilderMediaStepScreenProps = {
   errorMessage: string | null;
@@ -24,7 +22,6 @@ export type BuilderMediaStepScreenProps = {
     mediaId: string,
     update: DraftMediaUpdate,
   ) => Promise<void>;
-  onUploadMedia: (files: File[]) => Promise<void>;
 };
 
 export function BuilderMediaStepScreen({
@@ -34,7 +31,6 @@ export function BuilderMediaStepScreen({
   previewUrls,
   onDeleteMedia,
   onUpdateMedia,
-  onUploadMedia,
 }: BuilderMediaStepScreenProps) {
   const [selectedPreviewId, setSelectedPreviewId] = useState<string | null>(
     null,
@@ -45,12 +41,8 @@ export function BuilderMediaStepScreen({
     : null;
 
   return (
-    <div className="grid gap-5">
-      <MediaUploadBar
-        disabled={pending}
-        errorMessage={errorMessage}
-        onUploadMedia={onUploadMedia}
-      />
+    <div className="grid gap-4">
+      <MediaUploadNote errorMessage={errorMessage} />
 
       {media.length === 0 ? (
         <EmptyMediaList />
@@ -79,13 +71,11 @@ export function BuilderMediaStepScreen({
   );
 }
 
-function MediaUploadBar({
+export function BuilderMediaUploadAction({
   disabled,
-  errorMessage,
   onUploadMedia,
 }: {
   disabled: boolean;
-  errorMessage: string | null;
   onUploadMedia: (files: File[]) => Promise<void>;
 }) {
   const labelClassName = disabled
@@ -93,32 +83,30 @@ function MediaUploadBar({
     : 'inline-flex cursor-pointer items-center border border-[var(--color-primary)] px-3 py-2 text-xs font-bold uppercase text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-[var(--color-background)]';
 
   return (
-    <div className="grid gap-3 border border-[var(--color-neutral-20)] p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="space-y-1">
-          <h3 className="text-sm font-bold uppercase text-[var(--color-foreground)]">
-            Local media
-          </h3>
-          <p className="text-xs text-[var(--color-neutral-60)]">
-            Uploads stay local until publish.
-          </p>
-        </div>
-        <label className={labelClassName}>
-          <input
-            accept={ACCEPTED_MEDIA_TYPES}
-            className="sr-only"
-            disabled={disabled}
-            multiple
-            type="file"
-            onChange={(event) => {
-              const files = Array.from(event.currentTarget.files ?? []);
-              event.currentTarget.value = '';
-              if (files.length > 0) void onUploadMedia(files);
-            }}
-          />
-          Add media
-        </label>
-      </div>
+    <label className={labelClassName}>
+      <input
+        accept={ACCEPTED_MEDIA_TYPES}
+        className="sr-only"
+        disabled={disabled}
+        multiple
+        type="file"
+        onChange={(event) => {
+          const files = Array.from(event.currentTarget.files ?? []);
+          event.currentTarget.value = '';
+          if (files.length > 0) void onUploadMedia(files);
+        }}
+      />
+      Add media
+    </label>
+  );
+}
+
+function MediaUploadNote({ errorMessage }: { errorMessage: string | null }) {
+  return (
+    <div className="grid gap-2">
+      <p className="text-xs text-[var(--color-neutral-60)]">
+        Uploads stay local until publish.
+      </p>
       <MediaErrorMessage message={errorMessage} />
     </div>
   );
@@ -143,7 +131,7 @@ function MediaCard({
   ) => Promise<void>;
 }) {
   return (
-    <section className="grid gap-3 border border-[var(--color-neutral-20)] p-3 md:grid-cols-[13rem_minmax(0,1fr)]">
+    <section className="grid gap-3 border-t border-[var(--color-neutral-20)] py-3 first:border-t-0 first:pt-0 md:grid-cols-[13rem_minmax(0,1fr)]">
       <MediaPreviewButton
         media={media}
         previewUrl={previewUrl}
@@ -151,8 +139,8 @@ function MediaCard({
       />
 
       <div className="min-w-0">
-        <div className="grid gap-3 md:grid-cols-[9rem_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
-          <BuilderSelectField
+        <div className="grid gap-3 md:grid-cols-[9rem_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-start">
+          <MediaSelectField
             id={`builder-media-${media.id}-role`}
             label="Role"
             value={media.role}
@@ -167,22 +155,20 @@ function MediaCard({
                 {role}
               </option>
             ))}
-          </BuilderSelectField>
-          <BuilderTextAreaField
+          </MediaSelectField>
+          <MediaTextField
             id={`builder-media-${media.id}-alt`}
             label="Alt text"
             maxLength={240}
-            rows={2}
             value={media.alt ?? ''}
             onChange={(alt) => {
               void onUpdateMedia(media.id, { alt });
             }}
           />
-          <BuilderTextAreaField
+          <MediaTextField
             id={`builder-media-${media.id}-caption`}
             label="Caption"
             maxLength={240}
-            rows={2}
             value={media.caption ?? ''}
             onChange={(caption) => {
               void onUpdateMedia(media.id, { caption });
@@ -190,7 +176,7 @@ function MediaCard({
           />
           <button
             type="button"
-            className="justify-self-start text-xs font-bold uppercase text-[var(--color-error)] md:pb-2"
+            className="self-start justify-self-start pt-1 text-xs font-bold uppercase text-[var(--color-error)]"
             disabled={pending}
             onClick={() => {
               void onDeleteMedia(media.id);
@@ -201,6 +187,73 @@ function MediaCard({
         </div>
       </div>
     </section>
+  );
+}
+
+function MediaSelectField({
+  children,
+  id,
+  label,
+  value,
+  onChange,
+}: {
+  children: ReactNode;
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="grid gap-1">
+      <MediaFieldLabel id={id} label={label} />
+      <select
+        className={MEDIA_FIELD_CLASS_NAME}
+        id={id}
+        value={value}
+        onChange={(event) => onChange(event.currentTarget.value)}
+      >
+        {children}
+      </select>
+    </div>
+  );
+}
+
+function MediaTextField({
+  id,
+  label,
+  maxLength,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  maxLength: number;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="grid gap-1">
+      <MediaFieldLabel id={id} label={label} />
+      <input
+        className={MEDIA_FIELD_CLASS_NAME}
+        id={id}
+        maxLength={maxLength}
+        type="text"
+        value={value}
+        onChange={(event) => onChange(event.currentTarget.value)}
+      />
+    </div>
+  );
+}
+
+function MediaFieldLabel({ id, label }: { id: string; label: string }) {
+  return (
+    <label
+      className="text-xs font-bold uppercase text-[var(--color-neutral-60)]"
+      htmlFor={id}
+    >
+      {label}
+    </label>
   );
 }
 

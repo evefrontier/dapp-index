@@ -45,7 +45,6 @@ type RegistrationStepScreenProps = {
     update: DraftMediaUpdate,
   ) => Promise<void>;
   onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
-  onUploadMedia: (files: File[]) => Promise<void>;
   onVerifyPackages: () => Promise<void>;
 };
 
@@ -70,7 +69,6 @@ export function BuilderRegistrationStepScreen({
   onDeleteMedia,
   onUpdateMedia,
   onUpdateFields,
-  onUploadMedia,
   onVerifyPackages,
 }: RegistrationStepScreenProps) {
   if (activeStep === 'media') {
@@ -82,7 +80,6 @@ export function BuilderRegistrationStepScreen({
         previewUrls={mediaPreviewUrls}
         onDeleteMedia={onDeleteMedia}
         onUpdateMedia={onUpdateMedia}
-        onUploadMedia={onUploadMedia}
       />
     );
   }

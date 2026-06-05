@@ -1,11 +1,13 @@
 import { Button } from '@evefrontier/ui';
 import { Link } from '@tanstack/react-router';
+import type { ReactNode } from 'react';
 import type {
   Draft,
   DraftAutosaveStatus,
   DraftMediaUpdate,
   DraftStep,
 } from '@/storage/draftStorage';
+import { BuilderMediaUploadAction } from './BuilderMediaStepScreen';
 import { BuilderRegistrationStepScreen } from './BuilderRegistrationStepScreens';
 import {
   createBuilderWizardStepItems,
@@ -263,12 +265,20 @@ function WizardStepPanel({
   onVerifyPackages: () => Promise<void>;
 }) {
   const isPlaceholderStep = isBuilderWizardPlaceholderStep(activeStep);
+  const headerAction =
+    activeStep === 'media' ? (
+      <BuilderMediaUploadAction
+        disabled={mediaPending}
+        onUploadMedia={onUploadMedia}
+      />
+    ) : null;
 
   return (
     <main className="min-w-0 space-y-5">
       <section className="border border-(--color-neutral-20) p-4">
         <div className="space-y-4">
           <WizardStepPanelHeader
+            action={headerAction}
             draftId={draft.id}
             showDraftMeta={isPlaceholderStep}
             title={title}
@@ -285,7 +295,6 @@ function WizardStepPanel({
             onDeleteMedia={onDeleteMedia}
             onUpdateMedia={onUpdateMedia}
             onUpdateFields={onUpdateFields}
-            onUploadMedia={onUploadMedia}
             onVerifyPackages={onVerifyPackages}
           />
         </div>
@@ -330,19 +339,24 @@ function WizardStepPanel({
 }
 
 function WizardStepPanelHeader({
+  action,
   draftId,
   showDraftMeta,
   title,
 }: {
+  action?: ReactNode;
   draftId: string;
   showDraftMeta: boolean;
   title: string;
 }) {
   return (
     <div className="space-y-3">
-      <h2 className="text-lg font-bold uppercase text-(--color-neutral)">
-        {title}
-      </h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-bold uppercase text-(--color-neutral)">
+          {title}
+        </h2>
+        {action}
+      </div>
       {showDraftMeta ? (
         <dl className="grid gap-3 text-sm sm:grid-cols-[8rem_minmax(0,1fr)]">
           <dt className="font-bold uppercase text-(--color-neutral-60)">
