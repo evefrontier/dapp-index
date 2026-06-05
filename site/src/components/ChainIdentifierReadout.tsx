@@ -29,8 +29,8 @@ export function ChainIdentifierReadout() {
   return (
     <p className="ds-type-caption">
       Network:{' '}
-      <code className="text-[var(--color-foreground)]">{network}</code> · chain id:{' '}
-      <code className="text-[var(--color-foreground)]">{q.data}</code>
+      <code className="text-(--color-neutral)">{network}</code> · chain id:{' '}
+      <code className="text-(--color-neutral)">{q.data}</code>
     </p>
   );
 }

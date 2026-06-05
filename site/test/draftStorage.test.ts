@@ -10,23 +10,22 @@ import { createTestDraftStorage, draft } from './draftTestUtils';
 describe('draft storage', () => {
   test('declares the full builder listing wizard step order', () => {
     expect(DRAFT_STEPS).toEqual([
-      'profile',
-      'details',
+      'basics',
+      'about',
       'discovery',
       'packages',
-      'package-verification',
-      'media-upload',
-      'media-details',
+      'media',
       'proofs',
       'review',
-      'walrus-publish',
-      'sui-register',
+      'publish',
     ]);
   });
 
   test('parses persisted step values before using them as draft steps', () => {
-    expect(isDraftStep('details')).toBe(true);
-    expect(parseDraftStep('details')).toBe('details');
+    expect(isDraftStep('about')).toBe(true);
+    expect(parseDraftStep('about')).toBe('about');
+    expect(isDraftStep('media')).toBe(true);
+    expect(parseDraftStep('publish')).toBe('publish');
     expect(isDraftStep('not-a-step')).toBe(false);
     expect(parseDraftStep('not-a-step')).toBeNull();
     expect(parseDraftStep(42)).toBeNull();
@@ -50,8 +49,8 @@ describe('draft storage', () => {
 
     await storage.saveDraft({
       ...draft,
-      currentStep: 'details',
-      completedSteps: ['profile'],
+      currentStep: 'about',
+      completedSteps: ['basics'],
       media: [
         {
           id: 'screen-1',
@@ -74,8 +73,8 @@ describe('draft storage', () => {
       name: 'Updated Frontier Map',
       summary: 'A route planning dapp.',
     });
-    expect(updatedDraft.currentStep).toBe('details');
-    expect(updatedDraft.completedSteps).toEqual(['profile']);
+    expect(updatedDraft.currentStep).toBe('about');
+    expect(updatedDraft.completedSteps).toEqual(['basics']);
     expect(updatedDraft.media.map((item) => item.id)).toEqual(['screen-1']);
     expect(updatedDraft.updatedAt).toBe('2026-05-18T12:15:00.000Z');
   });
@@ -99,7 +98,7 @@ describe('draft storage', () => {
     expect(await storage.getDraft('draft-1')).toEqual({
       id: 'draft-1',
       status: 'draft',
-      currentStep: 'profile',
+      currentStep: 'basics',
       completedSteps: [],
       createdAt: '2026-05-18T12:00:00.000Z',
       updatedAt: '2026-05-18T12:00:00.000Z',
@@ -118,11 +117,11 @@ describe('draft storage', () => {
           status: 'not-a-status',
           currentStep: 'not-a-step',
           completedSteps: [
-            'profile',
+            'basics',
             'bad-step',
-            'profile',
-            'media-upload',
-            'media-upload',
+            'basics',
+            'media',
+            'media',
           ],
           createdAt: '2026-05-18T12:00:00.000Z',
           updatedAt: '2026-05-18T12:00:00.000Z',
@@ -134,8 +133,8 @@ describe('draft storage', () => {
     const restoredDraft = await storage.getDraft('draft-1');
 
     expect(restoredDraft?.status).toBe('draft');
-    expect(restoredDraft?.currentStep).toBe('profile');
-    expect(restoredDraft?.completedSteps).toEqual(['profile', 'media-upload']);
+    expect(restoredDraft?.currentStep).toBe('basics');
+    expect(restoredDraft?.completedSteps).toEqual(['basics', 'media']);
   });
 
   test('keeps existing draft metadata when field persistence fails', async () => {
@@ -165,10 +164,10 @@ describe('draft storage', () => {
     });
 
     await storage.saveDraft(draft);
-    const updatedDraft = await storage.setDraftStep('draft-1', 'media-upload');
+    const updatedDraft = await storage.setDraftStep('draft-1', 'media');
 
-    expect(DRAFT_STEPS).toContain('media-upload');
-    expect(updatedDraft.currentStep).toBe('media-upload');
+    expect(DRAFT_STEPS).toContain('media');
+    expect(updatedDraft.currentStep).toBe('media');
     expect(updatedDraft.completedSteps).toEqual([]);
     expect(updatedDraft.updatedAt).toBe('2026-05-18T12:30:00.000Z');
   });
@@ -180,16 +179,16 @@ describe('draft storage', () => {
 
     await storage.saveDraft({
       ...draft,
-      completedSteps: ['profile'],
+      completedSteps: ['basics'],
     });
     const updatedDraft = await storage.completeDraftStep(
       'draft-1',
-      'details',
+      'about',
       'discovery',
     );
 
     expect(updatedDraft.currentStep).toBe('discovery');
-    expect(updatedDraft.completedSteps).toEqual(['profile', 'details']);
+    expect(updatedDraft.completedSteps).toEqual(['basics', 'about']);
     expect(updatedDraft.updatedAt).toBe('2026-05-18T12:45:00.000Z');
   });
 

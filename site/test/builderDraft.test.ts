@@ -1,10 +1,12 @@
 import { describe, expect, test } from 'bun:test';
+import { createBuilderHomeDraftItem } from '../src/builder/builderHomeModel';
 import { createRegistrationDraft } from '../src/builder/registrationDraft';
 import {
   BUILDER_TUTORIAL_STORAGE_KEY,
   builderTutorialPreference,
 } from '../src/builder/tutorialStorage';
 import { createMemoryLocalStorage } from '../src/storage/draftStorage';
+import { draft } from './draftTestUtils';
 
 describe('builder draft helpers', () => {
   test('creates a new registration draft at the first wizard step', () => {
@@ -16,7 +18,7 @@ describe('builder draft helpers', () => {
     expect(draft).toEqual({
       id: 'draft-123',
       status: 'draft',
-      currentStep: 'profile',
+      currentStep: 'basics',
       completedSteps: [],
       createdAt: '2026-05-19T09:00:00.000Z',
       updatedAt: '2026-05-19T09:00:00.000Z',
@@ -32,6 +34,19 @@ describe('builder draft helpers', () => {
     });
 
     expect(draft.id).toBe('generated-id');
+  });
+
+  test('formats draft home items with user-facing step labels', () => {
+    expect(
+      createBuilderHomeDraftItem({
+        ...draft,
+        currentStep: 'publish',
+      }),
+    ).toMatchObject({
+      currentStep: 'publish',
+      currentStepLabel: 'Publish',
+      title: 'Frontier Map',
+    });
   });
 
   test('stores the builder tutorial skip flag separately from drafts', () => {
