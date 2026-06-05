@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { verifyMoveRegistryPackage } from '@/chain/moveRegistry';
 import { createMoveRegistryResolver } from '@/chain/moveRegistryResolver';
 import type { BuilderWizardShellProps } from './BuilderWizardShell';
@@ -11,6 +12,7 @@ import {
   createRegistrationDraftFields,
   readRegistrationDraftFields,
   validateRegistrationDraftFields,
+  type RegistrationDraftFieldErrors,
   type RegistrationDraftFields,
 } from './registrationDraftFields';
 import {
@@ -45,61 +47,152 @@ export type BuilderListingStepControllerOptions = {
   step: string;
 };
 
+type BuilderListingStepMessage = Extract<
+  BuilderListingStepController,
+  { kind: 'message' }
+>;
+type BuilderNavigate = ReturnType<typeof useNavigate>;
+type BuilderWizardRouteStep = ReturnType<typeof resolveBuilderWizardRouteStep>;
+type DraftAutosave = ReturnType<typeof createDraftAutosave>;
+const EMPTY_DRAFT_MEDIA: Draft['media'] = [];
+
+type BuilderListingStepState = {
+  draft: Draft | null;
+  error: string | null;
+  loading: boolean;
+  routeStep: BuilderWizardRouteStep | null;
+};
+
+type BuilderListingStepReadyState = BuilderListingStepState & {
+  draft: Draft;
+  error: null;
+  routeStep: BuilderWizardRouteStep;
+};
+
+type BuilderListingStepResultOptions = BuilderListingStepState & {
+  autosaveError: string | null;
+  autosaveStatus: DraftAutosaveStatus;
+  fieldErrors: RegistrationDraftFieldErrors;
+  fields: RegistrationDraftFields;
+  mediaError: string | null;
+  mediaPending: boolean;
+  mediaPreviewUrls: Record<string, string>;
+  navigationError: string | null;
+  navigationPending: boolean;
+  packageVerification: RegistrationDraftPackageVerificationState;
+  onDeleteMedia: (mediaId: string) => Promise<void>;
+  onExitWizard: () => Promise<void>;
+  onNavigateStep: (step: DraftStep) => Promise<void>;
+  onUpdateMedia: (
+    mediaId: string,
+    update: DraftMediaUpdate,
+  ) => Promise<void>;
+  onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
+  onUploadMedia: (files: File[]) => Promise<void>;
+  onVerifyPackages: () => Promise<void>;
+};
+
 export function useBuilderListingStepController({
   draftId,
   step,
 }: BuilderListingStepControllerOptions): BuilderListingStepController {
   const navigate = useNavigate();
   const [storage] = useState<DraftStorage>(() => createDraftStorage());
-  const [draft, setDraft] = useState<Draft | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [autosaveStatus, setAutosaveStatus] =
-    useState<DraftAutosaveStatus>('idle');
   const [navigationError, setNavigationError] = useState<string | null>(null);
   const [navigationPending, setNavigationPending] = useState(false);
-  const [mediaError, setMediaError] = useState<string | null>(null);
-  const [mediaPending, setMediaPending] = useState(false);
-  const [mediaPreviewUrls, setMediaPreviewUrls] = useState<
-    Record<string, string>
-  >({});
   const [packageVerification, setPackageVerification] =
     useState<RegistrationDraftPackageVerificationState>(
       INITIAL_REGISTRATION_DRAFT_PACKAGE_VERIFICATION,
     );
-  const loadedDraftId = draft?.id ?? null;
-  const draftMedia = draft?.media ?? [];
-  const storedStep = draft?.currentStep ?? null;
-  const fields = useMemo(
-    () =>
-      draft
-        ? readRegistrationDraftFields(draft.fields)
-        : createRegistrationDraftFields(),
-    [draft],
-  );
-  const fieldErrors = useMemo(
-    () => validateRegistrationDraftFields(fields),
-    [fields],
-  );
-  const routeStep = useMemo(
-    () =>
-      storedStep ? resolveBuilderWizardRouteStep(step, storedStep) : null,
-    [step, storedStep],
-  );
-  const autosave = useMemo(
-    () =>
-      createDraftAutosave({
-        storage,
-        draftId,
-        onStatusChange: setAutosaveStatus,
-      }),
-    [draftId, storage],
-  );
+  const { draft, setDraft, loading, error } = useDraftLoader({
+    draftId,
+    storage,
+    setNavigationError,
+  });
+  const { autosave, autosaveError, autosaveStatus, setAutosaveStatus } =
+    useDraftAutosaveController(storage, draftId);
+  const { fields, fieldErrors } = useRegistrationDraftFields(draft);
   const moveRegistryResolver = useMemo(() => createMoveRegistryResolver(), []);
-  const autosaveError =
-    autosaveStatus === 'error'
-      ? getBuilderErrorMessage(autosave.getError(), 'Could not save draft.')
-      : null;
+  const { loadedDraftId, routeStep } = useRouteStepSync({
+    draft,
+    navigate,
+    setDraft,
+    setNavigationError,
+    step,
+    storage,
+  });
+  const {
+    mediaError,
+    mediaPending,
+    mediaPreviewUrls,
+    onDeleteMedia,
+    onUpdateMedia,
+    onUploadMedia,
+  } = useLocalMediaController({
+    draftMedia: draft?.media ?? EMPTY_DRAFT_MEDIA,
+    loadedDraftId,
+    setDraft,
+    storage,
+  });
+  const onUpdateFields = useUpdateRegistrationDraftFields({
+    autosave,
+    setAutosaveStatus,
+    setDraft,
+    setPackageVerification,
+  });
+  const onVerifyPackages = useVerifyRegistrationDraftPackages({
+    fields,
+    moveRegistryResolver,
+    setPackageVerification,
+  });
+  const { onExitWizard, onNavigateStep } = useWizardNavigation({
+    autosave,
+    loadedDraftId,
+    navigate,
+    navigationPending,
+    setDraft,
+    setNavigationError,
+    setNavigationPending,
+    storage,
+  });
+
+  return createBuilderListingStepControllerResult({
+    autosaveError,
+    autosaveStatus,
+    draft,
+    error,
+    fieldErrors,
+    fields,
+    loading,
+    mediaError,
+    mediaPending,
+    mediaPreviewUrls,
+    navigationError,
+    navigationPending,
+    packageVerification,
+    onDeleteMedia,
+    onExitWizard,
+    onNavigateStep,
+    onUpdateMedia,
+    onUpdateFields,
+    onUploadMedia,
+    onVerifyPackages,
+    routeStep,
+  });
+}
+
+function useDraftLoader({
+  draftId,
+  storage,
+  setNavigationError,
+}: {
+  draftId: string;
+  storage: DraftStorage;
+  setNavigationError: (message: string | null) => void;
+}) {
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let canceled = false;
@@ -107,7 +200,6 @@ export function useBuilderListingStepController({
     async function loadDraft() {
       setLoading(true);
       setError(null);
-      setMediaError(null);
       setNavigationError(null);
       try {
         const loadedDraft = await storage.getDraft(draftId);
@@ -128,7 +220,273 @@ export function useBuilderListingStepController({
     return () => {
       canceled = true;
     };
-  }, [draftId, storage]);
+  }, [draftId, setNavigationError, storage]);
+
+  return {
+    draft,
+    error,
+    loading,
+    setDraft,
+  };
+}
+
+function useDraftAutosaveController(
+  storage: DraftStorage,
+  draftId: string,
+) {
+  const isMounted = useRef(true);
+  const [autosaveStatus, setAutosaveStatus] =
+    useState<DraftAutosaveStatus>('idle');
+  const autosave = useMemo(
+    () =>
+      createDraftAutosave({
+        storage,
+        draftId,
+        onStatusChange: (status) => {
+          if (isMounted.current) setAutosaveStatus(status);
+        },
+      }),
+    [draftId, storage],
+  );
+  const autosaveError =
+    autosaveStatus === 'error'
+      ? getBuilderErrorMessage(autosave.getError(), 'Could not save draft.')
+      : null;
+
+  useEffect(() => {
+    isMounted.current = true;
+
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setAutosaveStatus(autosave.getStatus());
+
+    return () => {
+      autosave.cancel();
+    };
+  }, [autosave]);
+
+  return {
+    autosave,
+    autosaveError,
+    autosaveStatus,
+    setAutosaveStatus,
+  };
+}
+
+function useRegistrationDraftFields(draft: Draft | null) {
+  const fields = useMemo(
+    () =>
+      draft
+        ? readRegistrationDraftFields(draft.fields)
+        : createRegistrationDraftFields(),
+    [draft],
+  );
+  const fieldErrors = useMemo(
+    () => validateRegistrationDraftFields(fields),
+    [fields],
+  );
+
+  return {
+    fieldErrors,
+    fields,
+  };
+}
+
+function useRouteStepSync({
+  draft,
+  navigate,
+  setDraft,
+  setNavigationError,
+  step,
+  storage,
+}: {
+  draft: Draft | null;
+  navigate: BuilderNavigate;
+  setDraft: (draft: Draft | null) => void;
+  setNavigationError: (message: string | null) => void;
+  step: string;
+  storage: DraftStorage;
+}) {
+  const loadedDraftId = draft?.id ?? null;
+  const storedStep = draft?.currentStep ?? null;
+  const routeStep = useMemo(
+    () =>
+      storedStep ? resolveBuilderWizardRouteStep(step, storedStep) : null,
+    [step, storedStep],
+  );
+
+  useEffect(() => {
+    if (!loadedDraftId || !storedStep || !routeStep) return;
+
+    if (routeStep.shouldRedirect) {
+      void navigate({
+        to: '/builder/listings/$draftId/$step',
+        params: { draftId: loadedDraftId, step: routeStep.step },
+        replace: true,
+      });
+      return;
+    }
+
+    const routeDraftId = loadedDraftId;
+    const nextStep = routeStep.step;
+
+    if (nextStep === storedStep) return;
+
+    let canceled = false;
+
+    async function syncRouteStep() {
+      setNavigationError(null);
+      try {
+        const updatedDraft = await storage.setDraftStep(routeDraftId, nextStep);
+        if (!canceled) setDraft(updatedDraft);
+      } catch (caughtError) {
+        if (!canceled) {
+          setNavigationError(
+            getBuilderErrorMessage(caughtError, 'Could not open this step.'),
+          );
+        }
+      }
+    }
+
+    void syncRouteStep();
+
+    return () => {
+      canceled = true;
+    };
+  }, [
+    loadedDraftId,
+    navigate,
+    routeStep,
+    setDraft,
+    setNavigationError,
+    storage,
+    storedStep,
+  ]);
+
+  return {
+    loadedDraftId,
+    routeStep,
+  };
+}
+
+function useUpdateRegistrationDraftFields({
+  autosave,
+  setAutosaveStatus,
+  setDraft,
+  setPackageVerification,
+}: {
+  autosave: DraftAutosave;
+  setAutosaveStatus: (status: DraftAutosaveStatus) => void;
+  setDraft: Dispatch<SetStateAction<Draft | null>>;
+  setPackageVerification: Dispatch<
+    SetStateAction<RegistrationDraftPackageVerificationState>
+  >;
+}) {
+  return useCallback(
+    (nextFields: Partial<RegistrationDraftFields>) => {
+      const fieldPatch = createRegistrationDraftFieldPatch(nextFields);
+
+      autosave.updateFields(fieldPatch);
+      setAutosaveStatus(autosave.getStatus());
+      if (Object.hasOwn(nextFields, 'suiPackages')) {
+        setPackageVerification(INITIAL_REGISTRATION_DRAFT_PACKAGE_VERIFICATION);
+      }
+      setDraft((currentDraft) =>
+        currentDraft
+          ? {
+              ...currentDraft,
+              fields: {
+                ...currentDraft.fields,
+                ...fieldPatch,
+              },
+            }
+          : currentDraft,
+      );
+    },
+    [autosave, setAutosaveStatus, setDraft, setPackageVerification],
+  );
+}
+
+function useVerifyRegistrationDraftPackages({
+  fields,
+  moveRegistryResolver,
+  setPackageVerification,
+}: {
+  fields: RegistrationDraftFields;
+  moveRegistryResolver: ReturnType<typeof createMoveRegistryResolver>;
+  setPackageVerification: Dispatch<
+    SetStateAction<RegistrationDraftPackageVerificationState>
+  >;
+}) {
+  return useCallback(async () => {
+    const verificationBlocker = getRegistrationDraftPackageVerificationBlocker(
+      fields.suiPackages,
+    );
+    if (verificationBlocker) {
+      setPackageVerification({
+        status: 'error',
+        result: null,
+        errorMessage: verificationBlocker,
+      });
+      return;
+    }
+
+    setPackageVerification({
+      status: 'verifying',
+      result: null,
+      errorMessage: null,
+    });
+
+    try {
+      const results = await Promise.all(
+        toMoveRegistryResolvablePackages(fields.suiPackages).map(
+          (entry) => verifyMoveRegistryPackage(entry, moveRegistryResolver),
+        ),
+      );
+      const ok = results.every((result) => result.status === 'verified');
+
+      setPackageVerification({
+        status: ok ? 'ready' : 'not-ready',
+        result: { ok, results },
+        errorMessage: null,
+      });
+    } catch (caughtError) {
+      setPackageVerification({
+        status: 'error',
+        result: null,
+        errorMessage: getBuilderErrorMessage(
+          caughtError,
+          'Could not verify packages.',
+        ),
+      });
+    }
+  }, [fields.suiPackages, moveRegistryResolver, setPackageVerification]);
+}
+
+function useLocalMediaController({
+  draftMedia,
+  loadedDraftId,
+  setDraft,
+  storage,
+}: {
+  draftMedia: Draft['media'];
+  loadedDraftId: string | null;
+  setDraft: Dispatch<SetStateAction<Draft | null>>;
+  storage: DraftStorage;
+}) {
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const [mediaPending, setMediaPending] = useState(false);
+  const [mediaPreviewUrls, setMediaPreviewUrls] = useState<
+    Record<string, string>
+  >({});
+
+  useEffect(() => {
+    setMediaError(null);
+  }, [loadedDraftId]);
 
   useEffect(() => {
     let canceled = false;
@@ -184,138 +542,14 @@ export function useBuilderListingStepController({
     };
   }, [draftMedia, loadedDraftId, storage]);
 
-  useEffect(() => {
-    setAutosaveStatus(autosave.getStatus());
-
-    return () => {
-      autosave.cancel();
-    };
-  }, [autosave]);
-
-  useEffect(() => {
-    if (!loadedDraftId || !storedStep || !routeStep) return;
-
-    if (routeStep.shouldRedirect) {
-      void navigate({
-        to: '/builder/listings/$draftId/$step',
-        params: { draftId: loadedDraftId, step: routeStep.step },
-        replace: true,
-      });
-      return;
-    }
-
-    const routeDraftId = loadedDraftId;
-    const nextStep = routeStep.step;
-
-    if (nextStep === storedStep) return;
-
-    let canceled = false;
-
-    async function syncRouteStep() {
-      setNavigationError(null);
-      try {
-        const updatedDraft = await storage.setDraftStep(routeDraftId, nextStep);
-        if (!canceled) setDraft(updatedDraft);
-      } catch (caughtError) {
-        if (!canceled) {
-          setNavigationError(
-            getBuilderErrorMessage(caughtError, 'Could not open this step.'),
-          );
-        }
-      }
-    }
-
-    void syncRouteStep();
-
-    return () => {
-      canceled = true;
-    };
-  }, [loadedDraftId, navigate, routeStep, storage, storedStep]);
-
-  const getSavedDraftBeforeNavigation = useCallback(async (): Promise<Draft> => {
-    const savedDraft = await autosave.flush();
-    if (!savedDraft) {
-      throw new Error('Draft not found.');
-    }
-    return savedDraft;
-  }, [autosave]);
-
-  const handleUpdateFields = useCallback(
-    (nextFields: Partial<RegistrationDraftFields>) => {
-      const fieldPatch = createRegistrationDraftFieldPatch(nextFields);
-
-      autosave.updateFields(fieldPatch);
-      setAutosaveStatus(autosave.getStatus());
-      if (Object.hasOwn(nextFields, 'suiPackages')) {
-        setPackageVerification(INITIAL_REGISTRATION_DRAFT_PACKAGE_VERIFICATION);
-      }
-      setDraft((currentDraft) =>
-        currentDraft
-          ? {
-              ...currentDraft,
-              fields: {
-                ...currentDraft.fields,
-                ...fieldPatch,
-              },
-            }
-          : currentDraft,
-      );
-    },
-    [autosave],
-  );
-
-  const handleVerifyPackages = useCallback(async () => {
-    const verificationBlocker = getRegistrationDraftPackageVerificationBlocker(
-      fields.suiPackages,
-    );
-    if (verificationBlocker) {
-      setPackageVerification({
-        status: 'error',
-        result: null,
-        errorMessage: verificationBlocker,
-      });
-      return;
-    }
-
-    setPackageVerification({
-      status: 'verifying',
-      result: null,
-      errorMessage: null,
-    });
-
-    try {
-      const results = await Promise.all(
-        toMoveRegistryResolvablePackages(fields.suiPackages).map(
-          (entry) => verifyMoveRegistryPackage(entry, moveRegistryResolver),
-        ),
-      );
-      const ok = results.every((result) => result.status === 'verified');
-
-      setPackageVerification({
-        status: ok ? 'ready' : 'not-ready',
-        result: { ok, results },
-        errorMessage: null,
-      });
-    } catch (caughtError) {
-      setPackageVerification({
-        status: 'error',
-        result: null,
-        errorMessage: getBuilderErrorMessage(
-          caughtError,
-          'Could not verify packages.',
-        ),
-      });
-    }
-  }, [fields.suiPackages, moveRegistryResolver]);
-
   const refreshLoadedDraft = useCallback(async () => {
     if (!loadedDraftId) return;
 
     const refreshedDraft = await storage.getDraft(loadedDraftId);
     setDraft(refreshedDraft);
-  }, [loadedDraftId, storage]);
+  }, [loadedDraftId, setDraft, storage]);
 
-  const handleUploadMedia = useCallback(
+  const onUploadMedia = useCallback(
     async (files: File[]) => {
       if (!loadedDraftId || files.length === 0 || mediaPending) return;
 
@@ -359,7 +593,7 @@ export function useBuilderListingStepController({
     ],
   );
 
-  const handleUpdateMedia = useCallback(
+  const onUpdateMedia = useCallback(
     async (mediaId: string, update: DraftMediaUpdate) => {
       if (!loadedDraftId) return;
 
@@ -377,10 +611,10 @@ export function useBuilderListingStepController({
         );
       }
     },
-    [loadedDraftId, storage],
+    [loadedDraftId, setDraft, storage],
   );
 
-  const handleDeleteMedia = useCallback(
+  const onDeleteMedia = useCallback(
     async (mediaId: string) => {
       if (!loadedDraftId || mediaPending) return;
 
@@ -397,17 +631,74 @@ export function useBuilderListingStepController({
         setMediaPending(false);
       }
     },
-    [loadedDraftId, mediaPending, storage],
+    [loadedDraftId, mediaPending, setDraft, storage],
   );
 
-  const handleNavigateStep = useCallback(
-    async (nextStep: DraftStep) => {
-      if (!loadedDraftId || navigationPending) return;
+  return {
+    mediaError,
+    mediaPending,
+    mediaPreviewUrls,
+    onDeleteMedia,
+    onUpdateMedia,
+    onUploadMedia,
+  };
+}
 
+function useWizardNavigation({
+  autosave,
+  loadedDraftId,
+  navigate,
+  navigationPending,
+  setDraft,
+  setNavigationError,
+  setNavigationPending,
+  storage,
+}: {
+  autosave: DraftAutosave;
+  loadedDraftId: string | null;
+  navigate: BuilderNavigate;
+  navigationPending: boolean;
+  setDraft: (draft: Draft | null) => void;
+  setNavigationError: (message: string | null) => void;
+  setNavigationPending: (pending: boolean) => void;
+  storage: DraftStorage;
+}) {
+  const getSavedDraftBeforeNavigation = useCallback(async (): Promise<Draft> => {
+    const savedDraft = await autosave.flush();
+    if (!savedDraft) {
+      throw new Error('Draft not found.');
+    }
+    return savedDraft;
+  }, [autosave]);
+
+  const runWizardNavigation = useCallback(
+    async (
+      navigateWithSavedDraft: (savedDraft: Draft) => Promise<void>,
+      fallbackMessage: string,
+    ) => {
       setNavigationPending(true);
       setNavigationError(null);
       try {
         const savedDraft = await getSavedDraftBeforeNavigation();
+        await navigateWithSavedDraft(savedDraft);
+      } catch (caughtError) {
+        setNavigationError(getBuilderErrorMessage(caughtError, fallbackMessage));
+      } finally {
+        setNavigationPending(false);
+      }
+    },
+    [
+      getSavedDraftBeforeNavigation,
+      setNavigationError,
+      setNavigationPending,
+    ],
+  );
+
+  const onNavigateStep = useCallback(
+    async (nextStep: DraftStep) => {
+      if (!loadedDraftId || navigationPending) return;
+
+      await runWizardNavigation(async (savedDraft) => {
         const updatedDraft =
           savedDraft.currentStep === nextStep
             ? savedDraft
@@ -418,50 +709,88 @@ export function useBuilderListingStepController({
           params: { draftId: updatedDraft.id, step: nextStep },
         });
         setDraft(updatedDraft);
-      } catch (caughtError) {
-        setNavigationError(
-          getBuilderErrorMessage(
-            caughtError,
-            'Could not save before navigation.',
-          ),
-        );
-      } finally {
-        setNavigationPending(false);
-      }
+      }, 'Could not save before navigation.');
     },
     [
-      getSavedDraftBeforeNavigation,
-      navigate,
       loadedDraftId,
+      navigate,
       navigationPending,
+      runWizardNavigation,
+      setDraft,
       storage,
     ],
   );
 
-  const handleExitWizard = useCallback(async () => {
+  const onExitWizard = useCallback(async () => {
     if (!loadedDraftId || navigationPending) return;
 
-    setNavigationPending(true);
-    setNavigationError(null);
-    try {
-      const savedDraft = await getSavedDraftBeforeNavigation();
+    await runWizardNavigation(async (savedDraft) => {
       setDraft(savedDraft);
       await navigate({ to: '/builder' });
-    } catch (caughtError) {
-      setNavigationError(
-        getBuilderErrorMessage(caughtError, 'Could not save before leaving.'),
-      );
-    } finally {
-      setNavigationPending(false);
-    }
+    }, 'Could not save before leaving.');
   }, [
-    getSavedDraftBeforeNavigation,
     loadedDraftId,
     navigate,
     navigationPending,
+    runWizardNavigation,
+    setDraft,
   ]);
 
-  if (loading) {
+  return {
+    onExitWizard,
+    onNavigateStep,
+  };
+}
+
+function createBuilderListingStepControllerResult(
+  options: BuilderListingStepResultOptions,
+): BuilderListingStepController {
+  if (!isBuilderListingStepReady(options)) {
+    return getBuilderListingStepMessage(options);
+  }
+
+  return {
+    kind: 'ready',
+    shellProps: {
+      activeStep: options.routeStep.step,
+      autosaveError: options.autosaveError,
+      autosaveStatus: options.autosaveStatus,
+      draft: options.draft,
+      fieldErrors: options.fieldErrors,
+      fields: options.fields,
+      mediaError: options.mediaError,
+      mediaPending: options.mediaPending,
+      mediaPreviewUrls: options.mediaPreviewUrls,
+      navigationError: options.navigationError,
+      navigationPending: options.navigationPending,
+      packageVerification: options.packageVerification,
+      onDeleteMedia: options.onDeleteMedia,
+      onExitWizard: options.onExitWizard,
+      onNavigateStep: options.onNavigateStep,
+      onUpdateMedia: options.onUpdateMedia,
+      onUpdateFields: options.onUpdateFields,
+      onUploadMedia: options.onUploadMedia,
+      onVerifyPackages: options.onVerifyPackages,
+    },
+  };
+}
+
+function isBuilderListingStepReady(
+  state: BuilderListingStepState,
+): state is BuilderListingStepReadyState {
+  return (
+    !state.loading &&
+    state.error === null &&
+    state.draft !== null &&
+    state.routeStep !== null &&
+    !state.routeStep.shouldRedirect
+  );
+}
+
+function getBuilderListingStepMessage(
+  state: BuilderListingStepState,
+): BuilderListingStepMessage {
+  if (state.loading) {
     return {
       kind: 'message',
       title: 'Loading draft',
@@ -469,15 +798,15 @@ export function useBuilderListingStepController({
     };
   }
 
-  if (error) {
+  if (state.error) {
     return {
       kind: 'message',
       title: 'Draft error',
-      body: error,
+      body: state.error,
     };
   }
 
-  if (!draft) {
+  if (!state.draft) {
     return {
       kind: 'message',
       title: 'Draft not found',
@@ -485,37 +814,10 @@ export function useBuilderListingStepController({
     };
   }
 
-  if (!routeStep || routeStep.shouldRedirect) {
-    return {
-      kind: 'message',
-      title: 'Opening step',
-      body: 'Returning to the saved draft step.',
-    };
-  }
-
   return {
-    kind: 'ready',
-    shellProps: {
-      activeStep: routeStep.step,
-      autosaveError,
-      autosaveStatus,
-      draft,
-      fieldErrors,
-      fields,
-      mediaError,
-      mediaPending,
-      mediaPreviewUrls,
-      navigationError,
-      navigationPending,
-      packageVerification,
-      onDeleteMedia: handleDeleteMedia,
-      onExitWizard: handleExitWizard,
-      onNavigateStep: handleNavigateStep,
-      onUpdateMedia: handleUpdateMedia,
-      onUpdateFields: handleUpdateFields,
-      onUploadMedia: handleUploadMedia,
-      onVerifyPackages: handleVerifyPackages,
-    },
+    kind: 'message',
+    title: 'Opening step',
+    body: 'Returning to the saved draft step.',
   };
 }
 

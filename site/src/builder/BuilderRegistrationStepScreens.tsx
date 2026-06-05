@@ -104,7 +104,7 @@ export function BuilderRegistrationStepScreen({
   }
 
   return (
-    <p className="text-sm text-[var(--color-neutral-70)]">
+    <p className="text-sm text-(--color-neutral-60)">
       Screen content lands in a later builder PR.
     </p>
   );
@@ -272,7 +272,7 @@ function CategoryFieldset({
       aria-invalid={error ? true : undefined}
       className="grid gap-2"
     >
-      <legend className="text-xs font-bold uppercase text-[var(--color-neutral-60)]">
+      <legend className="text-xs font-bold uppercase text-(--color-neutral-60)">
         Categories
       </legend>
       <div className="grid gap-2 md:grid-cols-2">
@@ -312,7 +312,7 @@ function SmartAssemblyFieldset({
       aria-invalid={error ? true : undefined}
       className="grid gap-2"
     >
-      <legend className="text-xs font-bold uppercase text-[var(--color-neutral-60)]">
+      <legend className="text-xs font-bold uppercase text-(--color-neutral-60)">
         Smart assemblies
       </legend>
       <div className="grid gap-2 md:grid-cols-3">
@@ -350,10 +350,10 @@ function CheckboxOption({
   onChange: () => void;
 }) {
   return (
-    <label className="grid cursor-pointer grid-cols-[auto_minmax(0,1fr)] gap-3 border border-[var(--color-neutral-20)] p-3 text-sm text-[var(--color-foreground)] hover:border-[var(--color-neutral-50)]">
+    <label className="grid cursor-pointer grid-cols-[auto_minmax(0,1fr)] gap-3 border border-(--color-neutral-20) p-3 text-sm text-(--color-neutral) hover:border-(--color-neutral-50)">
       <input
         checked={checked}
-        className="mt-0.5 h-4 w-4 accent-[var(--color-primary)]"
+        className="mt-0.5 h-4 w-4 accent-(--color-martian-red)"
         name={name}
         type="checkbox"
         value={value}
@@ -362,7 +362,7 @@ function CheckboxOption({
       <span className="grid gap-1">
         <span className="font-bold uppercase">{label}</span>
         {subLabel ? (
-          <span className="text-xs text-[var(--color-neutral-60)]">
+          <span className="text-xs text-(--color-neutral-60)">
             {subLabel}
           </span>
         ) : null}

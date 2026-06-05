@@ -7,9 +7,9 @@ type BuilderFieldProps = {
 };
 
 const FIELD_INPUT_CLASS_NAME =
-  'w-full border border-[var(--color-neutral-30)] bg-[var(--color-background-elevated)] px-3 py-2 text-sm text-[var(--color-foreground)] outline-none transition-colors focus:border-[var(--color-primary)]';
+  'w-full border border-(--color-neutral-30) bg-(--color-crude-60) px-3 py-2 text-sm text-(--color-neutral) outline-none transition-colors focus:border-(--color-martian-red)';
 const FIELD_ERROR_INPUT_CLASS_NAME =
-  'border-[var(--color-error)] focus:border-[var(--color-error)]';
+  'border-(--color-alert) focus:border-(--color-alert)';
 
 export function BuilderTextField({
   error,
@@ -110,7 +110,7 @@ export function BuilderFieldShell({
   return (
     <div className="grid gap-2">
       <label
-        className="text-xs font-bold uppercase text-[var(--color-neutral-60)]"
+        className="text-xs font-bold uppercase text-(--color-neutral-60)"
         htmlFor={id}
       >
         {label}
@@ -131,7 +131,7 @@ export function BuilderFieldError({
   if (!message) return null;
 
   return (
-    <p className="text-xs text-[var(--color-error)]" id={`${id}-error`}>
+    <p className="text-xs text-(--color-alert)" id={`${id}-error`}>
       {message}
     </p>
   );
