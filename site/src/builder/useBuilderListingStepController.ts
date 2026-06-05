@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { verifyMoveRegistryPackage } from '@/chain/moveRegistry';
 import { createMoveRegistryResolver } from '@/chain/moveRegistryResolver';
 import type { BuilderWizardShellProps } from './BuilderWizardShell';
@@ -10,6 +11,7 @@ import {
   createRegistrationDraftFields,
   readRegistrationDraftFields,
   validateRegistrationDraftFields,
+  type RegistrationDraftFieldErrors,
   type RegistrationDraftFields,
 } from './registrationDraftFields';
 import {
@@ -43,55 +45,123 @@ export type BuilderListingStepControllerOptions = {
   step: string;
 };
 
+type BuilderListingStepMessage = Extract<
+  BuilderListingStepController,
+  { kind: 'message' }
+>;
+type BuilderNavigate = ReturnType<typeof useNavigate>;
+type BuilderWizardRouteStep = ReturnType<typeof resolveBuilderWizardRouteStep>;
+type DraftAutosave = ReturnType<typeof createDraftAutosave>;
+
+type BuilderListingStepState = {
+  draft: Draft | null;
+  error: string | null;
+  loading: boolean;
+  routeStep: BuilderWizardRouteStep | null;
+};
+
+type BuilderListingStepReadyState = BuilderListingStepState & {
+  draft: Draft;
+  error: null;
+  routeStep: BuilderWizardRouteStep;
+};
+
+type BuilderListingStepResultOptions = BuilderListingStepState & {
+  autosaveError: string | null;
+  autosaveStatus: DraftAutosaveStatus;
+  fieldErrors: RegistrationDraftFieldErrors;
+  fields: RegistrationDraftFields;
+  navigationError: string | null;
+  navigationPending: boolean;
+  packageVerification: RegistrationDraftPackageVerificationState;
+  onExitWizard: () => Promise<void>;
+  onNavigateStep: (step: DraftStep) => Promise<void>;
+  onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
+  onVerifyPackages: () => Promise<void>;
+};
+
 export function useBuilderListingStepController({
   draftId,
   step,
 }: BuilderListingStepControllerOptions): BuilderListingStepController {
   const navigate = useNavigate();
   const [storage] = useState<DraftStorage>(() => createDraftStorage());
-  const [draft, setDraft] = useState<Draft | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [autosaveStatus, setAutosaveStatus] =
-    useState<DraftAutosaveStatus>('idle');
   const [navigationError, setNavigationError] = useState<string | null>(null);
   const [navigationPending, setNavigationPending] = useState(false);
   const [packageVerification, setPackageVerification] =
     useState<RegistrationDraftPackageVerificationState>(
       INITIAL_REGISTRATION_DRAFT_PACKAGE_VERIFICATION,
     );
-  const loadedDraftId = draft?.id ?? null;
-  const storedStep = draft?.currentStep ?? null;
-  const fields = useMemo(
-    () =>
-      draft
-        ? readRegistrationDraftFields(draft.fields)
-        : createRegistrationDraftFields(),
-    [draft],
-  );
-  const fieldErrors = useMemo(
-    () => validateRegistrationDraftFields(fields),
-    [fields],
-  );
-  const routeStep = useMemo(
-    () =>
-      storedStep ? resolveBuilderWizardRouteStep(step, storedStep) : null,
-    [step, storedStep],
-  );
-  const autosave = useMemo(
-    () =>
-      createDraftAutosave({
-        storage,
-        draftId,
-        onStatusChange: setAutosaveStatus,
-      }),
-    [draftId, storage],
-  );
+  const { draft, setDraft, loading, error } = useDraftLoader({
+    draftId,
+    storage,
+    setNavigationError,
+  });
+  const { autosave, autosaveError, autosaveStatus, setAutosaveStatus } =
+    useDraftAutosaveController(storage, draftId);
+  const { fields, fieldErrors } = useRegistrationDraftFields(draft);
   const moveRegistryResolver = useMemo(() => createMoveRegistryResolver(), []);
-  const autosaveError =
-    autosaveStatus === 'error'
-      ? getBuilderErrorMessage(autosave.getError(), 'Could not save draft.')
-      : null;
+  const { loadedDraftId, routeStep } = useRouteStepSync({
+    draft,
+    navigate,
+    setDraft,
+    setNavigationError,
+    step,
+    storage,
+  });
+  const onUpdateFields = useUpdateRegistrationDraftFields({
+    autosave,
+    setAutosaveStatus,
+    setDraft,
+    setPackageVerification,
+  });
+  const onVerifyPackages = useVerifyRegistrationDraftPackages({
+    fields,
+    moveRegistryResolver,
+    setPackageVerification,
+  });
+  const { onExitWizard, onNavigateStep } = useWizardNavigation({
+    autosave,
+    loadedDraftId,
+    navigate,
+    navigationPending,
+    setDraft,
+    setNavigationError,
+    setNavigationPending,
+    storage,
+  });
+
+  return createBuilderListingStepControllerResult({
+    autosaveError,
+    autosaveStatus,
+    draft,
+    error,
+    fieldErrors,
+    fields,
+    loading,
+    navigationError,
+    navigationPending,
+    packageVerification,
+    onExitWizard,
+    onNavigateStep,
+    onUpdateFields,
+    onVerifyPackages,
+    routeStep,
+  });
+}
+
+function useDraftLoader({
+  draftId,
+  storage,
+  setNavigationError,
+}: {
+  draftId: string;
+  storage: DraftStorage;
+  setNavigationError: (message: string | null) => void;
+}) {
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let canceled = false;
@@ -119,7 +189,46 @@ export function useBuilderListingStepController({
     return () => {
       canceled = true;
     };
-  }, [draftId, storage]);
+  }, [draftId, setNavigationError, storage]);
+
+  return {
+    draft,
+    error,
+    loading,
+    setDraft,
+  };
+}
+
+function useDraftAutosaveController(
+  storage: DraftStorage,
+  draftId: string,
+) {
+  const isMounted = useRef(true);
+  const [autosaveStatus, setAutosaveStatus] =
+    useState<DraftAutosaveStatus>('idle');
+  const autosave = useMemo(
+    () =>
+      createDraftAutosave({
+        storage,
+        draftId,
+        onStatusChange: (status) => {
+          if (isMounted.current) setAutosaveStatus(status);
+        },
+      }),
+    [draftId, storage],
+  );
+  const autosaveError =
+    autosaveStatus === 'error'
+      ? getBuilderErrorMessage(autosave.getError(), 'Could not save draft.')
+      : null;
+
+  useEffect(() => {
+    isMounted.current = true;
+
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     setAutosaveStatus(autosave.getStatus());
@@ -128,6 +237,56 @@ export function useBuilderListingStepController({
       autosave.cancel();
     };
   }, [autosave]);
+
+  return {
+    autosave,
+    autosaveError,
+    autosaveStatus,
+    setAutosaveStatus,
+  };
+}
+
+function useRegistrationDraftFields(draft: Draft | null) {
+  const fields = useMemo(
+    () =>
+      draft
+        ? readRegistrationDraftFields(draft.fields)
+        : createRegistrationDraftFields(),
+    [draft],
+  );
+  const fieldErrors = useMemo(
+    () => validateRegistrationDraftFields(fields),
+    [fields],
+  );
+
+  return {
+    fieldErrors,
+    fields,
+  };
+}
+
+function useRouteStepSync({
+  draft,
+  navigate,
+  setDraft,
+  setNavigationError,
+  step,
+  storage,
+}: {
+  draft: Draft | null;
+  navigate: BuilderNavigate;
+  setDraft: (draft: Draft | null) => void;
+  setNavigationError: (message: string | null) => void;
+  step: string;
+  storage: DraftStorage;
+}) {
+  const loadedDraftId = draft?.id ?? null;
+  const storedStep = draft?.currentStep ?? null;
+  const routeStep = useMemo(
+    () =>
+      storedStep ? resolveBuilderWizardRouteStep(step, storedStep) : null,
+    [step, storedStep],
+  );
 
   useEffect(() => {
     if (!loadedDraftId || !storedStep || !routeStep) return;
@@ -167,17 +326,36 @@ export function useBuilderListingStepController({
     return () => {
       canceled = true;
     };
-  }, [loadedDraftId, navigate, routeStep, storage, storedStep]);
+  }, [
+    loadedDraftId,
+    navigate,
+    routeStep,
+    setDraft,
+    setNavigationError,
+    storage,
+    storedStep,
+  ]);
 
-  const getSavedDraftBeforeNavigation = useCallback(async (): Promise<Draft> => {
-    const savedDraft = await autosave.flush();
-    if (!savedDraft) {
-      throw new Error('Draft not found.');
-    }
-    return savedDraft;
-  }, [autosave]);
+  return {
+    loadedDraftId,
+    routeStep,
+  };
+}
 
-  const handleUpdateFields = useCallback(
+function useUpdateRegistrationDraftFields({
+  autosave,
+  setAutosaveStatus,
+  setDraft,
+  setPackageVerification,
+}: {
+  autosave: DraftAutosave;
+  setAutosaveStatus: (status: DraftAutosaveStatus) => void;
+  setDraft: Dispatch<SetStateAction<Draft | null>>;
+  setPackageVerification: Dispatch<
+    SetStateAction<RegistrationDraftPackageVerificationState>
+  >;
+}) {
+  return useCallback(
     (nextFields: Partial<RegistrationDraftFields>) => {
       const fieldPatch = createRegistrationDraftFieldPatch(nextFields);
 
@@ -198,10 +376,22 @@ export function useBuilderListingStepController({
           : currentDraft,
       );
     },
-    [autosave],
+    [autosave, setAutosaveStatus, setDraft, setPackageVerification],
   );
+}
 
-  const handleVerifyPackages = useCallback(async () => {
+function useVerifyRegistrationDraftPackages({
+  fields,
+  moveRegistryResolver,
+  setPackageVerification,
+}: {
+  fields: RegistrationDraftFields;
+  moveRegistryResolver: ReturnType<typeof createMoveRegistryResolver>;
+  setPackageVerification: Dispatch<
+    SetStateAction<RegistrationDraftPackageVerificationState>
+  >;
+}) {
+  return useCallback(async () => {
     const verificationBlocker = getRegistrationDraftPackageVerificationBlocker(
       fields.suiPackages,
     );
@@ -243,16 +433,64 @@ export function useBuilderListingStepController({
         ),
       });
     }
-  }, [fields.suiPackages, moveRegistryResolver]);
+  }, [fields.suiPackages, moveRegistryResolver, setPackageVerification]);
+}
 
-  const handleNavigateStep = useCallback(
-    async (nextStep: DraftStep) => {
-      if (!loadedDraftId || navigationPending) return;
+function useWizardNavigation({
+  autosave,
+  loadedDraftId,
+  navigate,
+  navigationPending,
+  setDraft,
+  setNavigationError,
+  setNavigationPending,
+  storage,
+}: {
+  autosave: DraftAutosave;
+  loadedDraftId: string | null;
+  navigate: BuilderNavigate;
+  navigationPending: boolean;
+  setDraft: (draft: Draft | null) => void;
+  setNavigationError: (message: string | null) => void;
+  setNavigationPending: (pending: boolean) => void;
+  storage: DraftStorage;
+}) {
+  const getSavedDraftBeforeNavigation = useCallback(async (): Promise<Draft> => {
+    const savedDraft = await autosave.flush();
+    if (!savedDraft) {
+      throw new Error('Draft not found.');
+    }
+    return savedDraft;
+  }, [autosave]);
 
+  const runWizardNavigation = useCallback(
+    async (
+      navigateWithSavedDraft: (savedDraft: Draft) => Promise<void>,
+      fallbackMessage: string,
+    ) => {
       setNavigationPending(true);
       setNavigationError(null);
       try {
         const savedDraft = await getSavedDraftBeforeNavigation();
+        await navigateWithSavedDraft(savedDraft);
+      } catch (caughtError) {
+        setNavigationError(getBuilderErrorMessage(caughtError, fallbackMessage));
+      } finally {
+        setNavigationPending(false);
+      }
+    },
+    [
+      getSavedDraftBeforeNavigation,
+      setNavigationError,
+      setNavigationPending,
+    ],
+  );
+
+  const onNavigateStep = useCallback(
+    async (nextStep: DraftStep) => {
+      if (!loadedDraftId || navigationPending) return;
+
+      await runWizardNavigation(async (savedDraft) => {
         const updatedDraft =
           savedDraft.currentStep === nextStep
             ? savedDraft
@@ -263,50 +501,82 @@ export function useBuilderListingStepController({
           params: { draftId: updatedDraft.id, step: nextStep },
         });
         setDraft(updatedDraft);
-      } catch (caughtError) {
-        setNavigationError(
-          getBuilderErrorMessage(
-            caughtError,
-            'Could not save before navigation.',
-          ),
-        );
-      } finally {
-        setNavigationPending(false);
-      }
+      }, 'Could not save before navigation.');
     },
     [
-      getSavedDraftBeforeNavigation,
-      navigate,
       loadedDraftId,
+      navigate,
       navigationPending,
+      runWizardNavigation,
+      setDraft,
       storage,
     ],
   );
 
-  const handleExitWizard = useCallback(async () => {
+  const onExitWizard = useCallback(async () => {
     if (!loadedDraftId || navigationPending) return;
 
-    setNavigationPending(true);
-    setNavigationError(null);
-    try {
-      const savedDraft = await getSavedDraftBeforeNavigation();
+    await runWizardNavigation(async (savedDraft) => {
       setDraft(savedDraft);
       await navigate({ to: '/builder' });
-    } catch (caughtError) {
-      setNavigationError(
-        getBuilderErrorMessage(caughtError, 'Could not save before leaving.'),
-      );
-    } finally {
-      setNavigationPending(false);
-    }
+    }, 'Could not save before leaving.');
   }, [
-    getSavedDraftBeforeNavigation,
     loadedDraftId,
     navigate,
     navigationPending,
+    runWizardNavigation,
+    setDraft,
   ]);
 
-  if (loading) {
+  return {
+    onExitWizard,
+    onNavigateStep,
+  };
+}
+
+function createBuilderListingStepControllerResult(
+  options: BuilderListingStepResultOptions,
+): BuilderListingStepController {
+  if (!isBuilderListingStepReady(options)) {
+    return getBuilderListingStepMessage(options);
+  }
+
+  return {
+    kind: 'ready',
+    shellProps: {
+      activeStep: options.routeStep.step,
+      autosaveError: options.autosaveError,
+      autosaveStatus: options.autosaveStatus,
+      draft: options.draft,
+      fieldErrors: options.fieldErrors,
+      fields: options.fields,
+      navigationError: options.navigationError,
+      navigationPending: options.navigationPending,
+      packageVerification: options.packageVerification,
+      onExitWizard: options.onExitWizard,
+      onNavigateStep: options.onNavigateStep,
+      onUpdateFields: options.onUpdateFields,
+      onVerifyPackages: options.onVerifyPackages,
+    },
+  };
+}
+
+function isBuilderListingStepReady(
+  state: BuilderListingStepState,
+): state is BuilderListingStepReadyState {
+  return (
+    !state.loading &&
+    state.error === null &&
+    state.draft !== null &&
+    state.routeStep !== null &&
+    !state.routeStep.shouldRedirect
+  );
+}
+
+function getBuilderListingStepMessage(
+  state: BuilderListingStepState,
+): BuilderListingStepMessage {
+  if (state.loading) {
     return {
       kind: 'message',
       title: 'Loading draft',
@@ -314,15 +584,15 @@ export function useBuilderListingStepController({
     };
   }
 
-  if (error) {
+  if (state.error) {
     return {
       kind: 'message',
       title: 'Draft error',
-      body: error,
+      body: state.error,
     };
   }
 
-  if (!draft) {
+  if (!state.draft) {
     return {
       kind: 'message',
       title: 'Draft not found',
@@ -330,30 +600,9 @@ export function useBuilderListingStepController({
     };
   }
 
-  if (!routeStep || routeStep.shouldRedirect) {
-    return {
-      kind: 'message',
-      title: 'Opening step',
-      body: 'Returning to the saved draft step.',
-    };
-  }
-
   return {
-    kind: 'ready',
-    shellProps: {
-      activeStep: routeStep.step,
-      autosaveError,
-      autosaveStatus,
-      draft,
-      fieldErrors,
-      fields,
-      navigationError,
-      navigationPending,
-      packageVerification,
-      onExitWizard: handleExitWizard,
-      onNavigateStep: handleNavigateStep,
-      onUpdateFields: handleUpdateFields,
-      onVerifyPackages: handleVerifyPackages,
-    },
+    kind: 'message',
+    title: 'Opening step',
+    body: 'Returning to the saved draft step.',
   };
 }

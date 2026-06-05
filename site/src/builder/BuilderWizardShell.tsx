@@ -107,14 +107,14 @@ export function BuilderWizardMessage({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold uppercase tracking-wider text-[var(--color-foreground)]">
+        <h1 className="text-2xl font-bold uppercase tracking-wider text-(--color-neutral)">
           {title}
         </h1>
-        <p className="text-sm text-[var(--color-neutral-70)]">{body}</p>
+        <p className="text-sm text-(--color-neutral-60)">{body}</p>
       </div>
       <Link
         to="/builder"
-        className="text-sm font-bold uppercase text-[var(--color-primary)]"
+        className="text-sm font-bold uppercase text-(--color-martian-red)"
       >
         Back to drafts
       </Link>
@@ -132,14 +132,14 @@ function WizardHeader({
   return (
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div className="max-w-3xl space-y-2">
-        <p className="text-xs font-bold uppercase text-[var(--color-neutral-60)]">
+        <p className="text-xs font-bold uppercase text-(--color-neutral-60)">
           Listing wizard
         </p>
-        <h1 className="text-2xl font-bold uppercase tracking-wider text-[var(--color-foreground)]">
+        <h1 className="text-2xl font-bold uppercase tracking-wider text-(--color-neutral)">
           {title}
         </h1>
       </div>
-      <div className="border border-[var(--color-neutral-20)] px-3 py-2 text-xs font-bold uppercase text-[var(--color-neutral-70)]">
+      <div className="border border-(--color-neutral-20) px-3 py-2 text-xs font-bold uppercase text-(--color-neutral-60)">
         {statusLabel}
       </div>
     </div>
@@ -151,7 +151,7 @@ function WizardErrorMessage({ message }: { message: string | null }) {
 
   return (
     <div
-      className="border border-[var(--color-error)] p-3 text-sm text-[var(--color-error)]"
+      className="border border-(--color-alert) p-3 text-sm text-(--color-alert)"
       role="alert"
     >
       {message}
@@ -229,7 +229,7 @@ function WizardStepPanel({
 
   return (
     <main className="min-w-0 space-y-5">
-      <section className="border border-[var(--color-neutral-20)] p-4">
+      <section className="border border-(--color-neutral-20) p-4">
         <div className="space-y-4">
           <WizardStepPanelHeader
             draftId={draft.id}
@@ -250,7 +250,7 @@ function WizardStepPanel({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button
           type="button"
-          className="text-sm font-bold uppercase text-[var(--color-primary)]"
+          className="text-sm font-bold uppercase text-(--color-martian-red)"
           disabled={navigationPending}
           onClick={() => {
             void onExitWizard();
@@ -296,21 +296,19 @@ function WizardStepPanelHeader({
 }) {
   return (
     <div className="space-y-3">
-      <h2 className="text-lg font-bold uppercase text-[var(--color-foreground)]">
+      <h2 className="text-lg font-bold uppercase text-(--color-neutral)">
         {title}
       </h2>
       {showDraftMeta ? (
         <dl className="grid gap-3 text-sm sm:grid-cols-[8rem_minmax(0,1fr)]">
-          <dt className="font-bold uppercase text-[var(--color-neutral-60)]">
+          <dt className="font-bold uppercase text-(--color-neutral-60)">
             Draft
           </dt>
-          <dd className="break-all text-[var(--color-foreground)]">
-            {draftId}
-          </dd>
-          <dt className="font-bold uppercase text-[var(--color-neutral-60)]">
+          <dd className="break-all text-(--color-neutral)">{draftId}</dd>
+          <dt className="font-bold uppercase text-(--color-neutral-60)">
             Step
           </dt>
-          <dd className="text-[var(--color-foreground)]">{title}</dd>
+          <dd className="text-(--color-neutral)">{title}</dd>
         </dl>
       ) : null}
     </div>
@@ -322,14 +320,14 @@ function getStepButtonClassName(item: BuilderWizardStepItem): string {
     'flex w-full items-center justify-between gap-3 border px-3 py-2 text-left text-sm font-bold uppercase transition-colors disabled:cursor-default';
 
   if (item.state === 'active') {
-    return `${baseClassName} border-[var(--color-primary)] text-[var(--color-foreground)]`;
+    return `${baseClassName} border-(--color-martian-red) text-(--color-neutral)`;
   }
 
   if (item.state === 'complete') {
-    return `${baseClassName} border-[var(--color-neutral-20)] text-[var(--color-primary)] hover:border-[var(--color-primary)]`;
+    return `${baseClassName} border-(--color-neutral-20) text-(--color-martian-red) hover:border-(--color-martian-red)`;
   }
 
-  return `${baseClassName} border-[var(--color-neutral-20)] text-[var(--color-neutral-70)] hover:border-[var(--color-neutral-50)]`;
+  return `${baseClassName} border-(--color-neutral-20) text-(--color-neutral-60) hover:border-(--color-neutral-50)`;
 }
 
 function StepStateLabel({ item }: { item: BuilderWizardStepItem }) {
@@ -337,5 +335,5 @@ function StepStateLabel({ item }: { item: BuilderWizardStepItem }) {
 
   const label = item.state === 'active' ? 'Now' : 'Done';
 
-  return <span className="text-[0.6875rem]">{label}</span>;
+  return <span className="text-xs">{label}</span>;
 }
