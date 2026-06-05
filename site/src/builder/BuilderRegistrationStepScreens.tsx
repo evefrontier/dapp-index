@@ -1,3 +1,4 @@
+import { Button } from '@evefrontier/ui';
 import type { ComponentType } from 'react';
 import type { DraftStep } from '@/storage/draftStorage';
 import {
@@ -11,7 +12,6 @@ import {
 } from '@/types/dapp-index';
 import {
   BuilderFieldError,
-  BuilderSelectField,
   BuilderTextAreaField,
   BuilderTextField,
   getBuilderFieldErrorId,
@@ -177,24 +177,15 @@ function DiscoveryScreen({
         selectedValues={fields.smartAssemblyTypes}
         onChange={(smartAssemblyTypes) => onUpdateFields({ smartAssemblyTypes })}
       />
-      <BuilderSelectField
+      <ServerTenantFilter
         error={errors.serverTenant}
-        id="builder-server-tenant"
-        label="Server tenant"
         value={fields.serverTenant}
         onChange={(serverTenant) =>
           onUpdateFields({
-            serverTenant: serverTenant as DappIndexServerTenant | '',
+            serverTenant,
           })
         }
-      >
-        <option value="">Choose tenant</option>
-        {DAPP_INDEX_SERVER_TENANTS.map((tenant) => (
-          <option key={tenant} value={tenant}>
-            {DAPP_INDEX_SERVER_TENANT_LABELS[tenant]}
-          </option>
-        ))}
-      </BuilderSelectField>
+      />
     </div>
   );
 }
@@ -292,6 +283,48 @@ function SmartAssemblyFieldset({
         ))}
       </div>
       <BuilderFieldError id="builder-smart-assemblies" message={error} />
+    </fieldset>
+  );
+}
+
+function ServerTenantFilter({
+  error,
+  value,
+  onChange,
+}: {
+  error?: string;
+  value: DappIndexServerTenant | '';
+  onChange: (value: DappIndexServerTenant) => void;
+}) {
+  const errorId = getBuilderFieldErrorId('builder-server-tenant', error);
+
+  return (
+    <fieldset
+      aria-describedby={errorId}
+      aria-invalid={error ? true : undefined}
+      className="grid gap-2"
+    >
+      <legend className="mb-2 text-xs font-bold uppercase text-(--color-neutral-60)">
+        Server tenant
+      </legend>
+      <div className="flex flex-wrap items-center gap-4">
+        {DAPP_INDEX_SERVER_TENANTS.map((tenant) => {
+          const selected = value === tenant;
+
+          return (
+            <Button
+              key={tenant}
+              size="medium"
+              type="button"
+              variant={selected ? 'primary' : 'secondary'}
+              onClick={() => onChange(tenant)}
+            >
+              {DAPP_INDEX_SERVER_TENANT_LABELS[tenant]}
+            </Button>
+          );
+        })}
+      </div>
+      <BuilderFieldError id="builder-server-tenant" message={error} />
     </fieldset>
   );
 }
