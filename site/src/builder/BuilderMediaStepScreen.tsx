@@ -1,4 +1,5 @@
-import { type ReactNode, useEffect, useState } from 'react';
+import { Button } from '@evefrontier/ui';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import type {
   DraftMedia,
   DraftMediaUpdate,
@@ -78,13 +79,12 @@ export function BuilderMediaUploadAction({
   disabled: boolean;
   onUploadMedia: (files: File[]) => Promise<void>;
 }) {
-  const labelClassName = disabled
-    ? 'inline-flex cursor-not-allowed items-center border border-[var(--color-neutral-30)] px-3 py-2 text-xs font-bold uppercase text-[var(--color-neutral-60)] opacity-60'
-    : 'inline-flex cursor-pointer items-center border border-[var(--color-primary)] px-3 py-2 text-xs font-bold uppercase text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-[var(--color-background)]';
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   return (
-    <label className={labelClassName}>
+    <>
       <input
+        ref={inputRef}
         accept={ACCEPTED_MEDIA_TYPES}
         className="sr-only"
         disabled={disabled}
@@ -96,8 +96,16 @@ export function BuilderMediaUploadAction({
           if (files.length > 0) void onUploadMedia(files);
         }}
       />
-      Add media
-    </label>
+      <Button
+        disabled={disabled}
+        size="small"
+        type="button"
+        variant="secondary"
+        onClick={() => inputRef.current?.click()}
+      >
+        Add media
+      </Button>
+    </>
   );
 }
 
