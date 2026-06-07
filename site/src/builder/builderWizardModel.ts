@@ -81,7 +81,11 @@ export function getBuilderWizardStatusLabel(
 }
 
 export function isBuilderWizardPlaceholderStep(step: DraftStep): boolean {
-  return !isRegistrationDraftFieldStep(step) && step !== 'media';
+  return (
+    !isRegistrationDraftFieldStep(step) &&
+    step !== 'media' &&
+    step !== 'review'
+  );
 }
 
 function getBuilderWizardStepState(

@@ -26,6 +26,10 @@ import {
   addRegistrationDraftPackage,
   type RegistrationDraftPackageVerificationState,
 } from './registrationDraftPackages';
+import type {
+  RegistrationDraftReview,
+  RegistrationDraftSlugCheckState,
+} from './registrationDraftReview';
 
 export type BuilderWizardShellProps = {
   activeStep: DraftStep;
@@ -37,9 +41,15 @@ export type BuilderWizardShellProps = {
   mediaError: string | null;
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
+  metadataHashError: string | null;
+  metadataHashHex: string | null;
+  metadataHashPending: boolean;
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  review: RegistrationDraftReview;
+  slugCheck: RegistrationDraftSlugCheckState;
+  onCheckSlug: () => Promise<void>;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
@@ -62,9 +72,15 @@ export function BuilderWizardShell({
   mediaError,
   mediaPending,
   mediaPreviewUrls,
+  metadataHashError,
+  metadataHashHex,
+  metadataHashPending,
   navigationError,
   navigationPending,
   packageVerification,
+  review,
+  slugCheck,
+  onCheckSlug,
   onDeleteMedia,
   onExitWizard,
   onNavigateStep,
@@ -83,7 +99,8 @@ export function BuilderWizardShell({
   const statusLabel = getBuilderWizardStatusLabel(autosaveStatus);
   const errorMessage = navigationError ?? autosaveError;
   const canNavigateNext =
-    !nextStep || isRegistrationDraftStepValid(activeStep, fields);
+    !nextStep ||
+    isBuilderStepReadyForNext(activeStep, fields, review, slugCheck);
 
   return (
     <div className="space-y-6">
@@ -116,7 +133,13 @@ export function BuilderWizardShell({
           mediaError={mediaError}
           mediaPending={mediaPending}
           mediaPreviewUrls={mediaPreviewUrls}
+          metadataHashError={metadataHashError}
+          metadataHashHex={metadataHashHex}
+          metadataHashPending={metadataHashPending}
           packageVerification={packageVerification}
+          review={review}
+          slugCheck={slugCheck}
+          onCheckSlug={onCheckSlug}
           onVerifyPackages={onVerifyPackages}
         />
       </div>
@@ -230,11 +253,17 @@ function WizardStepPanel({
   mediaError,
   mediaPending,
   mediaPreviewUrls,
+  metadataHashError,
+  metadataHashHex,
+  metadataHashPending,
   nextStep,
   navigationPending,
   packageVerification,
   previousStep,
+  review,
+  slugCheck,
   title,
+  onCheckSlug,
   onDeleteMedia,
   onExitWizard,
   onNavigateStep,
@@ -251,11 +280,17 @@ function WizardStepPanel({
   mediaError: string | null;
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
+  metadataHashError: string | null;
+  metadataHashHex: string | null;
+  metadataHashPending: boolean;
   nextStep: DraftStep | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
   previousStep: DraftStep | null;
+  review: RegistrationDraftReview;
+  slugCheck: RegistrationDraftSlugCheckState;
   title: string;
+  onCheckSlug: () => Promise<void>;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
@@ -306,7 +341,13 @@ function WizardStepPanel({
             mediaError={mediaError}
             mediaPending={mediaPending}
             mediaPreviewUrls={mediaPreviewUrls}
+            metadataHashError={metadataHashError}
+            metadataHashHex={metadataHashHex}
+            metadataHashPending={metadataHashPending}
             packageVerification={packageVerification}
+            review={review}
+            slugCheck={slugCheck}
+            onCheckSlug={onCheckSlug}
             onDeleteMedia={onDeleteMedia}
             onUpdateMedia={onUpdateMedia}
             onUpdateFields={onUpdateFields}
@@ -409,4 +450,24 @@ function StepStateLabel({ item }: { item: BuilderWizardStepItem }) {
   const label = item.state === 'active' ? 'Now' : 'Done';
 
   return <span className="text-xs">{label}</span>;
+}
+
+function isBuilderStepReadyForNext(
+  step: DraftStep,
+  fields: RegistrationDraftFields,
+  review: RegistrationDraftReview,
+  slugCheck: RegistrationDraftSlugCheckState,
+): boolean {
+  if (step === 'review') {
+    return review.ready && isReviewSlugCheckReady(slugCheck);
+  }
+  return isRegistrationDraftStepValid(step, fields);
+}
+
+function isReviewSlugCheckReady(
+  slugCheck: RegistrationDraftSlugCheckState,
+): boolean {
+  return (
+    slugCheck.status === 'available' || slugCheck.status === 'unconfigured'
+  );
 }

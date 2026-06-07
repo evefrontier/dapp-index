@@ -76,7 +76,7 @@ describe('builder wizard model', () => {
 
   test('keeps only future publish screens as placeholders', () => {
     expect(isBuilderWizardPlaceholderStep('media')).toBe(false);
-    expect(isBuilderWizardPlaceholderStep('review')).toBe(true);
+    expect(isBuilderWizardPlaceholderStep('review')).toBe(false);
     expect(isBuilderWizardPlaceholderStep('publish')).toBe(true);
   });
 });

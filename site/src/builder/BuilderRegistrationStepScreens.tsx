@@ -22,6 +22,7 @@ import {
 } from './BuilderFormFields';
 import { BuilderMediaStepScreen } from './BuilderMediaStepScreen';
 import { BuilderPackageStepScreen } from './BuilderPackageStepScreen';
+import { BuilderReviewStepScreen } from './BuilderReviewStepScreen';
 import {
   isRegistrationDraftFieldStep,
   type RegistrationDraftFieldErrors,
@@ -29,6 +30,10 @@ import {
   type RegistrationDraftFieldStep,
 } from './registrationDraftFields';
 import type { RegistrationDraftPackageVerificationState } from './registrationDraftPackages';
+import type {
+  RegistrationDraftReview,
+  RegistrationDraftSlugCheckState,
+} from './registrationDraftReview';
 
 type RegistrationStepScreenProps = {
   activeStep: DraftStep;
@@ -38,7 +43,13 @@ type RegistrationStepScreenProps = {
   mediaError: string | null;
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
+  metadataHashError: string | null;
+  metadataHashHex: string | null;
+  metadataHashPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  review: RegistrationDraftReview;
+  slugCheck: RegistrationDraftSlugCheckState;
+  onCheckSlug: () => Promise<void>;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onUpdateMedia: (
     mediaId: string,
@@ -65,7 +76,13 @@ export function BuilderRegistrationStepScreen({
   mediaError,
   mediaPending,
   mediaPreviewUrls,
+  metadataHashError,
+  metadataHashHex,
+  metadataHashPending,
   packageVerification,
+  review,
+  slugCheck,
+  onCheckSlug,
   onDeleteMedia,
   onUpdateMedia,
   onUpdateFields,
@@ -80,6 +97,19 @@ export function BuilderRegistrationStepScreen({
         previewUrls={mediaPreviewUrls}
         onDeleteMedia={onDeleteMedia}
         onUpdateMedia={onUpdateMedia}
+      />
+    );
+  }
+
+  if (activeStep === 'review') {
+    return (
+      <BuilderReviewStepScreen
+        metadataHashError={metadataHashError}
+        metadataHashHex={metadataHashHex}
+        metadataHashPending={metadataHashPending}
+        review={review}
+        slugCheck={slugCheck}
+        onCheckSlug={onCheckSlug}
       />
     );
   }

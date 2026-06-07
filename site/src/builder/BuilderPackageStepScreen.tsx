@@ -275,6 +275,7 @@ function getVerificationResultLabel(
   result: MoveRegistryVerificationResult,
 ): string {
   if (result.status === 'verified') return 'Verified';
+  if (result.reason === 'missing-mvr-name') return 'MVR skipped';
   if (result.status === 'mismatch') return 'Mismatch';
   if (result.status === 'missing') return 'Missing';
   return 'Unreachable';
@@ -284,6 +285,9 @@ function getVerificationResultDetails(
   result: MoveRegistryVerificationResult,
 ): string | null {
   if (result.status === 'verified') return 'MVR package matches.';
+  if (result.reason === 'missing-mvr-name') {
+    return 'Package ID is declared. Add MVR to verify registry identity.';
+  }
   if (result.errorMessage) return result.errorMessage;
   if (result.reason) return result.reason;
   return null;
