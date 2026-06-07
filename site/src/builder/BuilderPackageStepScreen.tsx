@@ -304,12 +304,9 @@ function getVerificationSummary(
     };
   }
 
-  if (
-    verification.status === 'idle' &&
-    verificationBlocker === 'Add MVR names to verify packages.'
-  ) {
+  if (verification.status === 'idle' && verificationBlocker) {
     return {
-      title: 'Package ID saved',
+      title: 'Not verified',
       body: verificationBlocker,
     };
   }

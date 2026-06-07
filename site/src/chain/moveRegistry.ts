@@ -124,6 +124,20 @@ export async function verifyMoveRegistryPackage(
       );
     }
 
+    if (packageInfoId !== undefined && resolvedPackageInfoId === undefined) {
+      return moveRegistryVerificationResult(
+        'unreachable',
+        {
+          ...declared,
+          resolvedPackageId: resolvedPackageId.value,
+        },
+        {
+          reason: 'missing-resolved-package-info-id',
+          errorMessage: 'MVR resolver did not return a PackageInfo object id',
+        },
+      );
+    }
+
     if (
       packageInfoId !== undefined &&
       resolvedPackageInfoId !== undefined &&
