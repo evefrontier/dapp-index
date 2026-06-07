@@ -12,7 +12,6 @@ import {
   BuilderTextField,
 } from './BuilderFormFields';
 import {
-  createRegistrationDraftPackage,
   getRegistrationDraftPackageVerificationBlocker,
   validateRegistrationDraftPackages,
   type RegistrationDraftPackage,
@@ -41,25 +40,7 @@ export function BuilderPackageStepScreen({
     packageVerification.status !== 'verifying';
 
   return (
-    <div className="grid gap-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
-          <h3 className="text-sm font-bold uppercase text-(--color-neutral)">
-            Sui packages
-          </h3>
-          <p className="text-xs text-(--color-neutral-60)">
-            Optional Move Registry identities for this listing.
-          </p>
-        </div>
-        <Button
-          variant="secondary"
-          size="small"
-          onClick={() => onChange(addPackage(packages))}
-        >
-          Add package
-        </Button>
-      </div>
-
+    <div className="grid gap-4">
       <BuilderFieldError
         id="builder-sui-packages"
         message={packageValidation.fieldErrors.suiPackages}
@@ -68,7 +49,7 @@ export function BuilderPackageStepScreen({
       {packages.length === 0 ? (
         <EmptyPackageList />
       ) : (
-        <div className="grid gap-4">
+        <div className="grid border-t border-(--color-neutral-20)">
           {packages.map((draftPackage, index) => (
             <PackageCard
               key={draftPackage.draftPackageId}
@@ -92,7 +73,7 @@ export function BuilderPackageStepScreen({
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border border-(--color-neutral-20) p-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-(--color-neutral-20) pt-4">
         <PackageVerificationSummary
           packageCount={packages.length}
           verificationBlocker={verificationBlocker}
@@ -115,7 +96,7 @@ export function BuilderPackageStepScreen({
 
 function EmptyPackageList() {
   return (
-    <div className="space-y-1 border border-(--color-neutral-20) p-4 text-sm text-(--color-neutral-60)">
+    <div className="space-y-1 border-y border-(--color-neutral-20) py-4 text-sm text-(--color-neutral-60)">
       <p>No packages added.</p>
       <p className="text-xs text-(--color-neutral-60)">
         Add one only if this dapp publishes Move code.
@@ -142,7 +123,7 @@ function PackageCard({
   const packageNumber = index + 1;
 
   return (
-    <section className="grid gap-4 border border-(--color-neutral-20) p-4">
+    <section className="grid gap-4 border-b border-(--color-neutral-20) py-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <h4 className="text-sm font-bold uppercase text-(--color-neutral)">
@@ -279,18 +260,6 @@ function PackageVerificationSummary({
   );
 }
 
-function addPackage(
-  packages: readonly RegistrationDraftPackage[],
-): RegistrationDraftPackage[] {
-  return [
-    ...packages,
-    createRegistrationDraftPackage({
-      draftPackageId: crypto.randomUUID(),
-      role: getNewPackageDefaultRole(packages),
-    }),
-  ];
-}
-
 function updatePackage(
   packages: readonly RegistrationDraftPackage[],
   nextPackage: RegistrationDraftPackage,
@@ -300,14 +269,6 @@ function updatePackage(
       ? nextPackage
       : draftPackage,
   );
-}
-
-function getNewPackageDefaultRole(
-  packages: readonly RegistrationDraftPackage[],
-): DappIndexSuiPackageRole {
-  return packages.some((draftPackage) => draftPackage.role === 'core')
-    ? 'dependency'
-    : 'core';
 }
 
 function getVerificationResultLabel(
@@ -375,5 +336,5 @@ function getVerificationSummary(
 }
 
 function assertNever(value: never): never {
-  throw new Error(`Unhandled package verification status: ${String(value)}`);
+  throw new Error(`Unhandled package verification state: ${String(value)}`);
 }

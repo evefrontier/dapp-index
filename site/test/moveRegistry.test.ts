@@ -103,6 +103,25 @@ describe('Move Registry package verification', () => {
     expect(result.reason).toBe('resolved-package-info-id-mismatch');
   });
 
+  test('marks a package unreachable when declared PackageInfo ID is not resolved', async () => {
+    const result = await verifyMoveRegistryPackage(corePackage, {
+      core: {
+        mvr: {
+          resolvePackage: async () => ({
+            package: packageId,
+          }),
+        },
+      },
+    });
+
+    expect(result.status).toBe('unreachable');
+    expect(result.reason).toBe('missing-resolved-package-info-id');
+    expect(result.errorMessage).toBe(
+      'MVR resolver did not return a PackageInfo object id',
+    );
+    expect(result.resolvedPackageId).toBe(packageId);
+  });
+
   test('marks a package mismatched when MVR resolves on a different network', async () => {
     const result = await verifyMoveRegistryPackage(
       corePackage,

@@ -1,3 +1,4 @@
+import { Button } from '@evefrontier/ui';
 import type { ComponentType } from 'react';
 import type {
   DraftMedia,
@@ -15,7 +16,6 @@ import {
 } from '@/types/dapp-index';
 import {
   BuilderFieldError,
-  BuilderSelectField,
   BuilderTextAreaField,
   BuilderTextField,
   getBuilderFieldErrorId,
@@ -214,24 +214,15 @@ function DiscoveryScreen({
         selectedValues={fields.smartAssemblyTypes}
         onChange={(smartAssemblyTypes) => onUpdateFields({ smartAssemblyTypes })}
       />
-      <BuilderSelectField
+      <ServerTenantFilter
         error={errors.serverTenant}
-        id="builder-server-tenant"
-        label="Server tenant"
         value={fields.serverTenant}
         onChange={(serverTenant) =>
           onUpdateFields({
-            serverTenant: serverTenant as DappIndexServerTenant | '',
+            serverTenant,
           })
         }
-      >
-        <option value="">Choose tenant</option>
-        {DAPP_INDEX_SERVER_TENANTS.map((tenant) => (
-          <option key={tenant} value={tenant}>
-            {DAPP_INDEX_SERVER_TENANT_LABELS[tenant]}
-          </option>
-        ))}
-      </BuilderSelectField>
+      />
     </div>
   );
 }
@@ -269,7 +260,7 @@ function CategoryFieldset({
       aria-invalid={error ? true : undefined}
       className="grid gap-2"
     >
-      <legend className="text-xs font-bold uppercase text-(--color-neutral-60)">
+      <legend className="mb-2 text-xs font-bold uppercase text-(--color-neutral-60)">
         Categories
       </legend>
       <div className="grid gap-2 md:grid-cols-2">
@@ -277,6 +268,7 @@ function CategoryFieldset({
           <CheckboxOption
             key={category.id}
             checked={selectedValues.includes(category.id)}
+            error={Boolean(error)}
             label={category.label}
             name="builder-categories"
             subLabel={category.subLabel}
@@ -309,7 +301,7 @@ function SmartAssemblyFieldset({
       aria-invalid={error ? true : undefined}
       className="grid gap-2"
     >
-      <legend className="text-xs font-bold uppercase text-(--color-neutral-60)">
+      <legend className="mb-2 text-xs font-bold uppercase text-(--color-neutral-60)">
         Smart assemblies
       </legend>
       <div className="grid gap-2 md:grid-cols-3">
@@ -317,6 +309,7 @@ function SmartAssemblyFieldset({
           <CheckboxOption
             key={assembly.id}
             checked={selectedValues.includes(assembly.id)}
+            error={Boolean(error)}
             label={assembly.label}
             name="builder-smart-assemblies"
             value={assembly.id}
@@ -331,8 +324,51 @@ function SmartAssemblyFieldset({
   );
 }
 
+function ServerTenantFilter({
+  error,
+  value,
+  onChange,
+}: {
+  error?: string;
+  value: DappIndexServerTenant | '';
+  onChange: (value: DappIndexServerTenant) => void;
+}) {
+  const errorId = getBuilderFieldErrorId('builder-server-tenant', error);
+
+  return (
+    <fieldset
+      aria-describedby={errorId}
+      aria-invalid={error ? true : undefined}
+      className="grid gap-2"
+    >
+      <legend className="mb-2 text-xs font-bold uppercase text-(--color-neutral-60)">
+        Server tenant
+      </legend>
+      <div className="flex flex-wrap items-center gap-2">
+        {DAPP_INDEX_SERVER_TENANTS.map((tenant) => {
+          const selected = value === tenant;
+
+          return (
+            <Button
+              key={tenant}
+              size="small"
+              type="button"
+              variant={selected ? 'primary' : 'secondary'}
+              onClick={() => onChange(tenant)}
+            >
+              {DAPP_INDEX_SERVER_TENANT_LABELS[tenant]}
+            </Button>
+          );
+        })}
+      </div>
+      <BuilderFieldError id="builder-server-tenant" message={error} />
+    </fieldset>
+  );
+}
+
 function CheckboxOption({
   checked,
+  error,
   label,
   name,
   subLabel,
@@ -340,22 +376,47 @@ function CheckboxOption({
   onChange,
 }: {
   checked: boolean;
+  error: boolean;
   label: string;
   name: string;
   subLabel?: string;
   value: string;
   onChange: () => void;
 }) {
+  const checkboxClassName = [
+    'mt-0.5 grid h-6 w-6 shrink-0 place-items-center border-2 transition-colors',
+    checked ? 'bg-(--color-martian-red)' : '',
+    error
+      ? 'border-(--color-alert)'
+      : 'border-(--color-martian-red) hover:border-(--color-neutral) group-hover:border-(--color-neutral)',
+    error ? '' : 'peer-focus-visible:border-(--color-martian-red)',
+    'peer-disabled:border-(--color-neutral-20) peer-disabled:bg-(--color-neutral-20)',
+    checked && !error
+      ? 'group-hover:border-(--color-neutral) group-hover:bg-(--color-neutral)'
+      : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const checkmarkClassName = [
+    'h-3 w-2 bg-(--color-crude) transition-colors',
+    checked ? 'opacity-100' : 'opacity-0',
+    'group-hover:bg-(--color-crude)',
+    'peer-disabled:bg-(--color-neutral-40)',
+  ].join(' ');
+
   return (
-    <label className="grid cursor-pointer grid-cols-[auto_minmax(0,1fr)] gap-3 border border-(--color-neutral-20) p-3 text-sm text-(--color-neutral) hover:border-(--color-neutral-50)">
+    <label className="group grid cursor-pointer grid-cols-[auto_minmax(0,1fr)] gap-3 border border-(--color-neutral-20) p-3 text-sm text-(--color-neutral) hover:border-(--color-neutral-50)">
       <input
         checked={checked}
-        className="mt-0.5 h-4 w-4 accent-(--color-martian-red)"
+        className="peer sr-only"
         name={name}
         type="checkbox"
         value={value}
         onChange={onChange}
       />
+      <span aria-hidden="true" className={checkboxClassName}>
+        <span className={checkmarkClassName} />
+      </span>
       <span className="grid gap-1">
         <span className="font-bold uppercase">{label}</span>
         {subLabel ? (

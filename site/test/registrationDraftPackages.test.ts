@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import {
+  addRegistrationDraftPackage,
   createRegistrationDraftPackage,
   createRegistrationDraftPackagePatch,
   getRegistrationDraftPackageVerificationBlocker,
@@ -76,6 +77,20 @@ describe('registration draft packages', () => {
         role: 'dependency',
       }).role,
     ).toBe('dependency');
+  });
+
+  test('adds package rows with core then dependency roles', () => {
+    const packagesWithCore = addRegistrationDraftPackage([]);
+
+    expect(packagesWithCore).toHaveLength(1);
+    expect(typeof packagesWithCore[0]?.draftPackageId).toBe('string');
+    expect(packagesWithCore[0]?.role).toBe('core');
+
+    const packagesWithDependency = addRegistrationDraftPackage(packagesWithCore);
+
+    expect(packagesWithDependency).toHaveLength(2);
+    expect(packagesWithDependency[0]).toBe(packagesWithCore[0]);
+    expect(packagesWithDependency[1]?.role).toBe('dependency');
   });
 
   test('creates a storage patch for draft Sui packages', () => {

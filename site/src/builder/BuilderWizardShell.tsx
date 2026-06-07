@@ -22,7 +22,10 @@ import {
   type RegistrationDraftFieldErrors,
   type RegistrationDraftFields,
 } from './registrationDraftFields';
-import type { RegistrationDraftPackageVerificationState } from './registrationDraftPackages';
+import {
+  addRegistrationDraftPackage,
+  type RegistrationDraftPackageVerificationState,
+} from './registrationDraftPackages';
 
 export type BuilderWizardShellProps = {
   activeStep: DraftStep;
@@ -271,6 +274,18 @@ function WizardStepPanel({
         disabled={mediaPending}
         onUploadMedia={onUploadMedia}
       />
+    ) : activeStep === 'packages' ? (
+      <Button
+        variant="secondary"
+        size="small"
+        onClick={() =>
+          onUpdateFields({
+            suiPackages: addRegistrationDraftPackage(fields.suiPackages),
+          })
+        }
+      >
+        Add package
+      </Button>
     ) : null;
 
   return (
@@ -355,7 +370,7 @@ function WizardStepPanelHeader({
         <h2 className="text-lg font-bold uppercase text-(--color-neutral)">
           {title}
         </h2>
-        {action}
+        {action ? <div className="shrink-0">{action}</div> : null}
       </div>
       {showDraftMeta ? (
         <dl className="grid gap-3 text-sm sm:grid-cols-[8rem_minmax(0,1fr)]">
