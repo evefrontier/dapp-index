@@ -343,46 +343,37 @@ function getVerificationSummary(
     };
   }
 
-  if (
-    verification.status === 'idle' &&
-    verificationBlocker === 'Add MVR names to verify packages.'
-  ) {
-    return {
-      title: 'Package ID saved',
-      body: verificationBlocker,
-    };
+  switch (verification.status) {
+    case 'idle':
+      return {
+        title: 'Not verified',
+        body: verificationBlocker ?? 'Verify added packages before review.',
+      };
+    case 'verifying':
+      return {
+        title: 'Verifying',
+        body: 'Checking Move Registry package identities.',
+      };
+    case 'ready':
+      return {
+        title: 'Verified',
+        body: 'All added packages match Move Registry.',
+      };
+    case 'not-ready':
+      return {
+        title: 'Not ready',
+        body: 'Resolve package verification issues.',
+      };
+    case 'error':
+      return {
+        title: 'Verification failed',
+        body: verification.errorMessage ?? 'Could not verify packages.',
+      };
+    default:
+      return assertNever(verification.status);
   }
+}
 
-  if (verification.status === 'verifying') {
-    return {
-      title: 'Verifying',
-      body: 'Checking Move Registry package identities.',
-    };
-  }
-
-  if (verification.status === 'ready') {
-    return {
-      title: 'Verified',
-      body: 'All added packages match Move Registry.',
-    };
-  }
-
-  if (verification.status === 'not-ready') {
-    return {
-      title: 'Not ready',
-      body: 'Resolve package verification issues.',
-    };
-  }
-
-  if (verification.status === 'error') {
-    return {
-      title: 'Verification failed',
-      body: verification.errorMessage ?? 'Could not verify packages.',
-    };
-  }
-
-  return {
-    title: 'Not verified',
-    body: 'Verify added packages before review.',
-  };
+function assertNever(value: never): never {
+  throw new Error(`Unhandled package verification status: ${String(value)}`);
 }
