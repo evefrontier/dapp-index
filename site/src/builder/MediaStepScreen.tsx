@@ -13,7 +13,7 @@ const ACCEPTED_MEDIA_TYPES = 'image/png,image/jpeg,image/webp,video/webm';
 const MEDIA_FIELD_CLASS_NAME =
   'h-10 w-full border-0 border-b border-[var(--color-neutral-30)] bg-transparent px-0 py-2 text-sm text-[var(--color-foreground)] outline-none transition-colors focus:border-[var(--color-primary)]';
 
-export type BuilderMediaStepScreenProps = {
+export type MediaStepScreenProps = {
   errorMessage: string | null;
   media: DraftMedia[];
   pending: boolean;
@@ -25,14 +25,14 @@ export type BuilderMediaStepScreenProps = {
   ) => Promise<void>;
 };
 
-export function BuilderMediaStepScreen({
+export function MediaStepScreen({
   errorMessage,
   media,
   pending,
   previewUrls,
   onDeleteMedia,
   onUpdateMedia,
-}: BuilderMediaStepScreenProps) {
+}: MediaStepScreenProps) {
   const [selectedPreviewId, setSelectedPreviewId] = useState<string | null>(
     null,
   );
@@ -72,7 +72,7 @@ export function BuilderMediaStepScreen({
   );
 }
 
-export function BuilderMediaUploadAction({
+export function MediaUploadAction({
   disabled,
   onUploadMedia,
 }: {

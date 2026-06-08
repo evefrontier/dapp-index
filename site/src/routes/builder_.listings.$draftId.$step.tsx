@@ -1,25 +1,25 @@
 import { createFileRoute } from '@tanstack/react-router';
 import {
-  BuilderWizardMessage,
-  BuilderWizardShell,
-} from '@/builder/BuilderWizardShell';
-import { useBuilderListingStepController } from '@/builder/useBuilderListingStepController';
+  WizardMessage,
+  WizardShell,
+} from '@/builder/WizardShell';
+import { useListingStepController } from '@/builder/useListingStepController';
 
 export const Route = createFileRoute('/builder_/listings/$draftId/$step')({
   component: BuilderListingStepPage,
 });
 
 function BuilderListingStepPage() {
-  const controller = useBuilderListingStepController(Route.useParams());
+  const controller = useListingStepController(Route.useParams());
 
   if (controller.kind === 'message') {
     return (
-      <BuilderWizardMessage
+      <WizardMessage
         title={controller.title}
         body={controller.body}
       />
     );
   }
 
-  return <BuilderWizardShell {...controller.shellProps} />;
+  return <WizardShell {...controller.shellProps} />;
 }

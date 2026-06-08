@@ -22,6 +22,7 @@
     "@mysten/sui": "^2.16.0",
     "@mysten/walrus": "^1.1.7",
     "@mysten/walrus-wasm": "^0.2.2",
+    "@tanstack/react-form": "^1.33.0",
     "@tanstack/react-query": "^5.95.2",
     "@tanstack/react-query-devtools": "^5.95.2",
     "@tanstack/react-router": "^1.169.2",

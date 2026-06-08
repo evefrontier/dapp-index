@@ -1,11 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { BuilderHomeView } from '@/builder/BuilderHomeView';
-import { useBuilderHomeController } from '@/builder/useBuilderHomeController';
+import { HomeView } from '@/builder/HomeView';
+import { useHomeController } from '@/builder/useHomeController';
 
 export const Route = createFileRoute('/builder')({
   component: BuilderPage,
 });
 
 function BuilderPage() {
-  return <BuilderHomeView {...useBuilderHomeController()} />;
+  return <HomeView {...useHomeController()} />;
 }

@@ -6,15 +6,15 @@ import {
 } from '@/storage/draftStorage';
 import { isRegistrationDraftFieldStep } from './registrationDraftFields';
 
-type BuilderWizardStepState = 'complete' | 'active' | 'available';
+type WizardStepState = 'complete' | 'active' | 'available';
 
-export type BuilderWizardStepItem = {
+export type WizardStepItem = {
   step: DraftStep;
   label: string;
-  state: BuilderWizardStepState;
+  state: WizardStepState;
 };
 
-const BUILDER_WIZARD_STEP_LABELS = {
+const WIZARD_STEP_LABELS = {
   basics: 'Basics',
   about: 'About',
   discovery: 'Discovery',
@@ -24,7 +24,7 @@ const BUILDER_WIZARD_STEP_LABELS = {
   publish: 'Publish',
 } satisfies Record<DraftStep, string>;
 
-const BUILDER_WIZARD_STATUS_LABELS = {
+const WIZARD_STATUS_LABELS = {
   idle: 'Saved',
   pending: 'Unsaved',
   saving: 'Saving',
@@ -32,24 +32,24 @@ const BUILDER_WIZARD_STATUS_LABELS = {
   error: 'Save failed',
 } satisfies Record<DraftAutosaveStatus, string>;
 
-export function getBuilderWizardStepLabel(step: DraftStep): string {
-  return BUILDER_WIZARD_STEP_LABELS[step];
+export function getWizardStepLabel(step: DraftStep): string {
+  return WIZARD_STEP_LABELS[step];
 }
 
-export function createBuilderWizardStepItems(
+export function createWizardStepItems(
   activeStep: DraftStep,
   completedSteps: readonly DraftStep[],
-): BuilderWizardStepItem[] {
+): WizardStepItem[] {
   const completedStepSet = new Set(completedSteps);
 
   return DRAFT_STEPS.map((step) => ({
     step,
-    label: getBuilderWizardStepLabel(step),
-    state: getBuilderWizardStepState(step, activeStep, completedStepSet),
+    label: getWizardStepLabel(step),
+    state: getWizardStepState(step, activeStep, completedStepSet),
   }));
 }
 
-export function resolveBuilderWizardRouteStep(
+export function resolveWizardRouteStep(
   routeStep: string,
   storedStep: DraftStep,
 ): {
@@ -63,7 +63,7 @@ export function resolveBuilderWizardRouteStep(
     : { step: storedStep, shouldRedirect: true };
 }
 
-export function getBuilderWizardAdjacentStep(
+export function getWizardAdjacentStep(
   step: DraftStep,
   direction: 'previous' | 'next',
 ): DraftStep | null {
@@ -74,21 +74,21 @@ export function getBuilderWizardAdjacentStep(
   return DRAFT_STEPS[nextIndex] ?? null;
 }
 
-export function getBuilderWizardStatusLabel(
+export function getWizardStatusLabel(
   status: DraftAutosaveStatus,
 ): string {
-  return BUILDER_WIZARD_STATUS_LABELS[status];
+  return WIZARD_STATUS_LABELS[status];
 }
 
-export function isBuilderWizardPlaceholderStep(step: DraftStep): boolean {
+export function isWizardPlaceholderStep(step: DraftStep): boolean {
   return !isRegistrationDraftFieldStep(step) && step !== 'media';
 }
 
-function getBuilderWizardStepState(
+function getWizardStepState(
   step: DraftStep,
   activeStep: DraftStep,
   completedSteps: ReadonlySet<DraftStep>,
-): BuilderWizardStepState {
+): WizardStepState {
   if (step === activeStep) return 'active';
   return completedSteps.has(step) ? 'complete' : 'available';
 }

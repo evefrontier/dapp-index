@@ -1,10 +1,10 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { BuilderHomeViewProps } from './BuilderHomeView';
-import { getBuilderErrorMessage } from './builderErrors';
-import { createBuilderHomeDraftItem } from './builderHomeModel';
+import type { HomeViewProps } from './HomeView';
+import { getErrorMessage } from './errors';
+import { createHomeDraftItem } from './homeModel';
 import { createRegistrationDraft } from './registrationDraft';
-import { builderTutorialPreference } from './tutorialStorage';
+import { tutorialPreference } from './tutorialStorage';
 import {
   createDraftStorage,
   type Draft,
@@ -25,7 +25,7 @@ type DraftListLoadResult =
       message: string;
     };
 
-export function useBuilderHomeController(): BuilderHomeViewProps {
+export function useHomeController(): HomeViewProps {
   const navigate = useNavigate();
   const [storage] = useState<DraftStorage>(() => createDraftStorage());
   const {
@@ -36,7 +36,7 @@ export function useBuilderHomeController(): BuilderHomeViewProps {
     setError: setDraftListError,
   } = useDraftList(storage);
   const { tutorialSkipped, showTutorial, skipTutorial } =
-    useBuilderTutorialPreference();
+    useTutorialPreference();
 
   const createDraft = useCallback(async () => {
     setDraftListError(null);
@@ -48,7 +48,7 @@ export function useBuilderHomeController(): BuilderHomeViewProps {
       });
     } catch (caughtError) {
       setDraftListError(
-        getBuilderErrorMessage(caughtError, 'Could not create draft.'),
+        getErrorMessage(caughtError, 'Could not create draft.'),
       );
     }
   }, [navigate, setDraftListError, storage]);
@@ -64,7 +64,7 @@ export function useBuilderHomeController(): BuilderHomeViewProps {
         await refreshDrafts();
       } catch (caughtError) {
         setDraftListError(
-          getBuilderErrorMessage(caughtError, 'Could not delete draft.'),
+          getErrorMessage(caughtError, 'Could not delete draft.'),
         );
       }
     },
@@ -89,7 +89,7 @@ function useDraftList(storage: DraftStorage) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const draftItems = useMemo(
-    () => drafts.map(createBuilderHomeDraftItem),
+    () => drafts.map(createHomeDraftItem),
     [drafts],
   );
 
@@ -132,18 +132,18 @@ function useDraftList(storage: DraftStorage) {
   };
 }
 
-function useBuilderTutorialPreference() {
+function useTutorialPreference() {
   const [tutorialSkipped, setTutorialSkippedState] = useState(
-    () => builderTutorialPreference.read().skipped,
+    () => tutorialPreference.read().skipped,
   );
 
   const showTutorial = useCallback(() => {
-    builderTutorialPreference.show();
+    tutorialPreference.show();
     setTutorialSkippedState(false);
   }, []);
 
   const skipTutorial = useCallback(() => {
-    builderTutorialPreference.skip();
+    tutorialPreference.skip();
     setTutorialSkippedState(true);
   }, []);
 
@@ -165,7 +165,7 @@ async function loadDraftList(
   } catch (caughtError) {
     return {
       kind: 'error',
-      message: getBuilderErrorMessage(caughtError, 'Could not load drafts.'),
+      message: getErrorMessage(caughtError, 'Could not load drafts.'),
     };
   }
 }

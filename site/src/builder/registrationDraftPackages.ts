@@ -4,7 +4,8 @@ import {
   type DappIndexSuiNetwork,
   type DappIndexSuiPackageRole,
 } from '@/types/dapp-index';
-import { isValidMvrName } from '@/chain/moveRegistry';
+import { RegistrationDraftPackageSchema } from '@/schemas/registration-draft-package';
+import { zodIssuesToFieldErrors } from '@/schemas/zodFieldErrors';
 import type {
   MoveRegistryResolvablePackage,
   MoveRegistryVerificationResult,
@@ -62,10 +63,17 @@ export const INITIAL_REGISTRATION_DRAFT_PACKAGE_VERIFICATION: RegistrationDraftP
 
 const DEFAULT_PACKAGE_NETWORK: DappIndexSuiNetwork = 'testnet';
 const DEFAULT_PACKAGE_ROLE: DappIndexSuiPackageRole = 'dependency';
-const SUI_OBJECT_ID_PATTERN = /^0x[0-9a-fA-F]{64}$/;
 
 const SUI_NETWORK_VALUES = new Set<string>(DAPP_INDEX_SUI_NETWORKS);
 const SUI_PACKAGE_ROLE_VALUES = new Set<string>(DAPP_INDEX_SUI_PACKAGE_ROLES);
+
+const PACKAGE_FIELD_KEYS = [
+  'network',
+  'role',
+  'mvrName',
+  'packageId',
+  'packageInfoId',
+] as const satisfies readonly RegistrationDraftPackageFieldName[];
 
 export function createRegistrationDraftPackage({
   draftPackageId,
@@ -161,6 +169,14 @@ export function toMoveRegistryResolvablePackages(
   );
 }
 
+function validateRegistrationDraftPackage(
+  draftPackage: RegistrationDraftPackage,
+): RegistrationDraftPackageErrors {
+  const result = RegistrationDraftPackageSchema.safeParse(draftPackage);
+  if (result.success) return {};
+  return zodIssuesToFieldErrors(result.error.issues, PACKAGE_FIELD_KEYS);
+}
+
 function readRegistrationDraftPackage(
   value: unknown,
   index: number,
@@ -186,34 +202,6 @@ function readRegistrationDraftPackage(
     packageId: readString(item?.packageId),
     packageInfoId: readString(item?.packageInfoId),
   };
-}
-
-function validateRegistrationDraftPackage(
-  draftPackage: RegistrationDraftPackage,
-): RegistrationDraftPackageErrors {
-  const errors: RegistrationDraftPackageErrors = {};
-
-  if (
-    draftPackage.mvrName.trim() &&
-    !isValidMvrName(draftPackage.mvrName)
-  ) {
-    errors.mvrName = 'Use a valid MVR name.';
-  }
-
-  if (!draftPackage.packageId.trim()) {
-    errors.packageId = 'Package ID is required.';
-  } else if (!SUI_OBJECT_ID_PATTERN.test(draftPackage.packageId.trim())) {
-    errors.packageId = 'Use a valid Sui object ID.';
-  }
-
-  if (
-    draftPackage.packageInfoId.trim() &&
-    !SUI_OBJECT_ID_PATTERN.test(draftPackage.packageInfoId.trim())
-  ) {
-    errors.packageInfoId = 'Use a valid Sui object ID.';
-  }
-
-  return errors;
 }
 
 function hasPackageErrors(errors: RegistrationDraftPackageErrors): boolean {
