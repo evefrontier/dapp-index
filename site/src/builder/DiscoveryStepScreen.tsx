@@ -28,7 +28,7 @@ export function DiscoveryStepScreen({
   fields,
   onUpdateFields,
 }: DiscoveryStepScreenProps) {
-  useRegistrationDraftStepForm({
+  const { form, updateField } = useRegistrationDraftStepForm({
     values: {
       categories: fields.categories,
       smartAssemblyTypes: fields.smartAssemblyTypes,
@@ -40,21 +40,43 @@ export function DiscoveryStepScreen({
 
   return (
     <div className="grid gap-5">
-      <CategoryFieldset
-        error={errors.categories}
-        selectedValues={fields.categories}
-        onChange={(categories) => onUpdateFields({ categories })}
-      />
-      <SmartAssemblyFieldset
-        error={errors.smartAssemblyTypes}
-        selectedValues={fields.smartAssemblyTypes}
-        onChange={(smartAssemblyTypes) => onUpdateFields({ smartAssemblyTypes })}
-      />
-      <ServerTenantFilter
-        error={errors.serverTenant}
-        value={fields.serverTenant}
-        onChange={(serverTenant) => onUpdateFields({ serverTenant })}
-      />
+      <form.Field name="categories">
+        {(field) => (
+          <CategoryFieldset
+            error={field.state.meta.errors[0] ?? errors.categories}
+            selectedValues={field.state.value}
+            onChange={(categories) =>
+              updateField('categories', categories, field.handleChange)
+            }
+          />
+        )}
+      </form.Field>
+      <form.Field name="smartAssemblyTypes">
+        {(field) => (
+          <SmartAssemblyFieldset
+            error={field.state.meta.errors[0] ?? errors.smartAssemblyTypes}
+            selectedValues={field.state.value}
+            onChange={(smartAssemblyTypes) =>
+              updateField(
+                'smartAssemblyTypes',
+                smartAssemblyTypes,
+                field.handleChange,
+              )
+            }
+          />
+        )}
+      </form.Field>
+      <form.Field name="serverTenant">
+        {(field) => (
+          <ServerTenantFilter
+            error={field.state.meta.errors[0] ?? errors.serverTenant}
+            value={field.state.value}
+            onChange={(serverTenant) =>
+              updateField('serverTenant', serverTenant, field.handleChange)
+            }
+          />
+        )}
+      </form.Field>
     </div>
   );
 }
