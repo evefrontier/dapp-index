@@ -1,12 +1,12 @@
 import { Button } from '@evefrontier/ui';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import type {
   DraftMedia,
-  DraftMediaKind,
   DraftMediaUpdate,
 } from '@/storage/draftStorage';
 import type { DappIndexMediaRole } from '@/types/dapp-index';
 import { FieldError, TextField, getFieldErrorId } from './FormFields';
+import { MediaPreviewModal } from './MediaPreviewModal';
 import {
   MEDIA_STEP_GUIDANCE,
   getMediaRoleOption,
@@ -124,7 +124,7 @@ function MediaStepGuidance({ media }: { media: DraftMedia[] }) {
 
   return (
     <div className="grid gap-2 border border-(--color-neutral-20) p-4 text-xs text-(--color-neutral-60)">
-      <p className="font-bold uppercase text-(--color-neutral)">Listing media</p>
+      <h4>Listing media</h4>
       <ul className="grid list-disc gap-1 pl-4">
         <li>
           PNG, JPEG, or WebP up to {MEDIA_STEP_GUIDANCE.imageLimit}; WebM up
@@ -207,7 +207,7 @@ function MediaCard({
           />
           <button
             type="button"
-            className="self-start justify-self-start pt-1 text-xs font-bold uppercase text-(--color-alert)"
+            className="builder-text-button-danger self-start justify-self-start pt-1"
             disabled={pending}
             onClick={() => {
               void onDeleteMedia(media.id);
@@ -230,7 +230,7 @@ function MediaRoleFilter({
 }: {
   error?: string;
   id: string;
-  kind: DraftMediaKind;
+  kind: DraftMedia['kind'];
   value: DappIndexMediaRole;
   onChange: (role: DappIndexMediaRole) => void;
 }) {
@@ -243,11 +243,9 @@ function MediaRoleFilter({
     <fieldset
       aria-describedby={errorId}
       aria-invalid={error ? true : undefined}
-      className="grid gap-3"
+      className="builder-fieldset grid gap-3"
     >
-      <legend className="mb-2 text-xs font-bold uppercase text-(--color-neutral-60)">
-        Role
-      </legend>
+      <legend>Role</legend>
       <div className="flex flex-wrap items-center gap-2">
         {options.map((option) => {
           const selected = value === option.role;
@@ -309,9 +307,7 @@ function MediaPreviewButton({
           />
         )
       ) : (
-        <p className="text-xs font-bold uppercase text-(--color-neutral-60)">
-          Preview unavailable
-        </p>
+        <p className="text-xs text-(--color-neutral-60)">Preview unavailable</p>
       )}
       <MediaIdentity media={media} />
     </button>
@@ -322,76 +318,12 @@ function MediaIdentity({ media }: { media: DraftMedia }) {
   return (
     <div className="absolute inset-x-0 bottom-0 min-w-0 space-y-1 bg-black/80 p-2">
       <div className="flex flex-wrap items-center gap-2">
-        <h4 className="min-w-0 flex-1 truncate text-[0.6875rem] font-bold uppercase text-(--color-neutral)">
-          {media.name}
-        </h4>
-        <MediaBadge label={media.kind === 'video' ? 'Video' : 'Image'} />
+        <h4 className="min-w-0 flex-1 truncate text-xs">{media.name}</h4>
+        <span className="builder-status-badge">
+          {media.kind === 'video' ? 'Video' : 'Image'}
+        </span>
       </div>
       <p className="truncate text-xs text-(--color-neutral-60)">{media.id}</p>
-    </div>
-  );
-}
-
-function MediaPreviewModal({
-  media,
-  previewUrl,
-  onClose,
-}: {
-  media: DraftMedia | null;
-  previewUrl: string | null;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    if (!media) return;
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose();
-    }
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [media, onClose]);
-
-  if (!media || !previewUrl) return null;
-
-  return (
-    <div
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-      role="dialog"
-    >
-      <div className="grid max-h-full w-full max-w-5xl gap-3 border border-(--color-neutral-30) bg-(--color-crude) p-4">
-        <div className="flex items-center justify-between gap-3">
-          <h3 className="min-w-0 break-words text-sm font-bold uppercase text-(--color-neutral)">
-            {media.name}
-          </h3>
-          <button
-            type="button"
-            className="text-xs font-bold uppercase text-(--color-martian-red)"
-            onClick={onClose}
-          >
-            Close
-          </button>
-        </div>
-
-        <div className="flex max-h-[75vh] min-h-0 items-center justify-center overflow-hidden bg-(--color-crude-60)">
-          {media.kind === 'video' ? (
-            <video
-              className="max-h-[75vh] w-full object-contain"
-              controls
-              muted
-              playsInline
-              src={previewUrl}
-            />
-          ) : (
-            <img
-              alt={media.alt || media.name}
-              className="max-h-[75vh] w-full object-contain"
-              src={previewUrl}
-            />
-          )}
-        </div>
-      </div>
     </div>
   );
 }
@@ -405,13 +337,5 @@ function EmptyMediaList() {
         used on the listing.
       </p>
     </div>
-  );
-}
-
-function MediaBadge({ label }: { label: string }) {
-  return (
-    <span className="border border-(--color-neutral-20) px-2 py-1 text-[0.6875rem] font-bold uppercase text-(--color-neutral-60)">
-      {label}
-    </span>
   );
 }

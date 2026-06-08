@@ -1,4 +1,6 @@
 import { Button } from '@evefrontier/ui';
+import { RegistrationDraftDiscoverySchema } from '@/schemas/registration-draft-fields';
+import { zodFieldValidator } from '@/schemas/zodFieldErrors';
 import {
   DAPP_INDEX_CATEGORIES,
   DAPP_INDEX_SERVER_TENANTS,
@@ -38,7 +40,14 @@ export function DiscoveryStepScreen({
 
   return (
     <div className="grid gap-5">
-      <form.Field name="categories">
+      <form.Field
+        name="categories"
+        validators={{
+          onChange: zodFieldValidator(
+            RegistrationDraftDiscoverySchema.shape.categories,
+          ),
+        }}
+      >
         {(field) => (
           <CategoryFieldset
             error={field.state.meta.errors[0] ?? errors.categories}
@@ -49,7 +58,14 @@ export function DiscoveryStepScreen({
           />
         )}
       </form.Field>
-      <form.Field name="smartAssemblyTypes">
+      <form.Field
+        name="smartAssemblyTypes"
+        validators={{
+          onChange: zodFieldValidator(
+            RegistrationDraftDiscoverySchema.shape.smartAssemblyTypes,
+          ),
+        }}
+      >
         {(field) => (
           <SmartAssemblyFieldset
             error={field.state.meta.errors[0] ?? errors.smartAssemblyTypes}
@@ -64,7 +80,14 @@ export function DiscoveryStepScreen({
           />
         )}
       </form.Field>
-      <form.Field name="serverTenant">
+      <form.Field
+        name="serverTenant"
+        validators={{
+          onChange: zodFieldValidator(
+            RegistrationDraftDiscoverySchema.shape.serverTenant,
+          ),
+        }}
+      >
         {(field) => (
           <ServerTenantFilter
             error={field.state.meta.errors[0] ?? errors.serverTenant}

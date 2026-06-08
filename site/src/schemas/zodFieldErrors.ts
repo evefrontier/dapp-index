@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 
 export function zodFieldValidator<T>(schema: z.ZodType<T>) {
-  return ({ value }: { value: T }) => {
+  return ({ value }: { value: unknown }) => {
     const parsed = schema.safeParse(value);
     if (parsed.success) return undefined;
 
