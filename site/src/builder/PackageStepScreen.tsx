@@ -131,14 +131,12 @@ function PackageCard({
     <section className="grid gap-4 border-b border-(--color-neutral-20) py-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          <h4 className="text-sm font-bold uppercase text-(--color-neutral)">
-            Package {packageNumber}
-          </h4>
+          <h4 className="text-sm">Package {packageNumber}</h4>
           <PackageVerificationBadge result={verificationResult} />
         </div>
         <button
           type="button"
-          className="text-xs font-bold uppercase text-(--color-alert)"
+          className="builder-text-button-danger"
           onClick={onRemove}
         >
           Remove

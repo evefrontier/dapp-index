@@ -1,10 +1,11 @@
 import {
-  DAPP_INDEX_SUI_NETWORKS,
-  DAPP_INDEX_SUI_PACKAGE_ROLES,
   type DappIndexSuiNetwork,
   type DappIndexSuiPackageRole,
 } from '@/types/dapp-index';
-import { RegistrationDraftPackageSchema } from '@/schemas/registration-draft-package';
+import {
+  RegistrationDraftPackageSchema,
+  RegistrationDraftPackageStorageSchema,
+} from '@/schemas/registration-draft-package';
 import { zodIssuesToFieldErrors } from '@/schemas/zodFieldErrors';
 import type {
   MoveRegistryResolvablePackage,
@@ -63,9 +64,6 @@ export const INITIAL_REGISTRATION_DRAFT_PACKAGE_VERIFICATION: RegistrationDraftP
 
 const DEFAULT_PACKAGE_NETWORK: DappIndexSuiNetwork = 'testnet';
 const DEFAULT_PACKAGE_ROLE: DappIndexSuiPackageRole = 'dependency';
-
-const SUI_NETWORK_VALUES = new Set<string>(DAPP_INDEX_SUI_NETWORKS);
-const SUI_PACKAGE_ROLE_VALUES = new Set<string>(DAPP_INDEX_SUI_PACKAGE_ROLES);
 
 const PACKAGE_FIELD_KEYS = [
   'network',
@@ -182,25 +180,20 @@ function readRegistrationDraftPackage(
   index: number,
   usedIds: Set<string>,
 ): RegistrationDraftPackage {
-  const item = asRecord(value);
+  const parsed = RegistrationDraftPackageStorageSchema.safeParse(value);
+  const stored = parsed.success
+    ? parsed.data
+    : RegistrationDraftPackageStorageSchema.parse({});
   const fallbackId = `package-${index + 1}`;
   const draftPackageId = uniqueDraftPackageId(
-    readString(item?.draftPackageId) || fallbackId,
+    stored.draftPackageId || fallbackId,
     fallbackId,
     usedIds,
   );
 
   return {
+    ...stored,
     draftPackageId,
-    network: isDappIndexSuiNetwork(item?.network)
-      ? item.network
-      : DEFAULT_PACKAGE_NETWORK,
-    role: isDappIndexSuiPackageRole(item?.role)
-      ? item.role
-      : DEFAULT_PACKAGE_ROLE,
-    mvrName: readString(item?.mvrName),
-    packageId: readString(item?.packageId),
-    packageInfoId: readString(item?.packageInfoId),
   };
 }
 
@@ -212,16 +205,6 @@ function hasRequiredPackageErrors(
   errors: RegistrationDraftPackageErrors,
 ): boolean {
   return Boolean(errors.packageId);
-}
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-}
-
-function readString(value: unknown): string {
-  return typeof value === 'string' ? value : '';
 }
 
 function uniqueDraftPackageId(
@@ -247,14 +230,4 @@ function getNewRegistrationDraftPackageDefaultRole(
   return packages.some((draftPackage) => draftPackage.role === 'core')
     ? 'dependency'
     : 'core';
-}
-
-function isDappIndexSuiNetwork(value: unknown): value is DappIndexSuiNetwork {
-  return typeof value === 'string' && SUI_NETWORK_VALUES.has(value);
-}
-
-function isDappIndexSuiPackageRole(
-  value: unknown,
-): value is DappIndexSuiPackageRole {
-  return typeof value === 'string' && SUI_PACKAGE_ROLE_VALUES.has(value);
 }

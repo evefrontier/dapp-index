@@ -1,5 +1,4 @@
 import { Button } from '@evefrontier/ui';
-import { RegistrationDraftDiscoverySchema } from '@/schemas/registration-draft-fields';
 import {
   DAPP_INDEX_CATEGORIES,
   DAPP_INDEX_SERVER_TENANTS,
@@ -34,7 +33,6 @@ export function DiscoveryStepScreen({
       smartAssemblyTypes: fields.smartAssemblyTypes,
       serverTenant: fields.serverTenant,
     },
-    schema: RegistrationDraftDiscoverySchema,
     onUpdateFields,
   });
 
@@ -74,11 +72,9 @@ function CategoryFieldset({
     <fieldset
       aria-describedby={errorId}
       aria-invalid={error ? true : undefined}
-      className="grid gap-2"
+      className="builder-fieldset grid gap-2"
     >
-      <legend className="mb-2 text-xs font-bold uppercase text-(--color-neutral-60)">
-        Categories
-      </legend>
+      <legend>Categories</legend>
       <div className="grid gap-2 md:grid-cols-2">
         {DAPP_INDEX_CATEGORIES.map((category) => (
           <CheckboxOption
@@ -115,11 +111,9 @@ function SmartAssemblyFieldset({
     <fieldset
       aria-describedby={errorId}
       aria-invalid={error ? true : undefined}
-      className="grid gap-2"
+      className="builder-fieldset grid gap-2"
     >
-      <legend className="mb-2 text-xs font-bold uppercase text-(--color-neutral-60)">
-        Smart assemblies
-      </legend>
+      <legend>Smart assemblies</legend>
       <div className="grid gap-2 md:grid-cols-3">
         {DAPP_INDEX_SMART_ASSEMBLY_TYPES.map((assembly) => (
           <CheckboxOption
@@ -155,11 +149,9 @@ function ServerTenantFilter({
     <fieldset
       aria-describedby={errorId}
       aria-invalid={error ? true : undefined}
-      className="grid gap-2"
+      className="builder-fieldset grid gap-2"
     >
-      <legend className="mb-2 text-xs font-bold uppercase text-(--color-neutral-60)">
-        Server tenant
-      </legend>
+      <legend>Server tenant</legend>
       <div className="flex flex-wrap items-center gap-2">
         {DAPP_INDEX_SERVER_TENANTS.map((tenant) => {
           const selected = value === tenant;

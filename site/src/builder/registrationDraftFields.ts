@@ -1,8 +1,5 @@
 import type { DraftStep } from '@/storage/draftStorage';
 import {
-  DAPP_INDEX_CATEGORIES,
-  DAPP_INDEX_SERVER_TENANTS,
-  DAPP_INDEX_SMART_ASSEMBLY_TYPES,
   type DappIndexCategoryId,
   type DappIndexServerTenant,
   type DappIndexSmartAssemblyType,
@@ -12,6 +9,7 @@ import {
   RegistrationDraftBasicsSchema,
   RegistrationDraftDiscoverySchema,
   RegistrationDraftFieldsSchema,
+  RegistrationDraftFieldsStorageSchema,
   RegistrationDraftPackagesStepSchema,
 } from '@/schemas/registration-draft-fields';
 import {
@@ -68,13 +66,6 @@ export const REGISTRATION_DRAFT_FIELD_STEPS = [
 export type RegistrationDraftFieldStep =
   (typeof REGISTRATION_DRAFT_FIELD_STEPS)[number];
 
-const CATEGORY_VALUES = new Set<string>(
-  DAPP_INDEX_CATEGORIES.map((category) => category.id),
-);
-const SMART_ASSEMBLY_VALUES = new Set<string>(
-  DAPP_INDEX_SMART_ASSEMBLY_TYPES.map((assembly) => assembly.id),
-);
-const SERVER_TENANT_VALUES = new Set<string>(DAPP_INDEX_SERVER_TENANTS);
 const REGISTRATION_DRAFT_FIELD_STEP_VALUES: ReadonlySet<DraftStep> = new Set(
   REGISTRATION_DRAFT_FIELD_STEPS,
 );
@@ -115,22 +106,10 @@ export function createRegistrationDraftFields(): RegistrationDraftFields {
 export function readRegistrationDraftFields(
   fields: Record<string, unknown>,
 ): RegistrationDraftFields {
+  const stored = RegistrationDraftFieldsStorageSchema.parse(fields);
+
   return {
-    name: readString(fields.name),
-    slug: readString(fields.slug),
-    summary: readString(fields.summary),
-    description: readString(fields.description),
-    liveUrl: readString(fields.liveUrl),
-    repositoryUrl: readString(fields.repositoryUrl),
-    documentationUrl: readString(fields.documentationUrl),
-    categories: readStringArray(fields.categories, isDappIndexCategoryId),
-    smartAssemblyTypes: readStringArray(
-      fields.smartAssemblyTypes,
-      isDappIndexSmartAssemblyType,
-    ),
-    serverTenant: isDappIndexServerTenant(fields.serverTenant)
-      ? fields.serverTenant
-      : '',
+    ...stored,
     suiPackages: readRegistrationDraftPackages(fields),
   };
 }
@@ -213,38 +192,4 @@ function pickRegistrationDraftStepValues(
     values[fieldName] = fields[fieldName];
   }
   return values;
-}
-
-function readString(value: unknown): string {
-  return typeof value === 'string' ? value : '';
-}
-
-function readStringArray<T extends string>(
-  value: unknown,
-  isAllowedValue: (value: unknown) => value is T,
-): T[] {
-  if (!Array.isArray(value)) return [];
-
-  const nextValues: T[] = [];
-  for (const item of value) {
-    if (!isAllowedValue(item) || nextValues.includes(item)) continue;
-    nextValues.push(item);
-  }
-  return nextValues;
-}
-
-function isDappIndexCategoryId(value: unknown): value is DappIndexCategoryId {
-  return typeof value === 'string' && CATEGORY_VALUES.has(value);
-}
-
-function isDappIndexSmartAssemblyType(
-  value: unknown,
-): value is DappIndexSmartAssemblyType {
-  return typeof value === 'string' && SMART_ASSEMBLY_VALUES.has(value);
-}
-
-function isDappIndexServerTenant(
-  value: unknown,
-): value is DappIndexServerTenant {
-  return typeof value === 'string' && SERVER_TENANT_VALUES.has(value);
 }

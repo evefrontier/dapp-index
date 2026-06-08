@@ -25,11 +25,6 @@ export function TextField({
       <input
         aria-describedby={getFieldErrorId(id, error)}
         aria-invalid={error ? true : undefined}
-        className={
-          error
-            ? 'w-full border border-(--color-alert) bg-(--color-crude-60) px-3 py-2 text-sm text-(--color-neutral) outline-none transition-colors focus:border-(--color-alert)'
-            : 'w-full border border-(--color-neutral-30) bg-(--color-crude-60) px-3 py-2 text-sm text-(--color-neutral) outline-none transition-colors focus:border-(--color-martian-red)'
-        }
         id={id}
         maxLength={maxLength}
         type={type}
@@ -59,11 +54,6 @@ export function TextAreaField({
       <textarea
         aria-describedby={getFieldErrorId(id, error)}
         aria-invalid={error ? true : undefined}
-        className={
-          error
-            ? 'w-full border border-(--color-alert) bg-(--color-crude-60) px-3 py-2 text-sm text-(--color-neutral) outline-none transition-colors focus:border-(--color-alert)'
-            : 'w-full border border-(--color-neutral-30) bg-(--color-crude-60) px-3 py-2 text-sm text-(--color-neutral) outline-none transition-colors focus:border-(--color-martian-red)'
-        }
         id={id}
         maxLength={maxLength}
         rows={rows}
@@ -91,11 +81,6 @@ export function SelectField({
       <select
         aria-describedby={getFieldErrorId(id, error)}
         aria-invalid={error ? true : undefined}
-        className={
-          error
-            ? 'w-full border border-(--color-alert) bg-(--color-crude-60) px-3 py-2 text-sm text-(--color-neutral) outline-none transition-colors focus:border-(--color-alert)'
-            : 'w-full border border-(--color-neutral-30) bg-(--color-crude-60) px-3 py-2 text-sm text-(--color-neutral) outline-none transition-colors focus:border-(--color-martian-red)'
-        }
         id={id}
         value={value}
         onChange={(event) => onChange(event.currentTarget.value)}
@@ -115,11 +100,8 @@ export function FieldShell({
   children: ReactNode;
 }) {
   return (
-    <div className="grid gap-2">
-      <label
-        className="text-xs font-bold uppercase text-(--color-neutral-60)"
-        htmlFor={id}
-      >
+    <div className="builder-field grid gap-2">
+      <label htmlFor={id}>
         {label}
       </label>
       {children}

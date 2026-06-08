@@ -1,4 +1,5 @@
 import { RegistrationDraftBasicsSchema } from '@/schemas/registration-draft-fields';
+import { zodFieldValidator } from '@/schemas/zodFieldErrors';
 import { TextAreaField, TextField } from './FormFields';
 import type {
   RegistrationDraftFieldErrors,
@@ -23,13 +24,17 @@ export function BasicsStepScreen({
       slug: fields.slug,
       summary: fields.summary,
     },
-    schema: RegistrationDraftBasicsSchema,
     onUpdateFields,
   });
 
   return (
     <div className="grid gap-4">
-      <form.Field name="name">
+      <form.Field
+        name="name"
+        validators={{
+          onChange: zodFieldValidator(RegistrationDraftBasicsSchema.shape.name),
+        }}
+      >
         {(field) => (
           <TextField
             error={field.state.meta.errors[0] ?? errors.name}
@@ -41,7 +46,12 @@ export function BasicsStepScreen({
           />
         )}
       </form.Field>
-      <form.Field name="slug">
+      <form.Field
+        name="slug"
+        validators={{
+          onChange: zodFieldValidator(RegistrationDraftBasicsSchema.shape.slug),
+        }}
+      >
         {(field) => (
           <TextField
             error={field.state.meta.errors[0] ?? errors.slug}
@@ -53,7 +63,12 @@ export function BasicsStepScreen({
           />
         )}
       </form.Field>
-      <form.Field name="summary">
+      <form.Field
+        name="summary"
+        validators={{
+          onChange: zodFieldValidator(RegistrationDraftBasicsSchema.shape.summary),
+        }}
+      >
         {(field) => (
           <TextAreaField
             error={field.state.meta.errors[0] ?? errors.summary}

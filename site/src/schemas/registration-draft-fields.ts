@@ -8,6 +8,8 @@ import {
   isHttpsUrlValue,
   OptionalHttpsUrlSchema,
   SlugSchema,
+  storedString,
+  storedUniqueEnumArray,
 } from './shared';
 import { RegistrationDraftPackagesSchema } from './registration-draft-package';
 
@@ -90,4 +92,42 @@ export const RegistrationDraftFieldsSchema = RegistrationDraftBasicsSchema.merge
 
 export type RegistrationDraftFieldsInput = z.input<
   typeof RegistrationDraftFieldsSchema
+>;
+
+const CATEGORY_IDS = DAPP_INDEX_CATEGORIES.map((category) => category.id) as [
+  (typeof DAPP_INDEX_CATEGORIES)[number]['id'],
+  ...(typeof DAPP_INDEX_CATEGORIES)[number]['id'][],
+];
+
+const SMART_ASSEMBLY_IDS = DAPP_INDEX_SMART_ASSEMBLY_TYPES.map(
+  (assembly) => assembly.id,
+) as [
+  (typeof DAPP_INDEX_SMART_ASSEMBLY_TYPES)[number]['id'],
+  ...(typeof DAPP_INDEX_SMART_ASSEMBLY_TYPES)[number]['id'][],
+];
+
+const StoredServerTenantSchema = z.preprocess(
+  (value) =>
+    typeof value === 'string' &&
+    (DAPP_INDEX_SERVER_TENANTS as readonly string[]).includes(value)
+      ? value
+      : '',
+  z.union([ServerTenantSchema, z.literal('')]),
+);
+
+export const RegistrationDraftFieldsStorageSchema = z.object({
+  name: storedString(),
+  slug: storedString(),
+  summary: storedString(),
+  description: storedString(),
+  liveUrl: storedString(),
+  repositoryUrl: storedString(),
+  documentationUrl: storedString(),
+  categories: storedUniqueEnumArray(CATEGORY_IDS),
+  smartAssemblyTypes: storedUniqueEnumArray(SMART_ASSEMBLY_IDS),
+  serverTenant: StoredServerTenantSchema,
+});
+
+export type RegistrationDraftFieldsStorage = z.infer<
+  typeof RegistrationDraftFieldsStorageSchema
 >;
