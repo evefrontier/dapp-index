@@ -6,15 +6,15 @@ import type {
   DraftAutosaveStatus,
   DraftStep,
 } from '@/storage/draftStorage';
-import { BuilderRegistrationStepScreen } from './BuilderRegistrationStepScreens';
+import { RegistrationStepScreen } from './RegistrationStepScreens';
 import {
-  createBuilderWizardStepItems,
-  getBuilderWizardAdjacentStep,
-  getBuilderWizardStatusLabel,
-  getBuilderWizardStepLabel,
-  isBuilderWizardPlaceholderStep,
-  type BuilderWizardStepItem,
-} from './builderWizardModel';
+  createWizardStepItems,
+  getWizardAdjacentStep,
+  getWizardStatusLabel,
+  getWizardStepLabel,
+  isWizardPlaceholderStep,
+  type WizardStepItem,
+} from './wizardModel';
 import {
   isRegistrationDraftStepValid,
   type RegistrationDraftFieldErrors,
@@ -25,7 +25,7 @@ import {
   type RegistrationDraftPackageVerificationState,
 } from './registrationDraftPackages';
 
-export type BuilderWizardShellProps = {
+export type WizardShellProps = {
   activeStep: DraftStep;
   autosaveError: string | null;
   autosaveStatus: DraftAutosaveStatus;
@@ -41,7 +41,7 @@ export type BuilderWizardShellProps = {
   onVerifyPackages: () => Promise<void>;
 };
 
-export function BuilderWizardShell({
+export function WizardShell({
   activeStep,
   autosaveError,
   autosaveStatus,
@@ -55,15 +55,15 @@ export function BuilderWizardShell({
   onNavigateStep,
   onUpdateFields,
   onVerifyPackages,
-}: BuilderWizardShellProps) {
-  const stepItems = createBuilderWizardStepItems(
+}: WizardShellProps) {
+  const stepItems = createWizardStepItems(
     activeStep,
     draft.completedSteps,
   );
-  const title = getBuilderWizardStepLabel(activeStep);
-  const previousStep = getBuilderWizardAdjacentStep(activeStep, 'previous');
-  const nextStep = getBuilderWizardAdjacentStep(activeStep, 'next');
-  const statusLabel = getBuilderWizardStatusLabel(autosaveStatus);
+  const title = getWizardStepLabel(activeStep);
+  const previousStep = getWizardAdjacentStep(activeStep, 'previous');
+  const nextStep = getWizardAdjacentStep(activeStep, 'next');
+  const statusLabel = getWizardStatusLabel(autosaveStatus);
   const errorMessage = navigationError ?? autosaveError;
   const canNavigateNext =
     !nextStep || isRegistrationDraftStepValid(activeStep, fields);
@@ -101,7 +101,7 @@ export function BuilderWizardShell({
   );
 }
 
-export function BuilderWizardMessage({
+export function WizardMessage({
   title,
   body,
 }: {
@@ -170,7 +170,7 @@ function WizardStepNav({
   onNavigateStep,
 }: {
   activeStep: DraftStep;
-  items: BuilderWizardStepItem[];
+  items: WizardStepItem[];
   navigationPending: boolean;
   onNavigateStep: (step: DraftStep) => Promise<void>;
 }) {
@@ -229,7 +229,7 @@ function WizardStepPanel({
   onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
   onVerifyPackages: () => Promise<void>;
 }) {
-  const isPlaceholderStep = isBuilderWizardPlaceholderStep(activeStep);
+  const isPlaceholderStep = isWizardPlaceholderStep(activeStep);
   const panelAction =
     activeStep === 'packages' ? (
       <Button
@@ -255,7 +255,7 @@ function WizardStepPanel({
             showDraftMeta={isPlaceholderStep}
             title={title}
           />
-          <BuilderRegistrationStepScreen
+          <RegistrationStepScreen
             activeStep={activeStep}
             errors={fieldErrors}
             fields={fields}
@@ -339,7 +339,7 @@ function WizardStepPanelHeader({
   );
 }
 
-function getStepButtonClassName(item: BuilderWizardStepItem): string {
+function getStepButtonClassName(item: WizardStepItem): string {
   const baseClassName =
     'flex w-full items-center justify-between gap-3 border px-3 py-2 text-left text-sm font-bold uppercase transition-colors disabled:cursor-default';
 
@@ -354,7 +354,7 @@ function getStepButtonClassName(item: BuilderWizardStepItem): string {
   return `${baseClassName} border-(--color-neutral-20) text-(--color-neutral-60) hover:border-(--color-neutral-50)`;
 }
 
-function StepStateLabel({ item }: { item: BuilderWizardStepItem }) {
+function StepStateLabel({ item }: { item: WizardStepItem }) {
   if (item.state === 'available') return null;
 
   const label = item.state === 'active' ? 'Now' : 'Done';

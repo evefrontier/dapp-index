@@ -3,9 +3,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { verifyMoveRegistryPackage } from '@/chain/moveRegistry';
 import { createMoveRegistryResolver } from '@/chain/moveRegistryResolver';
-import type { BuilderWizardShellProps } from './BuilderWizardShell';
-import { getBuilderErrorMessage } from './builderErrors';
-import { resolveBuilderWizardRouteStep } from './builderWizardModel';
+import type { WizardShellProps } from './WizardShell';
+import { getErrorMessage } from './errors';
+import { resolveWizardRouteStep } from './wizardModel';
 import {
   createRegistrationDraftFieldPatch,
   createRegistrationDraftFields,
@@ -29,7 +29,7 @@ import {
   type DraftStorage,
 } from '@/storage/draftStorage';
 
-export type BuilderListingStepController =
+export type ListingStepController =
   | {
       kind: 'message';
       title: string;
@@ -37,36 +37,36 @@ export type BuilderListingStepController =
     }
   | {
       kind: 'ready';
-      shellProps: BuilderWizardShellProps;
+      shellProps: WizardShellProps;
     };
 
-export type BuilderListingStepControllerOptions = {
+export type ListingStepControllerOptions = {
   draftId: string;
   step: string;
 };
 
-type BuilderListingStepMessage = Extract<
-  BuilderListingStepController,
+type ListingStepMessage = Extract<
+  ListingStepController,
   { kind: 'message' }
 >;
-type BuilderNavigate = ReturnType<typeof useNavigate>;
-type BuilderWizardRouteStep = ReturnType<typeof resolveBuilderWizardRouteStep>;
+type WizardNavigate = ReturnType<typeof useNavigate>;
+type WizardRouteStep = ReturnType<typeof resolveWizardRouteStep>;
 type DraftAutosave = ReturnType<typeof createDraftAutosave>;
 
-type BuilderListingStepState = {
+type ListingStepState = {
   draft: Draft | null;
   error: string | null;
   loading: boolean;
-  routeStep: BuilderWizardRouteStep | null;
+  routeStep: WizardRouteStep | null;
 };
 
-type BuilderListingStepReadyState = BuilderListingStepState & {
+type ListingStepReadyState = ListingStepState & {
   draft: Draft;
   error: null;
-  routeStep: BuilderWizardRouteStep;
+  routeStep: WizardRouteStep;
 };
 
-type BuilderListingStepResultOptions = BuilderListingStepState & {
+type ListingStepResultOptions = ListingStepState & {
   autosaveError: string | null;
   autosaveStatus: DraftAutosaveStatus;
   fieldErrors: RegistrationDraftFieldErrors;
@@ -80,10 +80,10 @@ type BuilderListingStepResultOptions = BuilderListingStepState & {
   onVerifyPackages: () => Promise<void>;
 };
 
-export function useBuilderListingStepController({
+export function useListingStepController({
   draftId,
   step,
-}: BuilderListingStepControllerOptions): BuilderListingStepController {
+}: ListingStepControllerOptions): ListingStepController {
   const navigate = useNavigate();
   const [storage] = useState<DraftStorage>(() => createDraftStorage());
   const [navigationError, setNavigationError] = useState<string | null>(null);
@@ -131,7 +131,7 @@ export function useBuilderListingStepController({
     storage,
   });
 
-  return createBuilderListingStepControllerResult({
+  return createListingStepControllerResult({
     autosaveError,
     autosaveStatus,
     draft,
@@ -176,7 +176,7 @@ function useDraftLoader({
       } catch (caughtError) {
         if (!canceled) {
           setError(
-            getBuilderErrorMessage(caughtError, 'Could not load draft.'),
+            getErrorMessage(caughtError, 'Could not load draft.'),
           );
         }
       } finally {
@@ -219,7 +219,7 @@ function useDraftAutosaveController(
   );
   const autosaveError =
     autosaveStatus === 'error'
-      ? getBuilderErrorMessage(autosave.getError(), 'Could not save draft.')
+      ? getErrorMessage(autosave.getError(), 'Could not save draft.')
       : null;
 
   useEffect(() => {
@@ -274,7 +274,7 @@ function useRouteStepSync({
   storage,
 }: {
   draft: Draft | null;
-  navigate: BuilderNavigate;
+  navigate: WizardNavigate;
   setDraft: (draft: Draft | null) => void;
   setNavigationError: (message: string | null) => void;
   step: string;
@@ -284,7 +284,7 @@ function useRouteStepSync({
   const storedStep = draft?.currentStep ?? null;
   const routeStep = useMemo(
     () =>
-      storedStep ? resolveBuilderWizardRouteStep(step, storedStep) : null,
+      storedStep ? resolveWizardRouteStep(step, storedStep) : null,
     [step, storedStep],
   );
 
@@ -315,7 +315,7 @@ function useRouteStepSync({
       } catch (caughtError) {
         if (!canceled) {
           setNavigationError(
-            getBuilderErrorMessage(caughtError, 'Could not open this step.'),
+            getErrorMessage(caughtError, 'Could not open this step.'),
           );
         }
       }
@@ -427,7 +427,7 @@ function useVerifyRegistrationDraftPackages({
       setPackageVerification({
         status: 'error',
         result: null,
-        errorMessage: getBuilderErrorMessage(
+        errorMessage: getErrorMessage(
           caughtError,
           'Could not verify packages.',
         ),
@@ -448,7 +448,7 @@ function useWizardNavigation({
 }: {
   autosave: DraftAutosave;
   loadedDraftId: string | null;
-  navigate: BuilderNavigate;
+  navigate: WizardNavigate;
   navigationPending: boolean;
   setDraft: (draft: Draft | null) => void;
   setNavigationError: (message: string | null) => void;
@@ -474,7 +474,7 @@ function useWizardNavigation({
         const savedDraft = await getSavedDraftBeforeNavigation();
         await navigateWithSavedDraft(savedDraft);
       } catch (caughtError) {
-        setNavigationError(getBuilderErrorMessage(caughtError, fallbackMessage));
+        setNavigationError(getErrorMessage(caughtError, fallbackMessage));
       } finally {
         setNavigationPending(false);
       }
@@ -534,11 +534,11 @@ function useWizardNavigation({
   };
 }
 
-function createBuilderListingStepControllerResult(
-  options: BuilderListingStepResultOptions,
-): BuilderListingStepController {
-  if (!isBuilderListingStepReady(options)) {
-    return getBuilderListingStepMessage(options);
+function createListingStepControllerResult(
+  options: ListingStepResultOptions,
+): ListingStepController {
+  if (!isListingStepReady(options)) {
+    return getListingStepMessage(options);
   }
 
   return {
@@ -561,9 +561,9 @@ function createBuilderListingStepControllerResult(
   };
 }
 
-function isBuilderListingStepReady(
-  state: BuilderListingStepState,
-): state is BuilderListingStepReadyState {
+function isListingStepReady(
+  state: ListingStepState,
+): state is ListingStepReadyState {
   return (
     !state.loading &&
     state.error === null &&
@@ -573,9 +573,9 @@ function isBuilderListingStepReady(
   );
 }
 
-function getBuilderListingStepMessage(
-  state: BuilderListingStepState,
-): BuilderListingStepMessage {
+function getListingStepMessage(
+  state: ListingStepState,
+): ListingStepMessage {
   if (state.loading) {
     return {
       kind: 'message',

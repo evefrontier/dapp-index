@@ -7,10 +7,15 @@ import {
 } from '@/types/dapp-index';
 import type { MoveRegistryVerificationResult } from '@/chain/moveRegistry.types';
 import {
-  BuilderFieldError,
-  BuilderSelectField,
-  BuilderTextField,
-} from './BuilderFormFields';
+  FieldError,
+  SelectField,
+  TextField,
+} from './FormFields';
+import {
+  PackageVerificationBadge,
+  PackageVerificationDetails,
+  PackageVerificationSummary,
+} from './PackageVerification';
 import {
   getRegistrationDraftPackageVerificationBlocker,
   validateRegistrationDraftPackages,
@@ -19,19 +24,19 @@ import {
   type RegistrationDraftPackageVerificationState,
 } from './registrationDraftPackages';
 
-export type BuilderPackageStepScreenProps = {
+export type PackageStepScreenProps = {
   packageVerification: RegistrationDraftPackageVerificationState;
   packages: RegistrationDraftPackage[];
   onChange: (packages: RegistrationDraftPackage[]) => void;
   onVerifyPackages: () => Promise<void>;
 };
 
-export function BuilderPackageStepScreen({
+export function PackageStepScreen({
   packageVerification,
   packages,
   onChange,
   onVerifyPackages,
-}: BuilderPackageStepScreenProps) {
+}: PackageStepScreenProps) {
   const packageValidation = validateRegistrationDraftPackages(packages);
   const verificationBlocker =
     getRegistrationDraftPackageVerificationBlocker(packages);
@@ -41,7 +46,7 @@ export function BuilderPackageStepScreen({
 
   return (
     <div className="grid gap-4">
-      <BuilderFieldError
+      <FieldError
         id="builder-sui-packages"
         message={packageValidation.fieldErrors.suiPackages}
       />
@@ -129,7 +134,7 @@ function PackageCard({
           <h4 className="text-sm font-bold uppercase text-(--color-neutral)">
             Package {packageNumber}
           </h4>
-          <VerificationBadge result={verificationResult} />
+          <PackageVerificationBadge result={verificationResult} />
         </div>
         <button
           type="button"
@@ -141,7 +146,7 @@ function PackageCard({
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <BuilderSelectField
+        <SelectField
           id={`builder-package-${draftPackage.draftPackageId}-network`}
           label="Network"
           value={draftPackage.network}
@@ -157,8 +162,8 @@ function PackageCard({
               {network}
             </option>
           ))}
-        </BuilderSelectField>
-        <BuilderSelectField
+        </SelectField>
+        <SelectField
           id={`builder-package-${draftPackage.draftPackageId}-role`}
           label="Role"
           value={draftPackage.role}
@@ -174,24 +179,24 @@ function PackageCard({
               {role}
             </option>
           ))}
-        </BuilderSelectField>
+        </SelectField>
       </div>
 
-      <BuilderTextField
+      <TextField
         error={packageError.packageId}
         id={`builder-package-${draftPackage.draftPackageId}-package-id`}
         label="Package ID"
         value={draftPackage.packageId}
         onChange={(packageId) => onUpdate({ ...draftPackage, packageId })}
       />
-      <BuilderTextField
+      <TextField
         error={packageError.mvrName}
         id={`builder-package-${draftPackage.draftPackageId}-mvr-name`}
         label="MVR name (optional)"
         value={draftPackage.mvrName}
         onChange={(mvrName) => onUpdate({ ...draftPackage, mvrName })}
       />
-      <BuilderTextField
+      <TextField
         error={packageError.packageInfoId}
         id={`builder-package-${draftPackage.draftPackageId}-package-info-id`}
         label="PackageInfo ID (optional)"
@@ -201,62 +206,8 @@ function PackageCard({
         }
       />
 
-      <VerificationDetails result={verificationResult} />
+      <PackageVerificationDetails result={verificationResult} />
     </section>
-  );
-}
-
-function VerificationBadge({
-  result,
-}: {
-  result?: MoveRegistryVerificationResult;
-}) {
-  if (!result) return null;
-
-  const label = getVerificationResultLabel(result);
-
-  return (
-    <span className="border border-(--color-neutral-20) px-2 py-1 text-[0.6875rem] font-bold uppercase text-(--color-neutral-60)">
-      {label}
-    </span>
-  );
-}
-
-function VerificationDetails({
-  result,
-}: {
-  result?: MoveRegistryVerificationResult;
-}) {
-  if (!result) return null;
-
-  const details = getVerificationResultDetails(result);
-  if (!details) return null;
-
-  return <p className="text-xs text-(--color-neutral-60)">{details}</p>;
-}
-
-function PackageVerificationSummary({
-  packageCount,
-  verificationBlocker,
-  verification,
-}: {
-  packageCount: number;
-  verificationBlocker: string | null;
-  verification: RegistrationDraftPackageVerificationState;
-}) {
-  const summary = getVerificationSummary(
-    verification,
-    packageCount,
-    verificationBlocker,
-  );
-
-  return (
-    <div className="space-y-1 text-sm">
-      <p className="font-bold uppercase text-(--color-neutral)">
-        {summary.title}
-      </p>
-      <p className="text-xs text-(--color-neutral-60)">{summary.body}</p>
-    </div>
   );
 }
 
@@ -269,78 +220,4 @@ function updatePackage(
       ? nextPackage
       : draftPackage,
   );
-}
-
-function getVerificationResultLabel(
-  result: MoveRegistryVerificationResult,
-): string {
-  if (result.status === 'verified') return 'Verified';
-  if (result.status === 'mismatch') return 'Mismatch';
-  if (result.status === 'missing') return 'Missing';
-  return 'Unreachable';
-}
-
-function getVerificationResultDetails(
-  result: MoveRegistryVerificationResult,
-): string | null {
-  if (result.status === 'verified') return 'MVR package matches.';
-  if (result.errorMessage) return result.errorMessage;
-  if (result.reason) return result.reason;
-  return null;
-}
-
-function getVerificationSummary(
-  verification: RegistrationDraftPackageVerificationState,
-  packageCount: number,
-  verificationBlocker: string | null,
-): {
-  title: string;
-  body: string;
-} {
-  if (packageCount === 0) {
-    return {
-      title: 'Optional',
-      body: 'Add packages if this dapp publishes Move code.',
-    };
-  }
-
-  if (verification.status === 'idle' && verificationBlocker) {
-    return {
-      title: 'Not verified',
-      body: verificationBlocker,
-    };
-  }
-
-  if (verification.status === 'verifying') {
-    return {
-      title: 'Verifying',
-      body: 'Checking Move Registry package identities.',
-    };
-  }
-
-  if (verification.status === 'ready') {
-    return {
-      title: 'Verified',
-      body: 'All added packages match Move Registry.',
-    };
-  }
-
-  if (verification.status === 'not-ready') {
-    return {
-      title: 'Not ready',
-      body: 'Resolve package verification issues.',
-    };
-  }
-
-  if (verification.status === 'error') {
-    return {
-      title: 'Verification failed',
-      body: verification.errorMessage ?? 'Could not verify packages.',
-    };
-  }
-
-  return {
-    title: 'Not verified',
-    body: 'Verify added packages before review.',
-  };
 }

@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test';
-import { createBuilderHomeDraftItem } from '../src/builder/builderHomeModel';
+import { createHomeDraftItem } from '../src/builder/homeModel';
 import { createRegistrationDraft } from '../src/builder/registrationDraft';
 import {
-  BUILDER_TUTORIAL_STORAGE_KEY,
-  builderTutorialPreference,
+  TUTORIAL_STORAGE_KEY,
+  tutorialPreference,
 } from '../src/builder/tutorialStorage';
 import { createMemoryLocalStorage } from '../src/storage/draftStorage';
 import { draft } from './draftTestUtils';
@@ -38,7 +38,7 @@ describe('builder draft helpers', () => {
 
   test('formats draft home items with user-facing step labels', () => {
     expect(
-      createBuilderHomeDraftItem({
+      createHomeDraftItem({
         ...draft,
         currentStep: 'publish',
       }),
@@ -52,17 +52,17 @@ describe('builder draft helpers', () => {
   test('stores the builder tutorial skip flag separately from drafts', () => {
     const storage = createMemoryLocalStorage();
 
-    expect(builderTutorialPreference.read({ storage }).skipped).toBe(false);
+    expect(tutorialPreference.read({ storage }).skipped).toBe(false);
 
-    builderTutorialPreference.skip({ storage });
+    tutorialPreference.skip({ storage });
 
-    expect(builderTutorialPreference.read({ storage }).skipped).toBe(true);
-    expect(storage.getItem(BUILDER_TUTORIAL_STORAGE_KEY)).toBe('true');
+    expect(tutorialPreference.read({ storage }).skipped).toBe(true);
+    expect(storage.getItem(TUTORIAL_STORAGE_KEY)).toBe('true');
 
-    builderTutorialPreference.show({ storage });
+    tutorialPreference.show({ storage });
 
-    expect(builderTutorialPreference.read({ storage }).skipped).toBe(false);
-    expect(storage.getItem(BUILDER_TUTORIAL_STORAGE_KEY)).toBeNull();
+    expect(tutorialPreference.read({ storage }).skipped).toBe(false);
+    expect(storage.getItem(TUTORIAL_STORAGE_KEY)).toBeNull();
   });
 
   test('fails closed when tutorial storage reads are unavailable', () => {
@@ -74,7 +74,7 @@ describe('builder draft helpers', () => {
       removeItem: () => {},
     };
 
-    expect(builderTutorialPreference.read({ storage }).skipped).toBe(false);
+    expect(tutorialPreference.read({ storage }).skipped).toBe(false);
   });
 
   test('ignores tutorial storage write failures', () => {
@@ -88,7 +88,7 @@ describe('builder draft helpers', () => {
       },
     };
 
-    expect(() => builderTutorialPreference.skip({ storage })).not.toThrow();
-    expect(() => builderTutorialPreference.show({ storage })).not.toThrow();
+    expect(() => tutorialPreference.skip({ storage })).not.toThrow();
+    expect(() => tutorialPreference.show({ storage })).not.toThrow();
   });
 });
