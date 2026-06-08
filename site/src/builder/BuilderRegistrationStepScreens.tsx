@@ -22,6 +22,7 @@ import {
 } from './BuilderFormFields';
 import { BuilderMediaStepScreen } from './BuilderMediaStepScreen';
 import { BuilderPackageStepScreen } from './BuilderPackageStepScreen';
+import { BuilderPublishStepScreen } from './BuilderPublishStepScreen';
 import { BuilderReviewStepScreen } from './BuilderReviewStepScreen';
 import {
   isRegistrationDraftFieldStep,
@@ -34,6 +35,10 @@ import type {
   RegistrationDraftReview,
   RegistrationDraftSlugCheckState,
 } from './registrationDraftReview';
+import type {
+  RegistrationDraftPublishController,
+  RegistrationDraftPublishState,
+} from './useRegistrationDraftPublishController';
 
 type RegistrationStepScreenProps = {
   activeStep: DraftStep;
@@ -47,10 +52,17 @@ type RegistrationStepScreenProps = {
   metadataHashHex: string | null;
   metadataHashPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  publishReadiness: RegistrationDraftPublishController['publishReadiness'];
+  publishState: RegistrationDraftPublishState;
   review: RegistrationDraftReview;
   slugCheck: RegistrationDraftSlugCheckState;
+  suiNetwork: string;
+  walletAddress: string | null;
+  walletNetwork: string | null;
   onCheckSlug: () => Promise<void>;
+  onConnectWallet: () => void;
   onDeleteMedia: (mediaId: string) => Promise<void>;
+  onPublish: () => Promise<void>;
   onUpdateMedia: (
     mediaId: string,
     update: DraftMediaUpdate,
@@ -80,10 +92,17 @@ export function BuilderRegistrationStepScreen({
   metadataHashHex,
   metadataHashPending,
   packageVerification,
+  publishReadiness,
+  publishState,
   review,
   slugCheck,
+  suiNetwork,
+  walletAddress,
+  walletNetwork,
   onCheckSlug,
+  onConnectWallet,
   onDeleteMedia,
+  onPublish,
   onUpdateMedia,
   onUpdateFields,
   onVerifyPackages,
@@ -110,6 +129,20 @@ export function BuilderRegistrationStepScreen({
         review={review}
         slugCheck={slugCheck}
         onCheckSlug={onCheckSlug}
+      />
+    );
+  }
+
+  if (activeStep === 'publish') {
+    return (
+      <BuilderPublishStepScreen
+        publishReadiness={publishReadiness}
+        publishState={publishState}
+        suiNetwork={suiNetwork}
+        walletAddress={walletAddress}
+        walletNetwork={walletNetwork}
+        onConnectWallet={onConnectWallet}
+        onPublish={onPublish}
       />
     );
   }

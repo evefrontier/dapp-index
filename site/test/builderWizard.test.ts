@@ -74,9 +74,9 @@ describe('builder wizard model', () => {
     expect(getBuilderWizardStatusLabel('error')).toBe('Save failed');
   });
 
-  test('keeps only future publish screens as placeholders', () => {
+  test('does not treat implemented wizard screens as placeholders', () => {
     expect(isBuilderWizardPlaceholderStep('media')).toBe(false);
     expect(isBuilderWizardPlaceholderStep('review')).toBe(false);
-    expect(isBuilderWizardPlaceholderStep('publish')).toBe(true);
+    expect(isBuilderWizardPlaceholderStep('publish')).toBe(false);
   });
 });

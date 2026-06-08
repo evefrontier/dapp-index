@@ -30,6 +30,10 @@ import {
   type RegistrationDraftSlugCheckState,
 } from './registrationDraftReview';
 import {
+  useRegistrationDraftPublishController,
+  type RegistrationDraftPublishState,
+} from './useRegistrationDraftPublishController';
+import {
   createDraftAutosave,
   createDraftStorage,
   type Draft,
@@ -91,12 +95,21 @@ type BuilderListingStepResultOptions = BuilderListingStepState & {
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  publishReadiness: ReturnType<
+    typeof useRegistrationDraftPublishController
+  >['publishReadiness'];
+  publishState: RegistrationDraftPublishState;
   review: RegistrationDraftReview;
   slugCheck: RegistrationDraftSlugCheckState;
+  suiNetwork: string;
+  walletAddress: string | null;
+  walletNetwork: string | null;
   onCheckSlug: () => Promise<void>;
+  onConnectWallet: () => void;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
+  onPublish: () => Promise<void>;
   onUpdateMedia: (
     mediaId: string,
     update: DraftMediaUpdate,
@@ -173,6 +186,22 @@ export function useBuilderListingStepController({
     setNavigationPending,
     storage,
   });
+  const {
+    publishReadiness,
+    publishState,
+    suiNetwork,
+    walletAddress,
+    walletNetwork,
+    onConnectWallet,
+    onPublish,
+  } = useRegistrationDraftPublishController({
+    autosave,
+    draft,
+    fields,
+    review,
+    setDraft,
+    storage,
+  });
 
   return createBuilderListingStepControllerResult({
     autosaveError,
@@ -191,12 +220,19 @@ export function useBuilderListingStepController({
     navigationError,
     navigationPending,
     packageVerification,
+    publishReadiness,
+    publishState,
     review,
     slugCheck,
+    suiNetwork,
+    walletAddress,
+    walletNetwork,
     onCheckSlug,
+    onConnectWallet,
     onDeleteMedia,
     onExitWizard,
     onNavigateStep,
+    onPublish,
     onUpdateMedia,
     onUpdateFields,
     onUploadMedia,
@@ -925,12 +961,19 @@ function createBuilderListingStepControllerResult(
       navigationError: options.navigationError,
       navigationPending: options.navigationPending,
       packageVerification: options.packageVerification,
+      publishReadiness: options.publishReadiness,
+      publishState: options.publishState,
       review: options.review,
       slugCheck: options.slugCheck,
+      suiNetwork: options.suiNetwork,
+      walletAddress: options.walletAddress,
+      walletNetwork: options.walletNetwork,
       onCheckSlug: options.onCheckSlug,
+      onConnectWallet: options.onConnectWallet,
       onDeleteMedia: options.onDeleteMedia,
       onExitWizard: options.onExitWizard,
       onNavigateStep: options.onNavigateStep,
+      onPublish: options.onPublish,
       onUpdateMedia: options.onUpdateMedia,
       onUpdateFields: options.onUpdateFields,
       onUploadMedia: options.onUploadMedia,

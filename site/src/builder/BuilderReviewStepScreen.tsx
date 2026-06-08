@@ -253,6 +253,7 @@ function getSlugCheckTone(
     case 'available':
       return 'ready';
     case 'taken':
+      return 'warning';
     case 'error':
       return 'error';
     case 'idle':

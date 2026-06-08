@@ -57,7 +57,20 @@ export type DraftMedia = {
   walrusUrl?: string;
 };
 
+export type DraftPublishedMediaCheckpoint = {
+  mediaId: string;
+  walrusBlobId: string;
+  walrusUrl: string;
+  sha256: string;
+  sizeBytes: number;
+  width: number;
+  height: number;
+  durationSeconds?: number;
+};
+
 export type DraftPublishCheckpoint = {
+  media?: DraftPublishedMediaCheckpoint[];
+  metadataUri?: `walrus://blob/${string}`;
   walrusBlobId?: string;
   walrusUrl?: string;
   metadataHash?: string;

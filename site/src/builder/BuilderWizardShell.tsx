@@ -30,6 +30,10 @@ import type {
   RegistrationDraftReview,
   RegistrationDraftSlugCheckState,
 } from './registrationDraftReview';
+import type {
+  RegistrationDraftPublishState,
+  RegistrationDraftPublishController,
+} from './useRegistrationDraftPublishController';
 
 export type BuilderWizardShellProps = {
   activeStep: DraftStep;
@@ -47,12 +51,19 @@ export type BuilderWizardShellProps = {
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  publishReadiness: RegistrationDraftPublishController['publishReadiness'];
+  publishState: RegistrationDraftPublishState;
   review: RegistrationDraftReview;
   slugCheck: RegistrationDraftSlugCheckState;
+  suiNetwork: string;
+  walletAddress: string | null;
+  walletNetwork: string | null;
   onCheckSlug: () => Promise<void>;
+  onConnectWallet: () => void;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
+  onPublish: () => Promise<void>;
   onUpdateMedia: (
     mediaId: string,
     update: DraftMediaUpdate,
@@ -78,12 +89,19 @@ export function BuilderWizardShell({
   navigationError,
   navigationPending,
   packageVerification,
+  publishReadiness,
+  publishState,
   review,
   slugCheck,
+  suiNetwork,
+  walletAddress,
+  walletNetwork,
   onCheckSlug,
+  onConnectWallet,
   onDeleteMedia,
   onExitWizard,
   onNavigateStep,
+  onPublish,
   onUpdateMedia,
   onUpdateFields,
   onUploadMedia,
@@ -137,10 +155,17 @@ export function BuilderWizardShell({
           metadataHashHex={metadataHashHex}
           metadataHashPending={metadataHashPending}
           packageVerification={packageVerification}
+          publishReadiness={publishReadiness}
+          publishState={publishState}
           review={review}
           slugCheck={slugCheck}
+          suiNetwork={suiNetwork}
+          walletAddress={walletAddress}
+          walletNetwork={walletNetwork}
           onCheckSlug={onCheckSlug}
+          onConnectWallet={onConnectWallet}
           onVerifyPackages={onVerifyPackages}
+          onPublish={onPublish}
         />
       </div>
     </div>
@@ -259,14 +284,21 @@ function WizardStepPanel({
   nextStep,
   navigationPending,
   packageVerification,
+  publishReadiness,
+  publishState,
   previousStep,
   review,
   slugCheck,
+  suiNetwork,
   title,
+  walletAddress,
+  walletNetwork,
   onCheckSlug,
+  onConnectWallet,
   onDeleteMedia,
   onExitWizard,
   onNavigateStep,
+  onPublish,
   onUpdateMedia,
   onUpdateFields,
   onUploadMedia,
@@ -286,14 +318,21 @@ function WizardStepPanel({
   nextStep: DraftStep | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  publishReadiness: RegistrationDraftPublishController['publishReadiness'];
+  publishState: RegistrationDraftPublishState;
   previousStep: DraftStep | null;
   review: RegistrationDraftReview;
   slugCheck: RegistrationDraftSlugCheckState;
+  suiNetwork: string;
   title: string;
+  walletAddress: string | null;
+  walletNetwork: string | null;
   onCheckSlug: () => Promise<void>;
+  onConnectWallet: () => void;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
+  onPublish: () => Promise<void>;
   onUpdateMedia: (
     mediaId: string,
     update: DraftMediaUpdate,
@@ -345,10 +384,17 @@ function WizardStepPanel({
             metadataHashHex={metadataHashHex}
             metadataHashPending={metadataHashPending}
             packageVerification={packageVerification}
+            publishReadiness={publishReadiness}
+            publishState={publishState}
             review={review}
             slugCheck={slugCheck}
+            suiNetwork={suiNetwork}
+            walletAddress={walletAddress}
+            walletNetwork={walletNetwork}
             onCheckSlug={onCheckSlug}
+            onConnectWallet={onConnectWallet}
             onDeleteMedia={onDeleteMedia}
+            onPublish={onPublish}
             onUpdateMedia={onUpdateMedia}
             onUpdateFields={onUpdateFields}
             onVerifyPackages={onVerifyPackages}
@@ -468,6 +514,8 @@ function isReviewSlugCheckReady(
   slugCheck: RegistrationDraftSlugCheckState,
 ): boolean {
   return (
-    slugCheck.status === 'available' || slugCheck.status === 'unconfigured'
+    slugCheck.status === 'available' ||
+    slugCheck.status === 'taken' ||
+    slugCheck.status === 'unconfigured'
   );
 }

@@ -84,7 +84,8 @@ export function isBuilderWizardPlaceholderStep(step: DraftStep): boolean {
   return (
     !isRegistrationDraftFieldStep(step) &&
     step !== 'media' &&
-    step !== 'review'
+    step !== 'review' &&
+    step !== 'publish'
   );
 }
 
