@@ -1,5 +1,17 @@
 import type { z } from 'zod';
 
+export function zodFieldValidator<T>(schema: z.ZodType<T>) {
+  return ({ value }: { value: T }) => {
+    const parsed = schema.safeParse(value);
+    if (parsed.success) return undefined;
+
+    const messages = parsed.error.issues
+      .map((issue) => issue.message)
+      .filter((message) => message.length > 0);
+    return messages[0] ?? 'Invalid value.';
+  };
+}
+
 export function zodIssuesToFieldErrors<T extends string>(
   issues: readonly z.ZodIssue[],
   allowedKeys: readonly T[],

@@ -207,7 +207,8 @@ function WizardStepNav({
       <button
         type="button"
         aria-current={item.step === activeStep ? 'step' : undefined}
-        className={getStepButtonClassName(item)}
+        className="builder-wizard-step"
+        data-state={item.state}
         disabled={navigationPending || item.step === activeStep}
         onClick={() => {
           void onNavigateStep(item.step);
@@ -394,21 +395,6 @@ function WizardStepPanelHeader({
       ) : null}
     </div>
   );
-}
-
-function getStepButtonClassName(item: WizardStepItem): string {
-  const baseClassName =
-    'flex w-full items-center justify-between gap-3 border px-3 py-2 text-left text-sm font-bold uppercase transition-colors disabled:cursor-default';
-
-  if (item.state === 'active') {
-    return `${baseClassName} border-(--color-martian-red) text-(--color-neutral)`;
-  }
-
-  if (item.state === 'complete') {
-    return `${baseClassName} border-(--color-neutral-20) text-(--color-martian-red) hover:border-(--color-martian-red)`;
-  }
-
-  return `${baseClassName} border-(--color-neutral-20) text-(--color-neutral-60) hover:border-(--color-neutral-50)`;
 }
 
 function StepStateLabel({ item }: { item: WizardStepItem }) {

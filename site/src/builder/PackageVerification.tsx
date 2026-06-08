@@ -14,7 +14,7 @@ export function PackageVerificationBadge({
   });
 
   return (
-    <span className="border border-(--color-neutral-20) px-2 py-1 text-[0.6875rem] font-bold uppercase text-(--color-neutral-60)">
+    <span className="builder-status-badge">
       {presentation.title}
     </span>
   );
@@ -54,9 +54,7 @@ export function PackageVerificationSummary({
 
   return (
     <div className="space-y-1 text-sm">
-      <p className="font-bold uppercase text-(--color-neutral)">
-        {presentation.title}
-      </p>
+      <h4>{presentation.title}</h4>
       <p className="text-xs text-(--color-neutral-60)">{presentation.body}</p>
     </div>
   );

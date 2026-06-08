@@ -4,7 +4,23 @@ import {
   DAPP_INDEX_SUI_NETWORKS,
   DAPP_INDEX_SUI_PACKAGE_ROLES,
 } from '@/constants';
-import { SuiObjectIdSchema } from './shared';
+import { storedEnumValue, storedString, SuiObjectIdSchema } from './shared';
+
+const DEFAULT_PACKAGE_NETWORK = 'testnet' as const;
+const DEFAULT_PACKAGE_ROLE = 'dependency' as const;
+
+export const RegistrationDraftPackageStorageSchema = z.object({
+  draftPackageId: storedString(),
+  network: storedEnumValue(DAPP_INDEX_SUI_NETWORKS, DEFAULT_PACKAGE_NETWORK),
+  role: storedEnumValue(DAPP_INDEX_SUI_PACKAGE_ROLES, DEFAULT_PACKAGE_ROLE),
+  mvrName: storedString(),
+  packageId: storedString(),
+  packageInfoId: storedString(),
+});
+
+export type RegistrationDraftPackageStorage = z.infer<
+  typeof RegistrationDraftPackageStorageSchema
+>;
 
 export const RegistrationDraftPackageSchema = z
   .object({

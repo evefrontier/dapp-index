@@ -45,3 +45,51 @@ export function uniqueItems<T extends z.ZodTypeAny>(
     .array(schema)
     .refine((items) => new Set(items).size === items.length, { message });
 }
+
+export function storedString() {
+  return z.preprocess(
+    (value) => (typeof value === 'string' ? value : ''),
+    z.string(),
+  );
+}
+
+export function storedEnumValue<T extends readonly [string, ...string[]]>(
+  allowed: T,
+  fallback: T[number],
+) {
+  const schema = z.enum(allowed);
+
+  return z.preprocess(
+    (value) =>
+      typeof value === 'string' &&
+      (allowed as readonly string[]).includes(value)
+        ? value
+        : fallback,
+    schema,
+  );
+}
+
+export function storedUniqueEnumArray<T extends readonly [string, ...string[]]>(
+  allowed: T,
+) {
+  const itemSchema = z.enum(allowed);
+
+  return z.preprocess((value) => {
+    if (!Array.isArray(value)) return [];
+
+    const allowedValues = new Set<string>(allowed);
+    const seen = new Set<string>();
+    const nextValues: z.infer<typeof itemSchema>[] = [];
+
+    for (const item of value) {
+      if (typeof item !== 'string' || !allowedValues.has(item) || seen.has(item)) {
+        continue;
+      }
+
+      seen.add(item);
+      nextValues.push(item as z.infer<typeof itemSchema>);
+    }
+
+    return nextValues;
+  }, z.array(itemSchema));
+}

@@ -1,4 +1,5 @@
 import { RegistrationDraftAboutSchema } from '@/schemas/registration-draft-fields';
+import { zodFieldValidator } from '@/schemas/zodFieldErrors';
 import { TextAreaField, TextField } from './FormFields';
 import type {
   RegistrationDraftFieldErrors,
@@ -24,13 +25,19 @@ export function AboutStepScreen({
       repositoryUrl: fields.repositoryUrl,
       documentationUrl: fields.documentationUrl,
     },
-    schema: RegistrationDraftAboutSchema,
     onUpdateFields,
   });
 
   return (
     <div className="grid gap-4">
-      <form.Field name="description">
+      <form.Field
+        name="description"
+        validators={{
+          onChange: zodFieldValidator(
+            RegistrationDraftAboutSchema.shape.description,
+          ),
+        }}
+      >
         {(field) => (
           <TextAreaField
             error={field.state.meta.errors[0] ?? errors.description}
@@ -45,7 +52,12 @@ export function AboutStepScreen({
           />
         )}
       </form.Field>
-      <form.Field name="liveUrl">
+      <form.Field
+        name="liveUrl"
+        validators={{
+          onChange: zodFieldValidator(RegistrationDraftAboutSchema.shape.liveUrl),
+        }}
+      >
         {(field) => (
           <TextField
             error={field.state.meta.errors[0] ?? errors.liveUrl}
@@ -59,7 +71,14 @@ export function AboutStepScreen({
           />
         )}
       </form.Field>
-      <form.Field name="repositoryUrl">
+      <form.Field
+        name="repositoryUrl"
+        validators={{
+          onChange: zodFieldValidator(
+            RegistrationDraftAboutSchema.shape.repositoryUrl,
+          ),
+        }}
+      >
         {(field) => (
           <TextField
             error={field.state.meta.errors[0] ?? errors.repositoryUrl}
@@ -73,7 +92,14 @@ export function AboutStepScreen({
           />
         )}
       </form.Field>
-      <form.Field name="documentationUrl">
+      <form.Field
+        name="documentationUrl"
+        validators={{
+          onChange: zodFieldValidator(
+            RegistrationDraftAboutSchema.shape.documentationUrl,
+          ),
+        }}
+      >
         {(field) => (
           <TextField
             error={field.state.meta.errors[0] ?? errors.documentationUrl}
