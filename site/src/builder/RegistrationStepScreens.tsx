@@ -13,6 +13,7 @@ import type {
   RegistrationDraftFields,
 } from './registrationDraftFields';
 import type { RegistrationDraftPackageVerificationState } from './registrationDraftPackages';
+import type { RegistrationDraftMediaErrors } from './registrationDraftMedia';
 
 export type RegistrationStepScreenProps = {
   activeStep: DraftStep;
@@ -20,6 +21,7 @@ export type RegistrationStepScreenProps = {
   fields: RegistrationDraftFields;
   media: DraftMedia[];
   mediaError: string | null;
+  mediaErrors: RegistrationDraftMediaErrors;
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
   packageVerification: RegistrationDraftPackageVerificationState;
@@ -38,6 +40,7 @@ export function RegistrationStepScreen({
   fields,
   media,
   mediaError,
+  mediaErrors,
   mediaPending,
   mediaPreviewUrls,
   packageVerification,
@@ -85,6 +88,7 @@ export function RegistrationStepScreen({
         <MediaStepScreen
           errorMessage={mediaError}
           media={media}
+          mediaErrors={mediaErrors}
           pending={mediaPending}
           previewUrls={mediaPreviewUrls}
           onDeleteMedia={onDeleteMedia}

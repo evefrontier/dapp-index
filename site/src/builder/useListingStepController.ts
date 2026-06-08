@@ -6,6 +6,7 @@ import { createMoveRegistryResolver } from '@/chain/moveRegistryResolver';
 import type { WizardShellProps } from './WizardShell';
 import { getErrorMessage } from './errors';
 import { createRegistrationDraftMediaUploadInput } from './registrationDraftMedia';
+import { validateRegistrationDraftMediaStep } from './registrationDraftMedia';
 import { resolveWizardRouteStep } from './wizardModel';
 import {
   createRegistrationDraftFieldPatch,
@@ -75,6 +76,7 @@ type ListingStepResultOptions = ListingStepState & {
   fieldErrors: RegistrationDraftFieldErrors;
   fields: RegistrationDraftFields;
   mediaError: string | null;
+  mediaErrors: ReturnType<typeof validateRegistrationDraftMediaStep>['errors'];
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
   navigationError: string | null;
@@ -112,6 +114,10 @@ export function useListingStepController({
   const { autosave, autosaveError, autosaveStatus, setAutosaveStatus } =
     useDraftAutosaveController(storage, draftId);
   const { fields, fieldErrors } = useRegistrationDraftFields(draft);
+  const mediaErrors = useMemo(
+    () => validateRegistrationDraftMediaStep(draft?.media ?? []).errors,
+    [draft?.media],
+  );
   const moveRegistryResolver = useMemo(() => createMoveRegistryResolver(), []);
   const { loadedDraftId, routeStep } = useRouteStepSync({
     draft,
@@ -165,6 +171,7 @@ export function useListingStepController({
     fields,
     loading,
     mediaError,
+    mediaErrors,
     mediaPending,
     mediaPreviewUrls,
     navigationError,
@@ -759,6 +766,7 @@ function createListingStepControllerResult(
       fieldErrors: options.fieldErrors,
       fields: options.fields,
       mediaError: options.mediaError,
+      mediaErrors: options.mediaErrors,
       mediaPending: options.mediaPending,
       mediaPreviewUrls: options.mediaPreviewUrls,
       navigationError: options.navigationError,

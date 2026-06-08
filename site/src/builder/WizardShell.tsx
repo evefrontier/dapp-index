@@ -26,6 +26,7 @@ import {
   addRegistrationDraftPackage,
   type RegistrationDraftPackageVerificationState,
 } from './registrationDraftPackages';
+import type { RegistrationDraftMediaErrors } from './registrationDraftMedia';
 
 export type WizardShellProps = {
   activeStep: DraftStep;
@@ -35,6 +36,7 @@ export type WizardShellProps = {
   fieldErrors: RegistrationDraftFieldErrors;
   fields: RegistrationDraftFields;
   mediaError: string | null;
+  mediaErrors: RegistrationDraftMediaErrors;
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
   navigationError: string | null;
@@ -60,6 +62,7 @@ export function WizardShell({
   fieldErrors,
   fields,
   mediaError,
+  mediaErrors,
   mediaPending,
   mediaPreviewUrls,
   navigationError,
@@ -83,7 +86,8 @@ export function WizardShell({
   const statusLabel = getWizardStatusLabel(autosaveStatus);
   const errorMessage = navigationError ?? autosaveError;
   const canNavigateNext =
-    !nextStep || isRegistrationDraftStepValid(activeStep, fields);
+    !nextStep ||
+    isRegistrationDraftStepValid(activeStep, fields, draft.media);
 
   return (
     <div className="space-y-6">
@@ -114,6 +118,7 @@ export function WizardShell({
           onUpdateFields={onUpdateFields}
           onUploadMedia={onUploadMedia}
           mediaError={mediaError}
+          mediaErrors={mediaErrors}
           mediaPending={mediaPending}
           mediaPreviewUrls={mediaPreviewUrls}
           packageVerification={packageVerification}
@@ -228,6 +233,7 @@ function WizardStepPanel({
   fieldErrors,
   fields,
   mediaError,
+  mediaErrors,
   mediaPending,
   mediaPreviewUrls,
   nextStep,
@@ -249,6 +255,7 @@ function WizardStepPanel({
   fieldErrors: RegistrationDraftFieldErrors;
   fields: RegistrationDraftFields;
   mediaError: string | null;
+  mediaErrors: RegistrationDraftMediaErrors;
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
   nextStep: DraftStep | null;
@@ -304,6 +311,7 @@ function WizardStepPanel({
             fields={fields}
             media={draft.media}
             mediaError={mediaError}
+            mediaErrors={mediaErrors}
             mediaPending={mediaPending}
             mediaPreviewUrls={mediaPreviewUrls}
             packageVerification={packageVerification}

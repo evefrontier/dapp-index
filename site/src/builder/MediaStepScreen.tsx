@@ -1,21 +1,28 @@
 import { Button } from '@evefrontier/ui';
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {
   DraftMedia,
+  DraftMediaKind,
   DraftMediaUpdate,
 } from '@/storage/draftStorage';
+import type { DappIndexMediaRole } from '@/types/dapp-index';
+import { FieldError, TextField, getFieldErrorId } from './FormFields';
 import {
-  DAPP_INDEX_MEDIA_ROLES,
-  type DappIndexMediaRole,
-} from '@/types/dapp-index';
+  MEDIA_STEP_GUIDANCE,
+  getMediaRoleOption,
+  getMediaRoleOptionsForKind,
+} from './mediaRoleModel';
+import type {
+  RegistrationDraftMediaErrors,
+  RegistrationDraftMediaFieldErrors,
+} from './registrationDraftMedia';
 
 const ACCEPTED_MEDIA_TYPES = 'image/png,image/jpeg,image/webp,video/webm';
-const MEDIA_FIELD_CLASS_NAME =
-  'h-10 w-full border-0 border-b border-[var(--color-neutral-30)] bg-transparent px-0 py-2 text-sm text-[var(--color-foreground)] outline-none transition-colors focus:border-[var(--color-primary)]';
 
 export type MediaStepScreenProps = {
   errorMessage: string | null;
   media: DraftMedia[];
+  mediaErrors: RegistrationDraftMediaErrors;
   pending: boolean;
   previewUrls: Record<string, string>;
   onDeleteMedia: (mediaId: string) => Promise<void>;
@@ -28,6 +35,7 @@ export type MediaStepScreenProps = {
 export function MediaStepScreen({
   errorMessage,
   media,
+  mediaErrors,
   pending,
   previewUrls,
   onDeleteMedia,
@@ -43,7 +51,8 @@ export function MediaStepScreen({
 
   return (
     <div className="grid gap-4">
-      <MediaUploadNote errorMessage={errorMessage} />
+      <MediaStepGuidance media={media} />
+      <FieldError id="builder-media-upload" message={errorMessage ?? undefined} />
 
       {media.length === 0 ? (
         <EmptyMediaList />
@@ -52,6 +61,7 @@ export function MediaStepScreen({
           {media.map((item) => (
             <MediaCard
               key={item.id}
+              errors={mediaErrors[item.id] ?? {}}
               media={item}
               pending={pending}
               previewUrl={previewUrls[item.id] ?? null}
@@ -109,18 +119,35 @@ export function MediaUploadAction({
   );
 }
 
-function MediaUploadNote({ errorMessage }: { errorMessage: string | null }) {
+function MediaStepGuidance({ media }: { media: DraftMedia[] }) {
+  const videoCount = media.filter((item) => item.kind === 'video').length;
+
   return (
-    <div className="grid gap-2">
-      <p className="text-xs text-[var(--color-neutral-60)]">
-        Uploads stay local until publish.
-      </p>
-      <MediaErrorMessage message={errorMessage} />
+    <div className="grid gap-2 border border-(--color-neutral-20) p-4 text-xs text-(--color-neutral-60)">
+      <p className="font-bold uppercase text-(--color-neutral)">Listing media</p>
+      <ul className="grid list-disc gap-1 pl-4">
+        <li>
+          PNG, JPEG, or WebP up to {MEDIA_STEP_GUIDANCE.imageLimit}; WebM up
+          to {MEDIA_STEP_GUIDANCE.videoLimit}
+        </li>
+        <li>
+          Up to {MEDIA_STEP_GUIDANCE.itemLimit} items ({media.length}/
+          {MEDIA_STEP_GUIDANCE.itemLimit}) and{' '}
+          {MEDIA_STEP_GUIDANCE.videoLimitCount} videos ({videoCount}/
+          {MEDIA_STEP_GUIDANCE.videoLimitCount})
+        </li>
+        <li>
+          {MEDIA_STEP_GUIDANCE.totalLimit} total across images, posters, and
+          video sources
+        </li>
+        <li>Stored locally in your browser until publish</li>
+      </ul>
     </div>
   );
 }
 
 function MediaCard({
+  errors,
   media,
   pending,
   previewUrl,
@@ -128,6 +155,7 @@ function MediaCard({
   onOpenPreview,
   onUpdateMedia,
 }: {
+  errors: RegistrationDraftMediaFieldErrors;
   media: DraftMedia;
   pending: boolean;
   previewUrl: string | null;
@@ -139,32 +167,26 @@ function MediaCard({
   ) => Promise<void>;
 }) {
   return (
-    <section className="grid gap-3 border-t border-[var(--color-neutral-20)] py-3 first:border-t-0 first:pt-0 md:grid-cols-[13rem_minmax(0,1fr)]">
+    <section className="grid gap-3 border-t border-(--color-neutral-20) py-3 first:border-t-0 first:pt-0 md:grid-cols-[13rem_minmax(0,1fr)]">
       <MediaPreviewButton
         media={media}
         previewUrl={previewUrl}
         onOpenPreview={onOpenPreview}
       />
 
-      <div className="min-w-0">
-        <div className="grid gap-3 md:grid-cols-[9rem_minmax(0,1fr)_minmax(0,1fr)_auto] md:items-start">
-          <MediaSelectField
-            id={`builder-media-${media.id}-role`}
-            label="Role"
-            value={media.role}
-            onChange={(role) => {
-              void onUpdateMedia(media.id, {
-                role: role as DappIndexMediaRole,
-              });
-            }}
-          >
-            {DAPP_INDEX_MEDIA_ROLES.map((role) => (
-              <option key={role} value={role}>
-                {role}
-              </option>
-            ))}
-          </MediaSelectField>
-          <MediaTextField
+      <div className="min-w-0 grid gap-3">
+        <MediaRoleFilter
+          error={errors?.role}
+          id={`builder-media-${media.id}-role`}
+          kind={media.kind}
+          value={media.role}
+          onChange={(role) => {
+            void onUpdateMedia(media.id, { role });
+          }}
+        />
+        <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-start">
+          <TextField
+            error={errors?.alt}
             id={`builder-media-${media.id}-alt`}
             label="Alt text"
             maxLength={240}
@@ -173,7 +195,8 @@ function MediaCard({
               void onUpdateMedia(media.id, { alt });
             }}
           />
-          <MediaTextField
+          <TextField
+            error={errors?.caption}
             id={`builder-media-${media.id}-caption`}
             label="Caption"
             maxLength={240}
@@ -184,7 +207,7 @@ function MediaCard({
           />
           <button
             type="button"
-            className="self-start justify-self-start pt-1 text-xs font-bold uppercase text-[var(--color-error)]"
+            className="self-start justify-self-start pt-1 text-xs font-bold uppercase text-(--color-alert)"
             disabled={pending}
             onClick={() => {
               void onDeleteMedia(media.id);
@@ -198,70 +221,57 @@ function MediaCard({
   );
 }
 
-function MediaSelectField({
-  children,
+function MediaRoleFilter({
+  error,
   id,
-  label,
+  kind,
   value,
   onChange,
 }: {
-  children: ReactNode;
+  error?: string;
   id: string;
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
+  kind: DraftMediaKind;
+  value: DappIndexMediaRole;
+  onChange: (role: DappIndexMediaRole) => void;
 }) {
-  return (
-    <div className="grid gap-1">
-      <MediaFieldLabel id={id} label={label} />
-      <select
-        className={MEDIA_FIELD_CLASS_NAME}
-        id={id}
-        value={value}
-        onChange={(event) => onChange(event.currentTarget.value)}
-      >
-        {children}
-      </select>
-    </div>
-  );
-}
+  const fieldId = id;
+  const errorId = getFieldErrorId(fieldId, error);
+  const options = getMediaRoleOptionsForKind(kind);
+  const selectedOption = getMediaRoleOption(value);
 
-function MediaTextField({
-  id,
-  label,
-  maxLength,
-  value,
-  onChange,
-}: {
-  id: string;
-  label: string;
-  maxLength: number;
-  value: string;
-  onChange: (value: string) => void;
-}) {
   return (
-    <div className="grid gap-1">
-      <MediaFieldLabel id={id} label={label} />
-      <input
-        className={MEDIA_FIELD_CLASS_NAME}
-        id={id}
-        maxLength={maxLength}
-        type="text"
-        value={value}
-        onChange={(event) => onChange(event.currentTarget.value)}
-      />
-    </div>
-  );
-}
-
-function MediaFieldLabel({ id, label }: { id: string; label: string }) {
-  return (
-    <label
-      className="text-xs font-bold uppercase text-[var(--color-neutral-60)]"
-      htmlFor={id}
+    <fieldset
+      aria-describedby={errorId}
+      aria-invalid={error ? true : undefined}
+      className="grid gap-3"
     >
-      {label}
-    </label>
+      <legend className="mb-2 text-xs font-bold uppercase text-(--color-neutral-60)">
+        Role
+      </legend>
+      <div className="flex flex-wrap items-center gap-2">
+        {options.map((option) => {
+          const selected = value === option.role;
+
+          return (
+            <Button
+              key={option.role}
+              size="small"
+              type="button"
+              variant={selected ? 'primary' : 'secondary'}
+              onClick={() => onChange(option.role)}
+            >
+              {option.label}
+            </Button>
+          );
+        })}
+      </div>
+      {selectedOption ? (
+        <p className="text-xs text-(--color-neutral-60)">
+          {selectedOption.description}
+        </p>
+      ) : null}
+      <FieldError id={fieldId} message={error} />
+    </fieldset>
   );
 }
 
@@ -278,7 +288,7 @@ function MediaPreviewButton({
     <button
       type="button"
       aria-label={`Open preview for ${media.name}`}
-      className="relative flex aspect-video h-32 w-full items-center justify-center overflow-hidden border border-[var(--color-neutral-20)] bg-[var(--color-background-elevated)] text-left transition-colors hover:border-[var(--color-primary)] disabled:cursor-default disabled:hover:border-[var(--color-neutral-20)] md:h-32"
+      className="relative flex aspect-video h-32 w-full items-center justify-center overflow-hidden border border-(--color-neutral-20) bg-(--color-crude-60) text-left transition-colors hover:border-(--color-martian-red) disabled:cursor-default disabled:hover:border-(--color-neutral-20) md:h-32"
       disabled={!previewUrl}
       onClick={() => onOpenPreview(media.id)}
     >
@@ -299,7 +309,7 @@ function MediaPreviewButton({
           />
         )
       ) : (
-        <p className="text-xs font-bold uppercase text-[var(--color-neutral-60)]">
+        <p className="text-xs font-bold uppercase text-(--color-neutral-60)">
           Preview unavailable
         </p>
       )}
@@ -312,15 +322,12 @@ function MediaIdentity({ media }: { media: DraftMedia }) {
   return (
     <div className="absolute inset-x-0 bottom-0 min-w-0 space-y-1 bg-black/80 p-2">
       <div className="flex flex-wrap items-center gap-2">
-        <h4 className="min-w-0 flex-1 truncate text-[0.6875rem] font-bold uppercase text-[var(--color-foreground)]">
+        <h4 className="min-w-0 flex-1 truncate text-[0.6875rem] font-bold uppercase text-(--color-neutral)">
           {media.name}
         </h4>
         <MediaBadge label={media.kind === 'video' ? 'Video' : 'Image'} />
-        <MediaBadge label={media.role} />
       </div>
-      <p className="truncate text-xs text-[var(--color-neutral-60)]">
-        {media.id}
-      </p>
+      <p className="truncate text-xs text-(--color-neutral-60)">{media.id}</p>
     </div>
   );
 }
@@ -353,21 +360,21 @@ function MediaPreviewModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
       role="dialog"
     >
-      <div className="grid max-h-full w-full max-w-5xl gap-3 border border-[var(--color-neutral-30)] bg-[var(--color-background)] p-4">
+      <div className="grid max-h-full w-full max-w-5xl gap-3 border border-(--color-neutral-30) bg-(--color-crude) p-4">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="min-w-0 break-words text-sm font-bold uppercase text-[var(--color-foreground)]">
+          <h3 className="min-w-0 break-words text-sm font-bold uppercase text-(--color-neutral)">
             {media.name}
           </h3>
           <button
             type="button"
-            className="text-xs font-bold uppercase text-[var(--color-primary)]"
+            className="text-xs font-bold uppercase text-(--color-martian-red)"
             onClick={onClose}
           >
             Close
           </button>
         </div>
 
-        <div className="flex max-h-[75vh] min-h-0 items-center justify-center overflow-hidden bg-[var(--color-background-elevated)]">
+        <div className="flex max-h-[75vh] min-h-0 items-center justify-center overflow-hidden bg-(--color-crude-60)">
           {media.kind === 'video' ? (
             <video
               className="max-h-[75vh] w-full object-contain"
@@ -391,28 +398,19 @@ function MediaPreviewModal({
 
 function EmptyMediaList() {
   return (
-    <div className="space-y-1 border border-[var(--color-neutral-20)] p-4 text-sm text-[var(--color-neutral-70)]">
+    <div className="space-y-1 border border-(--color-neutral-20) p-4 text-sm text-(--color-neutral-60)">
       <p>No local media added.</p>
-      <p className="text-xs text-[var(--color-neutral-60)]">
-        Add screenshots, logos, or a WebM demo.
+      <p className="text-xs text-(--color-neutral-60)">
+        Add screenshots, a logo, or a WebM demo, then choose how each file is
+        used on the listing.
       </p>
     </div>
   );
 }
 
-function MediaErrorMessage({ message }: { message: string | null }) {
-  if (!message) return null;
-
-  return (
-    <p className="text-xs text-[var(--color-error)]" role="alert">
-      {message}
-    </p>
-  );
-}
-
 function MediaBadge({ label }: { label: string }) {
   return (
-    <span className="border border-[var(--color-neutral-20)] px-2 py-1 text-[0.6875rem] font-bold uppercase text-[var(--color-neutral-70)]">
+    <span className="border border-(--color-neutral-20) px-2 py-1 text-[0.6875rem] font-bold uppercase text-(--color-neutral-60)">
       {label}
     </span>
   );
