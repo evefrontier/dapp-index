@@ -1,15 +1,30 @@
-import type { DraftMediaInput } from '@/storage/draftStorage';
+import type { DraftMedia, DraftMediaInput } from '@/storage/draftStorage';
+import { validateDraftMediaFile } from '@/storage/draftMediaValidation';
+import { DAPP_INDEX_VIDEO_MIME_TYPE } from '@/constants';
+import { getDefaultMediaRoleForKind } from './mediaRoleModel';
 import {
-  DAPP_INDEX_IMAGE_MIME_TYPES,
-  DAPP_INDEX_VIDEO_MIME_TYPE,
-} from '@/types/dapp-index';
+  RegistrationDraftMediaItemSchema,
+  RegistrationDraftMediaStepSchema,
+  RegistrationDraftMediaUploadMimeSchema,
+} from '@/schemas/registration-draft-media';
+import { zodIssuesToFieldErrors } from '@/schemas/zodFieldErrors';
 
 const MEDIA_ID_MAX_LENGTH = 64;
 const DEFAULT_MEDIA_ID = 'media';
-const DEFAULT_MEDIA_ROLE = 'gallery';
-const IMAGE_MIME_TYPE_VALUES: ReadonlySet<string> = new Set(
-  DAPP_INDEX_IMAGE_MIME_TYPES,
-);
+
+const MEDIA_ITEM_FIELD_NAMES = ['role', 'alt', 'caption'] as const;
+
+export type RegistrationDraftMediaFieldName =
+  (typeof MEDIA_ITEM_FIELD_NAMES)[number];
+
+export type RegistrationDraftMediaFieldErrors = Partial<
+  Record<RegistrationDraftMediaFieldName, string>
+>;
+
+export type RegistrationDraftMediaErrors = Record<
+  string,
+  RegistrationDraftMediaFieldErrors
+>;
 
 export type RegistrationDraftMediaUploadInputResult =
   | { ok: true; input: DraftMediaInput }
@@ -20,11 +35,24 @@ export function createRegistrationDraftMediaUploadInput(
   existingMediaIds: readonly string[],
 ): RegistrationDraftMediaUploadInputResult {
   const mimeType = file.type.toLowerCase();
-  const kind = getDraftMediaKind(mimeType);
-  if (!kind) {
+  if (!RegistrationDraftMediaUploadMimeSchema.safeParse(mimeType).success) {
     return {
       ok: false,
       errorMessage: 'Use PNG, JPEG, WebP, or WebM media.',
+    };
+  }
+
+  const kind =
+    mimeType === DAPP_INDEX_VIDEO_MIME_TYPE ? 'video' : 'screenshot';
+  const sizeValidation = validateDraftMediaFile({
+    kind,
+    file,
+    mimeType,
+  });
+  if (!sizeValidation.ok) {
+    return {
+      ok: false,
+      errorMessage: sizeValidation.reason,
     };
   }
 
@@ -33,7 +61,7 @@ export function createRegistrationDraftMediaUploadInput(
     input: {
       id: createRegistrationMediaId(file.name, existingMediaIds),
       kind,
-      role: DEFAULT_MEDIA_ROLE,
+      role: getDefaultMediaRoleForKind(kind),
       name: file.name,
       mimeType,
     },
@@ -54,14 +82,61 @@ export function createRegistrationMediaId(
   }
 }
 
-function getDraftMediaKind(
-  mimeType: string,
-): DraftMediaInput['kind'] | null {
-  if (IMAGE_MIME_TYPE_VALUES.has(mimeType)) {
-    return 'screenshot';
+export function validateRegistrationDraftMediaStep(
+  media: readonly DraftMedia[],
+): {
+  ok: boolean;
+  errors: RegistrationDraftMediaErrors;
+} {
+  const parsed = RegistrationDraftMediaStepSchema.safeParse(media);
+  if (parsed.success) {
+    return { ok: true, errors: {} };
   }
 
-  return mimeType === DAPP_INDEX_VIDEO_MIME_TYPE ? 'video' : null;
+  return {
+    ok: false,
+    errors: zodMediaStepErrors(parsed.error.issues, media),
+  };
+}
+
+export function validateRegistrationDraftMediaItem(
+  media: DraftMedia,
+): RegistrationDraftMediaFieldErrors {
+  const parsed = RegistrationDraftMediaItemSchema.safeParse(media);
+  if (parsed.success) return {};
+
+  return zodIssuesToFieldErrors(parsed.error.issues, MEDIA_ITEM_FIELD_NAMES);
+}
+
+function zodMediaStepErrors(
+  issues: readonly { path: PropertyKey[]; message: string }[],
+  media: readonly DraftMedia[],
+): RegistrationDraftMediaErrors {
+  const errors: RegistrationDraftMediaErrors = {};
+
+  for (const issue of issues) {
+    const mediaIndex = issue.path[0];
+    if (typeof mediaIndex !== 'number') continue;
+
+    const mediaItem = media[mediaIndex];
+    if (!mediaItem) continue;
+
+    const fieldName = issue.path[1];
+    if (
+      typeof fieldName !== 'string' ||
+      !MEDIA_ITEM_FIELD_NAMES.includes(
+        fieldName as RegistrationDraftMediaFieldName,
+      )
+    ) {
+      continue;
+    }
+
+    const itemErrors = errors[mediaItem.id] ?? {};
+    itemErrors[fieldName as RegistrationDraftMediaFieldName] = issue.message;
+    errors[mediaItem.id] = itemErrors;
+  }
+
+  return errors;
 }
 
 function stripFileExtension(fileName: string): string {

@@ -158,6 +158,33 @@ describe('registration draft fields', () => {
         suiPackages: [],
       }),
     ).toBe(true);
+    expect(
+      isRegistrationDraftStepValid('media', validFields, [
+        {
+          id: 'hero-shot',
+          kind: 'screenshot',
+          role: 'gallery',
+          name: 'Hero.png',
+          mimeType: 'image/png',
+          size: 1024,
+          createdAt: '2026-05-19T09:00:00.000Z',
+        },
+      ]),
+    ).toBe(true);
+    expect(
+      isRegistrationDraftStepValid('media', validFields, [
+        {
+          id: 'hero-shot',
+          kind: 'screenshot',
+          role: 'gallery',
+          name: 'Hero.png',
+          mimeType: 'image/png',
+          size: 1024,
+          createdAt: '2026-05-19T09:00:00.000Z',
+          alt: 'a'.repeat(241),
+        },
+      ]),
+    ).toBe(false);
   });
 
   test('identifies wizard steps backed by registration fields', () => {
