@@ -1,6 +1,12 @@
+import {
+  LISTING_MEDIA_IMAGE_MAX_BYTES,
+  LISTING_MEDIA_VIDEO_MAX_BYTES,
+} from '@/constants';
+import type { DappIndexMediaRole } from '@/types/dapp-index';
+
 export const DRAFT_STORAGE_KEY = 'dapp-index:drafts:v1';
-export const MAX_DRAFT_SCREENSHOT_BYTES = 10 * 1024 * 1024;
-export const MAX_DRAFT_VIDEO_BYTES = 100 * 1024 * 1024;
+export const MAX_DRAFT_SCREENSHOT_BYTES = LISTING_MEDIA_IMAGE_MAX_BYTES;
+export const MAX_DRAFT_VIDEO_BYTES = LISTING_MEDIA_VIDEO_MAX_BYTES;
 
 export const DRAFT_STEPS = [
   'basics',
@@ -33,10 +39,13 @@ export type DraftMediaKind = 'screenshot' | 'video';
 export type DraftMedia = {
   id: string;
   kind: DraftMediaKind;
+  role: DappIndexMediaRole;
   name: string;
   mimeType: string;
   size: number;
   createdAt: string;
+  alt?: string;
+  caption?: string;
   walrusBlobId?: string;
   walrusUrl?: string;
 };
@@ -63,8 +72,17 @@ export type Draft = {
 export type DraftMediaInput = {
   id: string;
   kind: DraftMediaKind;
+  role?: DappIndexMediaRole;
   name: string;
   mimeType?: string;
+  alt?: string;
+  caption?: string;
+};
+
+export type DraftMediaUpdate = {
+  role?: DappIndexMediaRole;
+  alt?: string;
+  caption?: string;
 };
 
 export type DraftMediaValidation =
@@ -78,6 +96,7 @@ export type DraftLocalMediaStore = {
     content: Blob;
   }): Promise<void>;
   get(draftId: string, mediaId: string): Promise<Blob | null>;
+  delete(draftId: string, mediaId: string): Promise<void>;
   deleteDraft(draftId: string): Promise<void>;
   clear(): Promise<void>;
 };
@@ -114,6 +133,12 @@ export type DraftStorage = {
     media: DraftMediaInput,
     content: Blob,
   ): Promise<DraftMedia>;
+  updateMedia(
+    draftId: string,
+    mediaId: string,
+    media: DraftMediaUpdate,
+  ): Promise<Draft>;
+  deleteMedia(draftId: string, mediaId: string): Promise<Draft>;
   getLocalMedia(draftId: string, mediaId: string): Promise<Blob | null>;
   deleteDraft(draftId: string): Promise<void>;
   clearPublishedDraft(draftId: string): Promise<void>;
