@@ -1,17 +1,12 @@
 import type { ReactNode } from 'react';
 
-type BuilderFieldProps = {
+type FieldProps = {
   error?: string;
   id: string;
   label: string;
 };
 
-const FIELD_INPUT_CLASS_NAME =
-  'w-full border border-(--color-neutral-30) bg-(--color-crude-60) px-3 py-2 text-sm text-(--color-neutral) outline-none transition-colors focus:border-(--color-martian-red)';
-const FIELD_ERROR_INPUT_CLASS_NAME =
-  'border-(--color-alert) focus:border-(--color-alert)';
-
-export function BuilderTextField({
+export function TextField({
   error,
   id,
   label,
@@ -19,29 +14,28 @@ export function BuilderTextField({
   type = 'text',
   value,
   onChange,
-}: BuilderFieldProps & {
+}: FieldProps & {
   maxLength?: number;
   type?: 'text' | 'url';
   value: string;
   onChange: (value: string) => void;
 }) {
   return (
-    <BuilderFieldShell error={error} id={id} label={label}>
+    <FieldShell error={error} id={id} label={label}>
       <input
-        aria-describedby={getBuilderFieldErrorId(id, error)}
+        aria-describedby={getFieldErrorId(id, error)}
         aria-invalid={error ? true : undefined}
-        className={getBuilderFieldInputClassName(error)}
         id={id}
         maxLength={maxLength}
         type={type}
         value={value}
         onChange={(event) => onChange(event.currentTarget.value)}
       />
-    </BuilderFieldShell>
+    </FieldShell>
   );
 }
 
-export function BuilderTextAreaField({
+export function TextAreaField({
   error,
   id,
   label,
@@ -49,79 +43,74 @@ export function BuilderTextAreaField({
   rows,
   value,
   onChange,
-}: BuilderFieldProps & {
+}: FieldProps & {
   maxLength?: number;
   rows: number;
   value: string;
   onChange: (value: string) => void;
 }) {
   return (
-    <BuilderFieldShell error={error} id={id} label={label}>
+    <FieldShell error={error} id={id} label={label}>
       <textarea
-        aria-describedby={getBuilderFieldErrorId(id, error)}
+        aria-describedby={getFieldErrorId(id, error)}
         aria-invalid={error ? true : undefined}
-        className={getBuilderFieldInputClassName(error)}
         id={id}
         maxLength={maxLength}
         rows={rows}
         value={value}
         onChange={(event) => onChange(event.currentTarget.value)}
       />
-    </BuilderFieldShell>
+    </FieldShell>
   );
 }
 
-export function BuilderSelectField({
+export function SelectField({
   children,
   error,
   id,
   label,
   value,
   onChange,
-}: BuilderFieldProps & {
+}: FieldProps & {
   children: ReactNode;
   value: string;
   onChange: (value: string) => void;
 }) {
   return (
-    <BuilderFieldShell error={error} id={id} label={label}>
+    <FieldShell error={error} id={id} label={label}>
       <select
-        aria-describedby={getBuilderFieldErrorId(id, error)}
+        aria-describedby={getFieldErrorId(id, error)}
         aria-invalid={error ? true : undefined}
-        className={getBuilderFieldInputClassName(error)}
         id={id}
         value={value}
         onChange={(event) => onChange(event.currentTarget.value)}
       >
         {children}
       </select>
-    </BuilderFieldShell>
+    </FieldShell>
   );
 }
 
-export function BuilderFieldShell({
+export function FieldShell({
   children,
   error,
   id,
   label,
-}: BuilderFieldProps & {
+}: FieldProps & {
   children: ReactNode;
 }) {
   return (
-    <div className="grid gap-2">
-      <label
-        className="text-xs font-bold uppercase text-(--color-neutral-60)"
-        htmlFor={id}
-      >
+    <div className="builder-field grid gap-2">
+      <label htmlFor={id}>
         {label}
       </label>
       {children}
-      <BuilderFieldError id={id} message={error} />
+      <FieldError id={id} message={error} />
     </div>
   );
 }
 
-export function BuilderFieldError({
+export function FieldError({
   id,
   message,
 }: {
@@ -137,15 +126,9 @@ export function BuilderFieldError({
   );
 }
 
-export function getBuilderFieldErrorId(
+export function getFieldErrorId(
   id: string,
   error?: string,
 ): string | undefined {
   return error ? `${id}-error` : undefined;
-}
-
-function getBuilderFieldInputClassName(error?: string): string {
-  return error
-    ? `${FIELD_INPUT_CLASS_NAME} ${FIELD_ERROR_INPUT_CLASS_NAME}`
-    : FIELD_INPUT_CLASS_NAME;
 }

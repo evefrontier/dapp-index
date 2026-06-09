@@ -4,7 +4,7 @@ import type {
   RegistrationDraftPublishState,
 } from './useRegistrationDraftPublishController';
 
-export type BuilderPublishStepScreenProps = {
+export type PublishStepScreenProps = {
   publishReadiness: RegistrationDraftPublishController['publishReadiness'];
   publishState: RegistrationDraftPublishState;
   suiNetwork: string;
@@ -14,7 +14,7 @@ export type BuilderPublishStepScreenProps = {
   onPublish: () => Promise<void>;
 };
 
-export function BuilderPublishStepScreen({
+export function PublishStepScreen({
   publishReadiness,
   publishState,
   suiNetwork,
@@ -22,7 +22,7 @@ export function BuilderPublishStepScreen({
   walletNetwork,
   onConnectWallet,
   onPublish,
-}: BuilderPublishStepScreenProps) {
+}: PublishStepScreenProps) {
   const isPublishing = publishState.status === 'publishing';
 
   return (
@@ -130,10 +130,8 @@ function PublishStatusRow({
 }) {
   return (
     <div className="grid gap-3 border-t border-(--color-neutral-20) py-3 first:border-t-0 md:grid-cols-[8rem_8rem_minmax(0,1fr)] md:items-center">
-      <p className="text-xs font-bold uppercase text-(--color-neutral-60)">
-        {label}
-      </p>
-      <p className={`text-xs font-bold uppercase ${getToneClassName(tone)}`}>
+      <p className="builder-review-label">{label}</p>
+      <p className="builder-review-status" data-tone={tone}>
         {status}
       </p>
       <p className="min-w-0 break-words text-sm text-(--color-neutral)">
@@ -148,9 +146,7 @@ function PublishBlockers({ blockers }: { blockers: string[] }) {
 
   return (
     <div className="grid gap-3">
-      <h3 className="text-sm font-bold uppercase text-(--color-neutral)">
-        Needs work
-      </h3>
+      <h3 className="text-sm">Needs work</h3>
       <ul className="grid border-y border-(--color-neutral-20)">
         {blockers.map((blocker) => (
           <li
@@ -187,29 +183,19 @@ function PublishResult({
 
   return (
     <div className="grid gap-3 border border-(--color-martian-red) p-3">
-      <h3 className="text-sm font-bold uppercase text-(--color-neutral)">
-        Published
-      </h3>
+      <h3 className="text-sm">Published</h3>
       <dl className="grid gap-3 text-sm sm:grid-cols-[9rem_minmax(0,1fr)]">
-        <dt className="font-bold uppercase text-(--color-neutral-60)">
-          Action
-        </dt>
+        <dt className="builder-review-label">Action</dt>
         <dd className="text-(--color-neutral)">{publishState.action}</dd>
-        <dt className="font-bold uppercase text-(--color-neutral-60)">
-          Metadata URI
-        </dt>
+        <dt className="builder-review-label">Metadata URI</dt>
         <dd className="break-all text-(--color-neutral)">
           {publishState.metadataUri}
         </dd>
-        <dt className="font-bold uppercase text-(--color-neutral-60)">
-          Read URL
-        </dt>
+        <dt className="builder-review-label">Read URL</dt>
         <dd className="break-all text-(--color-neutral)">
           {publishState.metadataWalrusUrl}
         </dd>
-        <dt className="font-bold uppercase text-(--color-neutral-60)">
-          Digest
-        </dt>
+        <dt className="builder-review-label">Digest</dt>
         <dd className="break-all text-(--color-neutral)">
           {publishState.suiTransactionDigest}
         </dd>
@@ -255,13 +241,6 @@ function getPublishStateTone(
     default:
       return assertNever(publishState);
   }
-}
-
-function getToneClassName(tone: PublishTone): string {
-  if (tone === 'ready') return 'text-(--color-martian-red)';
-  if (tone === 'warning') return 'text-[#d7a84a]';
-  if (tone === 'error') return 'text-(--color-alert)';
-  return 'text-(--color-neutral-60)';
 }
 
 function assertNever(value: never): never {

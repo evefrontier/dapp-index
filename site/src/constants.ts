@@ -80,6 +80,15 @@ export const DAPP_INDEX_MEDIA_ROLES = [
   'logo',
 ] as const;
 
+/** Max bytes per listing image (registry-entry.schema.json imageAssetBase). */
+export const LISTING_MEDIA_IMAGE_MAX_BYTES = 5_000_000;
+
+/** Max bytes per listing video source (registry-entry.schema.json videoSource). */
+export const LISTING_MEDIA_VIDEO_MAX_BYTES = 60_000_000;
+
+/** Max media items in a public listing gallery. */
+export const PUBLIC_MEDIA_ITEM_LIMIT = 10;
+
 /** Public listing media budget across images, posters, and video sources. */
 export const PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES = 150_000_000;
 

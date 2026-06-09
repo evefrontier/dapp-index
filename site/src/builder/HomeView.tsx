@@ -1,10 +1,10 @@
 import { Button } from '@evefrontier/ui';
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
-import type { BuilderHomeDraftItem } from './builderHomeModel';
+import type { HomeDraftItem } from './homeModel';
 
-export type BuilderHomeViewProps = {
-  drafts: BuilderHomeDraftItem[];
+export type HomeViewProps = {
+  drafts: HomeDraftItem[];
   error: string | null;
   loading: boolean;
   tutorialSkipped: boolean;
@@ -15,7 +15,7 @@ export type BuilderHomeViewProps = {
   onSkipTutorial: () => void;
 };
 
-export function BuilderHomeView({
+export function HomeView({
   drafts,
   error,
   loading,
@@ -25,16 +25,16 @@ export function BuilderHomeView({
   onRefreshDrafts,
   onShowTutorial,
   onSkipTutorial,
-}: BuilderHomeViewProps) {
+}: HomeViewProps) {
   return (
     <div className="space-y-6">
-      <BuilderPageHeader onCreateDraft={onCreateDraft} />
-      <BuilderTutorial
+      <PageHeader onCreateDraft={onCreateDraft} />
+      <Tutorial
         skipped={tutorialSkipped}
         onShow={onShowTutorial}
         onSkip={onSkipTutorial}
       />
-      <BuilderErrorMessage message={error} />
+      <ErrorMessage message={error} />
       <DraftListSection
         loading={loading}
         drafts={drafts}
@@ -45,7 +45,7 @@ export function BuilderHomeView({
   );
 }
 
-function BuilderPageHeader({
+function PageHeader({
   onCreateDraft,
 }: {
   onCreateDraft: () => Promise<void>;
@@ -77,7 +77,7 @@ function BuilderPageHeader({
   );
 }
 
-function BuilderTutorial({
+function Tutorial({
   skipped,
   onShow,
   onSkip,
@@ -119,7 +119,7 @@ function BuilderTutorial({
   );
 }
 
-function BuilderErrorMessage({ message }: { message: string | null }) {
+function ErrorMessage({ message }: { message: string | null }) {
   if (!message) return null;
 
   return (
@@ -139,7 +139,7 @@ function DraftListSection({
   onDeleteDraft,
 }: {
   loading: boolean;
-  drafts: BuilderHomeDraftItem[];
+  drafts: HomeDraftItem[];
   onRefresh: () => Promise<void>;
   onDeleteDraft: (draftId: string) => Promise<void>;
 }) {
@@ -185,7 +185,7 @@ function DraftList({
   drafts,
   onDeleteDraft,
 }: {
-  drafts: BuilderHomeDraftItem[];
+  drafts: HomeDraftItem[];
   onDeleteDraft: (draftId: string) => Promise<void>;
 }) {
   const draftCards = drafts.map((draft) => (
@@ -203,7 +203,7 @@ function DraftListCard({
   draft,
   onDeleteDraft,
 }: {
-  draft: BuilderHomeDraftItem;
+  draft: HomeDraftItem;
   onDeleteDraft: (draftId: string) => Promise<void>;
 }) {
   const resumeParams = { draftId: draft.id, step: draft.currentStep };

@@ -29,7 +29,7 @@ import type {
   DraftStorage,
 } from '@/storage/draftStorage';
 import { canonicalStringify } from '@/utils/canonicalJson';
-import { getBuilderErrorMessage } from './builderErrors';
+import { getErrorMessage } from './errors';
 import {
   buildRegistrationPublishMetadata,
   createRegistrationPublishReadiness,
@@ -375,7 +375,7 @@ export function useRegistrationDraftPublishController({
       setPublishState((current) => ({
         status: 'error',
         action: current.action,
-        errorMessage: getBuilderErrorMessage(
+        errorMessage: getErrorMessage(
           caughtError,
           'Could not publish listing.',
         ),

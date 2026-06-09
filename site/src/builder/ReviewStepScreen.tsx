@@ -2,10 +2,11 @@ import { Button } from '@evefrontier/ui';
 import type { ReactNode } from 'react';
 import type {
   RegistrationDraftReview,
+  RegistrationDraftReviewIssue,
   RegistrationDraftSlugCheckState,
 } from './registrationDraftReview';
 
-export type BuilderReviewStepScreenProps = {
+export type ReviewStepScreenProps = {
   metadataHashError: string | null;
   metadataHashHex: string | null;
   metadataHashPending: boolean;
@@ -14,14 +15,14 @@ export type BuilderReviewStepScreenProps = {
   onCheckSlug: () => Promise<void>;
 };
 
-export function BuilderReviewStepScreen({
+export function ReviewStepScreen({
   metadataHashError,
   metadataHashHex,
   metadataHashPending,
   review,
   slugCheck,
   onCheckSlug,
-}: BuilderReviewStepScreenProps) {
+}: ReviewStepScreenProps) {
   const prettyMetadataJson = JSON.stringify(review.metadata, null, 2);
 
   return (
@@ -51,7 +52,7 @@ function ReviewStatusRows({
   review,
   slugCheck,
   onCheckSlug,
-}: BuilderReviewStepScreenProps) {
+}: ReviewStepScreenProps) {
   const issueCounts = getReviewIssueCounts(review);
 
   return (
@@ -122,10 +123,8 @@ function ReviewStatusRow({
 }) {
   return (
     <div className="grid gap-3 border-t border-(--color-neutral-20) py-3 first:border-t-0 md:grid-cols-[8rem_8rem_minmax(0,1fr)_auto] md:items-center">
-      <p className="text-xs font-bold uppercase text-(--color-neutral-60)">
-        {label}
-      </p>
-      <p className={`text-xs font-bold uppercase ${getToneClassName(tone)}`}>
+      <p className="builder-review-label">{label}</p>
+      <p className="builder-review-status" data-tone={tone}>
         {status}
       </p>
       <p className="min-w-0 break-words text-sm text-(--color-neutral)">
@@ -147,9 +146,7 @@ function ReviewIssues({
   if (blockingIssues.length === 0 && warningIssues.length === 0) {
     return (
       <div className="border-b border-(--color-neutral-20) pb-4">
-        <p className="text-sm font-bold uppercase text-(--color-neutral)">
-          No review notes.
-        </p>
+        <h4>No review notes.</h4>
       </div>
     );
   }
@@ -167,24 +164,20 @@ function ReviewIssueList({
   issues,
 }: {
   heading: string;
-  issues: RegistrationDraftReview['issues'];
+  issues: RegistrationDraftReviewIssue[];
 }) {
   if (issues.length === 0) return null;
 
   return (
     <div className="grid gap-3">
-      <h3 className="text-sm font-bold uppercase text-(--color-neutral)">
-        {heading}
-      </h3>
+      <h3 className="text-sm">{heading}</h3>
       <ul className="grid border-y border-(--color-neutral-20)">
         {issues.map((issue) => (
           <li
             key={`${issue.id}:${issue.message}`}
             className="grid gap-1 border-t border-(--color-neutral-20) py-3 first:border-t-0 sm:grid-cols-[10rem_minmax(0,1fr)]"
           >
-            <p
-              className={`text-xs font-bold uppercase ${getIssueClassName(issue)}`}
-            >
+            <p className="builder-review-issue" data-severity={issue.severity}>
               {issue.label}
             </p>
             <p className="text-sm text-(--color-neutral)">{issue.message}</p>
@@ -213,9 +206,7 @@ function ReviewJsonPreview({
 function CodePreview({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid gap-2">
-      <h3 className="text-sm font-bold uppercase text-(--color-neutral)">
-        {label}
-      </h3>
+      <h3 className="text-sm">{label}</h3>
       <pre className="max-h-80 overflow-auto border border-(--color-neutral-20) bg-(--color-crude-60) p-3 text-xs leading-relaxed text-(--color-neutral-70)">
         {value}
       </pre>
@@ -263,21 +254,6 @@ function getSlugCheckTone(
     default:
       return assertNever(slugCheck);
   }
-}
-
-function getToneClassName(tone: ReviewTone): string {
-  if (tone === 'ready') return 'text-(--color-martian-red)';
-  if (tone === 'warning') return 'text-[#d7a84a]';
-  if (tone === 'error') return 'text-(--color-alert)';
-  return 'text-(--color-neutral-60)';
-}
-
-function getIssueClassName(
-  issue: RegistrationDraftReview['issues'][number],
-): string {
-  return issue.severity === 'warning'
-    ? 'text-[#d7a84a]'
-    : 'text-(--color-alert)';
 }
 
 function getReviewIssueCounts(review: RegistrationDraftReview): {

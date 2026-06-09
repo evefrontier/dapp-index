@@ -1,8 +1,12 @@
+import {
+  LISTING_MEDIA_IMAGE_MAX_BYTES,
+  LISTING_MEDIA_VIDEO_MAX_BYTES,
+} from '@/constants';
 import type { DappIndexMediaRole } from '@/types/dapp-index';
 
 export const DRAFT_STORAGE_KEY = 'dapp-index:drafts:v1';
-export const MAX_DRAFT_SCREENSHOT_BYTES = 10 * 1024 * 1024;
-export const MAX_DRAFT_VIDEO_BYTES = 100 * 1024 * 1024;
+export const MAX_DRAFT_SCREENSHOT_BYTES = LISTING_MEDIA_IMAGE_MAX_BYTES;
+export const MAX_DRAFT_VIDEO_BYTES = LISTING_MEDIA_VIDEO_MAX_BYTES;
 
 export const DRAFT_STEPS = [
   'basics',
@@ -21,24 +25,13 @@ export type DraftStep = (typeof DRAFT_STEPS)[number];
 export const DEFAULT_DRAFT_STEP: DraftStep = 'basics';
 
 const DRAFT_STEP_VALUES: ReadonlySet<string> = new Set(DRAFT_STEPS);
-const LEGACY_DRAFT_STEP_ALIASES: Readonly<Record<string, DraftStep>> = {
-  proofs: 'review',
-};
 
 export function isDraftStep(value: unknown): value is DraftStep {
   return typeof value === 'string' && DRAFT_STEP_VALUES.has(value);
 }
 
 export function parseDraftStep(value: unknown): DraftStep | null {
-  if (isDraftStep(value)) return value;
-  if (
-    typeof value === 'string' &&
-    Object.hasOwn(LEGACY_DRAFT_STEP_ALIASES, value)
-  ) {
-    return LEGACY_DRAFT_STEP_ALIASES[value] ?? null;
-  }
-
-  return null;
+  return isDraftStep(value) ? value : null;
 }
 
 export type DraftMediaKind = 'screenshot' | 'video';

@@ -24,8 +24,6 @@ describe('draft storage', () => {
     expect(isDraftStep('about')).toBe(true);
     expect(parseDraftStep('about')).toBe('about');
     expect(isDraftStep('media')).toBe(true);
-    expect(isDraftStep('proofs')).toBe(false);
-    expect(parseDraftStep('proofs')).toBe('review');
     expect(parseDraftStep('publish')).toBe('publish');
     expect(isDraftStep('not-a-step')).toBe(false);
     expect(parseDraftStep('not-a-step')).toBeNull();
@@ -137,33 +135,6 @@ describe('draft storage', () => {
     expect(restoredDraft?.status).toBe('draft');
     expect(restoredDraft?.currentStep).toBe('basics');
     expect(restoredDraft?.completedSteps).toEqual(['basics', 'media']);
-  });
-
-  test('maps legacy proofs drafts to review', async () => {
-    const { localStorage, storage } = createTestDraftStorage();
-    localStorage.setItem(
-      DRAFT_STORAGE_KEY,
-      JSON.stringify({
-        'draft-1': {
-          id: 'draft-1',
-          status: 'draft',
-          currentStep: 'proofs',
-          completedSteps: ['basics', 'about', 'proofs'],
-          createdAt: '2026-05-18T12:00:00.000Z',
-          updatedAt: '2026-05-18T12:00:00.000Z',
-          fields: { id: 'frontier-map' },
-          media: [],
-        },
-      }),
-    );
-    const restoredDraft = await storage.getDraft('draft-1');
-
-    expect(restoredDraft?.currentStep).toBe('review');
-    expect(restoredDraft?.completedSteps).toEqual([
-      'basics',
-      'about',
-      'review',
-    ]);
   });
 
   test('keeps existing draft metadata when field persistence fails', async () => {

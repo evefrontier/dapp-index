@@ -1,17 +1,27 @@
-import type { DraftStep } from '@/storage/draftStorage';
+import type { DraftMedia, DraftStep } from '@/storage/draftStorage';
 import {
-  DAPP_INDEX_CATEGORIES,
-  DAPP_INDEX_SERVER_TENANTS,
-  DAPP_INDEX_SMART_ASSEMBLY_TYPES,
   type DappIndexCategoryId,
   type DappIndexServerTenant,
   type DappIndexSmartAssemblyType,
 } from '@/types/dapp-index';
 import {
+  RegistrationDraftAboutSchema,
+  RegistrationDraftBasicsSchema,
+  RegistrationDraftDiscoverySchema,
+  RegistrationDraftFieldsSchema,
+  RegistrationDraftFieldsStorageSchema,
+  RegistrationDraftPackagesStepSchema,
+} from '@/schemas/registration-draft-fields';
+import {
+  zodIssuesToFieldErrors,
+  zodSafeParseFieldErrors,
+} from '@/schemas/zodFieldErrors';
+import {
   readRegistrationDraftPackages,
   validateRegistrationDraftPackages,
   type RegistrationDraftPackage,
 } from './registrationDraftPackages';
+import { validateRegistrationDraftMediaStep } from './registrationDraftMedia';
 
 export type RegistrationDraftFields = {
   name: string;
@@ -57,17 +67,16 @@ export const REGISTRATION_DRAFT_FIELD_STEPS = [
 export type RegistrationDraftFieldStep =
   (typeof REGISTRATION_DRAFT_FIELD_STEPS)[number];
 
-const CATEGORY_VALUES = new Set<string>(
-  DAPP_INDEX_CATEGORIES.map((category) => category.id),
-);
-const SMART_ASSEMBLY_VALUES = new Set<string>(
-  DAPP_INDEX_SMART_ASSEMBLY_TYPES.map((assembly) => assembly.id),
-);
-const SERVER_TENANT_VALUES = new Set<string>(DAPP_INDEX_SERVER_TENANTS);
-const SLUG_PATTERN = /^[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?$/;
 const REGISTRATION_DRAFT_FIELD_STEP_VALUES: ReadonlySet<DraftStep> = new Set(
   REGISTRATION_DRAFT_FIELD_STEPS,
 );
+
+const STEP_SCHEMAS = {
+  basics: RegistrationDraftBasicsSchema,
+  about: RegistrationDraftAboutSchema,
+  discovery: RegistrationDraftDiscoverySchema,
+  packages: RegistrationDraftPackagesStepSchema,
+} as const;
 
 const STEP_FIELD_GROUPS = {
   basics: ['name', 'slug', 'summary'],
@@ -98,22 +107,10 @@ export function createRegistrationDraftFields(): RegistrationDraftFields {
 export function readRegistrationDraftFields(
   fields: Record<string, unknown>,
 ): RegistrationDraftFields {
+  const stored = RegistrationDraftFieldsStorageSchema.parse(fields);
+
   return {
-    name: readString(fields.name),
-    slug: readString(fields.slug),
-    summary: readString(fields.summary),
-    description: readString(fields.description),
-    liveUrl: readString(fields.liveUrl),
-    repositoryUrl: readString(fields.repositoryUrl),
-    documentationUrl: readString(fields.documentationUrl),
-    categories: readStringArray(fields.categories, isDappIndexCategoryId),
-    smartAssemblyTypes: readStringArray(
-      fields.smartAssemblyTypes,
-      isDappIndexSmartAssemblyType,
-    ),
-    serverTenant: isDappIndexServerTenant(fields.serverTenant)
-      ? fields.serverTenant
-      : '',
+    ...stored,
     suiPackages: readRegistrationDraftPackages(fields),
   };
 }
@@ -136,11 +133,39 @@ export function createRegistrationDraftFieldPatch(
 export function validateRegistrationDraftFields(
   fields: RegistrationDraftFields,
 ): RegistrationDraftFieldErrors {
+  const fieldErrors = zodSafeParseFieldErrors(
+    RegistrationDraftFieldsSchema,
+    fields,
+    REGISTRATION_DRAFT_FIELD_KEYS,
+  );
+  const packageValidation = validateRegistrationDraftPackages(fields.suiPackages);
+
   return {
-    ...validateBasicsFields(fields),
-    ...validateAboutFields(fields),
-    ...validateDiscoveryFields(fields),
-    ...validateRegistrationDraftPackages(fields.suiPackages).fieldErrors,
+    ...fieldErrors,
+    ...packageValidation.fieldErrors,
+  };
+}
+
+export function validateRegistrationDraftStepFields(
+  step: RegistrationDraftFieldStep,
+  fields: RegistrationDraftFields,
+): RegistrationDraftFieldErrors {
+  const schema = STEP_SCHEMAS[step];
+  const stepValues = pickRegistrationDraftStepValues(step, fields);
+  const parsed = schema.safeParse(stepValues);
+  const fieldErrors = zodIssuesToFieldErrors(
+    parsed.success ? [] : parsed.error.issues,
+    STEP_FIELD_GROUPS[step],
+  );
+
+  if (step !== 'packages') {
+    return fieldErrors;
+  }
+
+  const packageValidation = validateRegistrationDraftPackages(fields.suiPackages);
+  return {
+    ...fieldErrors,
+    ...packageValidation.fieldErrors,
   };
 }
 
@@ -153,146 +178,24 @@ export function isRegistrationDraftFieldStep(
 export function isRegistrationDraftStepValid(
   step: DraftStep,
   fields: RegistrationDraftFields,
+  media: readonly DraftMedia[] = [],
 ): boolean {
+  if (step === 'media') {
+    return validateRegistrationDraftMediaStep(media).ok;
+  }
+
   if (!isRegistrationDraftFieldStep(step)) return true;
 
-  const errors = validateRegistrationDraftFields(fields);
+  const errors = validateRegistrationDraftStepFields(step, fields);
   return STEP_FIELD_GROUPS[step].every((fieldName) => !errors[fieldName]);
 }
-
-function validateBasicsFields(
+function pickRegistrationDraftStepValues(
+  step: RegistrationDraftFieldStep,
   fields: RegistrationDraftFields,
-): RegistrationDraftFieldErrors {
-  const errors: RegistrationDraftFieldErrors = {};
-
-  if (!hasText(fields.name)) {
-    errors.name = 'Name is required.';
-  } else if (fields.name.length > 80) {
-    errors.name = 'Name must be 80 characters or fewer.';
+): Record<string, unknown> {
+  const values: Record<string, unknown> = {};
+  for (const fieldName of STEP_FIELD_GROUPS[step]) {
+    values[fieldName] = fields[fieldName];
   }
-
-  if (!hasText(fields.slug)) {
-    errors.slug = 'Slug is required.';
-  } else if (fields.slug.length > 50) {
-    errors.slug = 'Slug must be 50 characters or fewer.';
-  } else if (!SLUG_PATTERN.test(fields.slug)) {
-    errors.slug = 'Use lowercase letters, numbers, and hyphens.';
-  }
-
-  if (!hasText(fields.summary)) {
-    errors.summary = 'Summary is required.';
-  } else if (fields.summary.length > 180) {
-    errors.summary = 'Summary must be 180 characters or fewer.';
-  }
-
-  return errors;
-}
-
-function validateAboutFields(
-  fields: RegistrationDraftFields,
-): RegistrationDraftFieldErrors {
-  const errors: RegistrationDraftFieldErrors = {};
-
-  if (hasText(fields.description) && fields.description.length > 4000) {
-    errors.description = 'Description must be 4000 characters or fewer.';
-  }
-
-  if (!hasText(fields.liveUrl)) {
-    errors.liveUrl = 'Live URL is required.';
-  } else if (!isHttpsUrl(fields.liveUrl)) {
-    errors.liveUrl = 'Use an HTTPS URL.';
-  }
-
-  if (hasText(fields.repositoryUrl) && !isHttpsUrl(fields.repositoryUrl)) {
-    errors.repositoryUrl = 'Use an HTTPS URL.';
-  }
-
-  if (hasText(fields.documentationUrl) && !isHttpsUrl(fields.documentationUrl)) {
-    errors.documentationUrl = 'Use an HTTPS URL.';
-  }
-
-  return errors;
-}
-
-function validateDiscoveryFields(
-  fields: RegistrationDraftFields,
-): RegistrationDraftFieldErrors {
-  const errors: RegistrationDraftFieldErrors = {};
-
-  if (fields.categories.length === 0) {
-    errors.categories = 'Choose at least one category.';
-  } else if (fields.categories.length > 5) {
-    errors.categories = 'Choose no more than five categories.';
-  } else if (
-    hasDuplicate(fields.categories) ||
-    !fields.categories.every(isDappIndexCategoryId)
-  ) {
-    errors.categories = 'Choose valid categories.';
-  }
-
-  if (
-    hasDuplicate(fields.smartAssemblyTypes) ||
-    !fields.smartAssemblyTypes.every(isDappIndexSmartAssemblyType)
-  ) {
-    errors.smartAssemblyTypes = 'Choose valid smart assemblies.';
-  }
-
-  if (!fields.serverTenant) {
-    errors.serverTenant = 'Choose a server tenant.';
-  } else if (!isDappIndexServerTenant(fields.serverTenant)) {
-    errors.serverTenant = 'Choose a valid server tenant.';
-  }
-
-  return errors;
-}
-
-function readString(value: unknown): string {
-  return typeof value === 'string' ? value : '';
-}
-
-function readStringArray<T extends string>(
-  value: unknown,
-  isAllowedValue: (value: unknown) => value is T,
-): T[] {
-  if (!Array.isArray(value)) return [];
-
-  const nextValues: T[] = [];
-  for (const item of value) {
-    if (!isAllowedValue(item) || nextValues.includes(item)) continue;
-    nextValues.push(item);
-  }
-  return nextValues;
-}
-
-function hasText(value: string): boolean {
-  return value.trim().length > 0;
-}
-
-function isHttpsUrl(value: string): boolean {
-  try {
-    const url = new URL(value.trim());
-    return url.protocol === 'https:' && url.hostname.length > 0;
-  } catch {
-    return false;
-  }
-}
-
-function hasDuplicate(values: readonly string[]): boolean {
-  return new Set(values).size !== values.length;
-}
-
-function isDappIndexCategoryId(value: unknown): value is DappIndexCategoryId {
-  return typeof value === 'string' && CATEGORY_VALUES.has(value);
-}
-
-function isDappIndexSmartAssemblyType(
-  value: unknown,
-): value is DappIndexSmartAssemblyType {
-  return typeof value === 'string' && SMART_ASSEMBLY_VALUES.has(value);
-}
-
-function isDappIndexServerTenant(
-  value: unknown,
-): value is DappIndexServerTenant {
-  return typeof value === 'string' && SERVER_TENANT_VALUES.has(value);
+  return values;
 }

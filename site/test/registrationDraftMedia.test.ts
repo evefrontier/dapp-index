@@ -2,7 +2,9 @@ import { describe, expect, test } from 'bun:test';
 import {
   createRegistrationDraftMediaUploadInput,
   createRegistrationMediaId,
+  validateRegistrationDraftMediaStep,
 } from '../src/builder/registrationDraftMedia';
+import { MAX_DRAFT_SCREENSHOT_BYTES } from '../src/storage/draftStorage';
 
 describe('registration draft media', () => {
   test('creates local screenshot media input from supported image files', () => {
@@ -44,7 +46,7 @@ describe('registration draft media', () => {
       input: {
         id: 'trailer',
         kind: 'video',
-        role: 'gallery',
+        role: 'demo',
         name: 'Trailer.webm',
         mimeType: 'video/webm',
       },
@@ -60,6 +62,43 @@ describe('registration draft media', () => {
     ).toEqual({
       ok: false,
       errorMessage: 'Use PNG, JPEG, WebP, or WebM media.',
+    });
+  });
+
+  test('rejects oversized local media files before storage', () => {
+    const oversized = new File(
+      [new Uint8Array(MAX_DRAFT_SCREENSHOT_BYTES + 1)],
+      'huge.png',
+      { type: 'image/png' },
+    );
+
+    expect(createRegistrationDraftMediaUploadInput(oversized, [])).toEqual({
+      ok: false,
+      errorMessage: 'Screenshots must be 5 MB or smaller.',
+    });
+  });
+
+  test('validates media metadata for the media wizard step', () => {
+    expect(
+      validateRegistrationDraftMediaStep([
+        {
+          id: 'hero-shot',
+          kind: 'screenshot',
+          role: 'gallery',
+          name: 'Hero.png',
+          mimeType: 'image/png',
+          size: 1024,
+          createdAt: '2026-05-19T09:00:00.000Z',
+          alt: 'a'.repeat(241),
+        },
+      ]),
+    ).toMatchObject({
+      ok: false,
+      errors: {
+        'hero-shot': {
+          alt: 'Alt text must be 240 characters or fewer.',
+        },
+      },
     });
   });
 });
