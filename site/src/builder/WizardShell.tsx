@@ -1,48 +1,72 @@
 import { Button } from '@evefrontier/ui';
 import { Link } from '@tanstack/react-router';
+import type { ReactNode } from 'react';
 import type {
   Draft,
   DraftAutosaveStatus,
   DraftStep,
 } from '@/storage/draftStorage';
+import { RegistrationStepScreen } from './RegistrationStepScreens';
 import {
-  createBuilderWizardStepItems,
-  getBuilderWizardAdjacentStep,
-  getBuilderWizardStatusLabel,
-  getBuilderWizardStepLabel,
-  type BuilderWizardStepItem,
-} from './builderWizardModel';
+  createWizardStepItems,
+  getWizardAdjacentStep,
+  getWizardStatusLabel,
+  getWizardStepLabel,
+  isWizardPlaceholderStep,
+  type WizardStepItem,
+} from './wizardModel';
+import {
+  isRegistrationDraftStepValid,
+  type RegistrationDraftFieldErrors,
+  type RegistrationDraftFields,
+} from './registrationDraftFields';
+import {
+  addRegistrationDraftPackage,
+  type RegistrationDraftPackageVerificationState,
+} from './registrationDraftPackages';
 
-export type BuilderWizardShellProps = {
+export type WizardShellProps = {
   activeStep: DraftStep;
   autosaveError: string | null;
   autosaveStatus: DraftAutosaveStatus;
   draft: Draft;
+  fieldErrors: RegistrationDraftFieldErrors;
+  fields: RegistrationDraftFields;
   navigationError: string | null;
   navigationPending: boolean;
+  packageVerification: RegistrationDraftPackageVerificationState;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
+  onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
+  onVerifyPackages: () => Promise<void>;
 };
 
-export function BuilderWizardShell({
+export function WizardShell({
   activeStep,
   autosaveError,
   autosaveStatus,
   draft,
+  fieldErrors,
+  fields,
   navigationError,
   navigationPending,
+  packageVerification,
   onExitWizard,
   onNavigateStep,
-}: BuilderWizardShellProps) {
-  const stepItems = createBuilderWizardStepItems(
+  onUpdateFields,
+  onVerifyPackages,
+}: WizardShellProps) {
+  const stepItems = createWizardStepItems(
     activeStep,
     draft.completedSteps,
   );
-  const title = getBuilderWizardStepLabel(activeStep);
-  const previousStep = getBuilderWizardAdjacentStep(activeStep, 'previous');
-  const nextStep = getBuilderWizardAdjacentStep(activeStep, 'next');
-  const statusLabel = getBuilderWizardStatusLabel(autosaveStatus);
+  const title = getWizardStepLabel(activeStep);
+  const previousStep = getWizardAdjacentStep(activeStep, 'previous');
+  const nextStep = getWizardAdjacentStep(activeStep, 'next');
+  const statusLabel = getWizardStatusLabel(autosaveStatus);
   const errorMessage = navigationError ?? autosaveError;
+  const canNavigateNext =
+    !nextStep || isRegistrationDraftStepValid(activeStep, fields);
 
   return (
     <div className="space-y-6">
@@ -58,19 +82,26 @@ export function BuilderWizardShell({
         />
         <WizardStepPanel
           draft={draft}
+          fieldErrors={fieldErrors}
+          fields={fields}
           nextStep={nextStep}
           previousStep={previousStep}
           title={title}
+          activeStep={activeStep}
+          canNavigateNext={canNavigateNext}
           navigationPending={navigationPending}
           onExitWizard={onExitWizard}
           onNavigateStep={onNavigateStep}
+          onUpdateFields={onUpdateFields}
+          packageVerification={packageVerification}
+          onVerifyPackages={onVerifyPackages}
         />
       </div>
     </div>
   );
 }
 
-export function BuilderWizardMessage({
+export function WizardMessage({
   title,
   body,
 }: {
@@ -139,7 +170,7 @@ function WizardStepNav({
   onNavigateStep,
 }: {
   activeStep: DraftStep;
-  items: BuilderWizardStepItem[];
+  items: WizardStepItem[];
   navigationPending: boolean;
   onNavigateStep: (step: DraftStep) => Promise<void>;
 }) {
@@ -148,7 +179,8 @@ function WizardStepNav({
       <button
         type="button"
         aria-current={item.step === activeStep ? 'step' : undefined}
-        className={getStepButtonClassName(item)}
+        className="builder-wizard-step"
+        data-state={item.state}
         disabled={navigationPending || item.step === activeStep}
         onClick={() => {
           void onNavigateStep(item.step);
@@ -168,47 +200,70 @@ function WizardStepNav({
 }
 
 function WizardStepPanel({
+  activeStep,
+  canNavigateNext,
   draft,
+  fieldErrors,
+  fields,
   nextStep,
   navigationPending,
+  packageVerification,
   previousStep,
   title,
   onExitWizard,
   onNavigateStep,
+  onUpdateFields,
+  onVerifyPackages,
 }: {
+  activeStep: DraftStep;
+  canNavigateNext: boolean;
   draft: Draft;
+  fieldErrors: RegistrationDraftFieldErrors;
+  fields: RegistrationDraftFields;
   nextStep: DraftStep | null;
   navigationPending: boolean;
+  packageVerification: RegistrationDraftPackageVerificationState;
   previousStep: DraftStep | null;
   title: string;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
+  onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
+  onVerifyPackages: () => Promise<void>;
 }) {
+  const isPlaceholderStep = isWizardPlaceholderStep(activeStep);
+  const panelAction =
+    activeStep === 'packages' ? (
+      <Button
+        variant="secondary"
+        size="small"
+        onClick={() =>
+          onUpdateFields({
+            suiPackages: addRegistrationDraftPackage(fields.suiPackages),
+          })
+        }
+      >
+        Add package
+      </Button>
+    ) : null;
+
   return (
     <main className="min-w-0 space-y-5">
       <section className="border border-(--color-neutral-20) p-4">
         <div className="space-y-4">
-          <div className="space-y-1">
-            <h2 className="text-lg font-bold uppercase text-(--color-neutral)">
-              {title}
-            </h2>
-            <p className="text-sm text-(--color-neutral-60)">
-              Screen content lands in the next builder PR.
-            </p>
-          </div>
-
-          <dl className="grid gap-3 text-sm sm:grid-cols-[8rem_minmax(0,1fr)]">
-            <dt className="font-bold uppercase text-(--color-neutral-60)">
-              Draft
-            </dt>
-            <dd className="break-all text-(--color-neutral)">
-              {draft.id}
-            </dd>
-            <dt className="font-bold uppercase text-(--color-neutral-60)">
-              Step
-            </dt>
-            <dd className="text-(--color-neutral)">{title}</dd>
-          </dl>
+          <WizardStepPanelHeader
+            action={panelAction}
+            draftId={draft.id}
+            showDraftMeta={isPlaceholderStep}
+            title={title}
+          />
+          <RegistrationStepScreen
+            activeStep={activeStep}
+            errors={fieldErrors}
+            fields={fields}
+            packageVerification={packageVerification}
+            onUpdateFields={onUpdateFields}
+            onVerifyPackages={onVerifyPackages}
+          />
         </div>
       </section>
 
@@ -237,7 +292,7 @@ function WizardStepPanel({
           <Button
             variant="primary"
             size="small"
-            disabled={navigationPending || !nextStep}
+            disabled={navigationPending || !nextStep || !canNavigateNext}
             onClick={() => {
               if (nextStep) void onNavigateStep(nextStep);
             }}
@@ -250,22 +305,42 @@ function WizardStepPanel({
   );
 }
 
-function getStepButtonClassName(item: BuilderWizardStepItem): string {
-  const baseClassName =
-    'flex w-full items-center justify-between gap-3 border px-3 py-2 text-left text-sm font-bold uppercase transition-colors disabled:cursor-default';
-
-  if (item.state === 'active') {
-    return `${baseClassName} border-(--color-martian-red) text-(--color-neutral)`;
-  }
-
-  if (item.state === 'complete') {
-    return `${baseClassName} border-(--color-neutral-20) text-(--color-martian-red) hover:border-(--color-martian-red)`;
-  }
-
-  return `${baseClassName} border-(--color-neutral-20) text-(--color-neutral-60) hover:border-(--color-neutral-50)`;
+function WizardStepPanelHeader({
+  action,
+  draftId,
+  showDraftMeta,
+  title,
+}: {
+  action?: ReactNode;
+  draftId: string;
+  showDraftMeta: boolean;
+  title: string;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-bold uppercase text-(--color-neutral)">
+          {title}
+        </h2>
+        {action ? <div className="shrink-0">{action}</div> : null}
+      </div>
+      {showDraftMeta ? (
+        <dl className="grid gap-3 text-sm sm:grid-cols-[8rem_minmax(0,1fr)]">
+          <dt className="font-bold uppercase text-(--color-neutral-60)">
+            Draft
+          </dt>
+          <dd className="break-all text-(--color-neutral)">{draftId}</dd>
+          <dt className="font-bold uppercase text-(--color-neutral-60)">
+            Step
+          </dt>
+          <dd className="text-(--color-neutral)">{title}</dd>
+        </dl>
+      ) : null}
+    </div>
+  );
 }
 
-function StepStateLabel({ item }: { item: BuilderWizardStepItem }) {
+function StepStateLabel({ item }: { item: WizardStepItem }) {
   if (item.state === 'available') return null;
 
   const label = item.state === 'active' ? 'Now' : 'Done';

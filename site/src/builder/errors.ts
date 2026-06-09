@@ -1,4 +1,4 @@
-export function getBuilderErrorMessage(
+export function getErrorMessage(
   caughtError: unknown,
   fallback: string,
 ): string {

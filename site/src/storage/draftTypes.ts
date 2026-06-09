@@ -8,7 +8,6 @@ export const DRAFT_STEPS = [
   'discovery',
   'packages',
   'media',
-  'proofs',
   'review',
   'publish',
 ] as const;

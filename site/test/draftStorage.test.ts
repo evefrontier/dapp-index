@@ -15,7 +15,6 @@ describe('draft storage', () => {
       'discovery',
       'packages',
       'media',
-      'proofs',
       'review',
       'publish',
     ]);
