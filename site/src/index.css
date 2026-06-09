@@ -26,6 +26,14 @@ h4 {
   color: var(--color-neutral);
 }
 
+h3 {
+  margin: 0;
+  font-size: inherit;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  color: var(--color-neutral);
+}
+
 @layer components {
   .builder-field label,
   .builder-fieldset legend {
@@ -50,6 +58,10 @@ h4 {
 
   .builder-text-button-danger {
     @apply text-xs font-bold uppercase text-(--color-alert);
+  }
+
+  .builder-text-button {
+    @apply text-xs font-bold uppercase text-(--color-martian-red);
   }
 
   .builder-wizard-step {
