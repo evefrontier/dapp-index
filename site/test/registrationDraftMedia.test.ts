@@ -4,7 +4,7 @@ import {
   createRegistrationMediaId,
   validateRegistrationDraftMediaStep,
 } from '../src/builder/registrationDraftMedia';
-import { MAX_DRAFT_SCREENSHOT_BYTES } from '../src/storage/draftStorage';
+import { LISTING_MEDIA_IMAGE_MAX_BYTES } from '@/constants';
 
 describe('registration draft media', () => {
   test('creates local screenshot media input from supported image files', () => {
@@ -67,7 +67,7 @@ describe('registration draft media', () => {
 
   test('rejects oversized local media files before storage', () => {
     const oversized = new File(
-      [new Uint8Array(MAX_DRAFT_SCREENSHOT_BYTES + 1)],
+      [new Uint8Array(LISTING_MEDIA_IMAGE_MAX_BYTES + 1)],
       'huge.png',
       { type: 'image/png' },
     );

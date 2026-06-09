@@ -1,9 +1,8 @@
 import {
-  MAX_DRAFT_SCREENSHOT_BYTES,
-  MAX_DRAFT_VIDEO_BYTES,
-  type DraftMediaKind,
-  type DraftMediaValidation,
-} from './draftTypes';
+  LISTING_MEDIA_IMAGE_MAX_BYTES,
+  LISTING_MEDIA_VIDEO_MAX_BYTES,
+} from '@/constants';
+import type { DraftMediaKind, DraftMediaValidation } from './draftTypes';
 
 export function validateDraftMediaFile(input: {
   kind: DraftMediaKind;
@@ -17,10 +16,10 @@ export function validateDraftMediaFile(input: {
       return { ok: false, reason: 'Only video/webm videos are supported.' };
     }
 
-    if (input.file.size > MAX_DRAFT_VIDEO_BYTES) {
+    if (input.file.size > LISTING_MEDIA_VIDEO_MAX_BYTES) {
       return {
         ok: false,
-        reason: `Videos must be ${formatBytes(MAX_DRAFT_VIDEO_BYTES)} or smaller.`,
+        reason: `Videos must be ${formatBytes(LISTING_MEDIA_VIDEO_MAX_BYTES)} or smaller.`,
       };
     }
 
@@ -34,10 +33,10 @@ export function validateDraftMediaFile(input: {
     };
   }
 
-  if (input.file.size > MAX_DRAFT_SCREENSHOT_BYTES) {
+  if (input.file.size > LISTING_MEDIA_IMAGE_MAX_BYTES) {
     return {
       ok: false,
-      reason: `Screenshots must be ${formatBytes(MAX_DRAFT_SCREENSHOT_BYTES)} or smaller.`,
+      reason: `Screenshots must be ${formatBytes(LISTING_MEDIA_IMAGE_MAX_BYTES)} or smaller.`,
     };
   }
 

@@ -1,12 +1,6 @@
-import {
-  LISTING_MEDIA_IMAGE_MAX_BYTES,
-  LISTING_MEDIA_VIDEO_MAX_BYTES,
-} from '@/constants';
 import type { DappIndexMediaRole } from '@/types/dapp-index';
 
 export const DRAFT_STORAGE_KEY = 'dapp-index:drafts:v1';
-export const MAX_DRAFT_SCREENSHOT_BYTES = LISTING_MEDIA_IMAGE_MAX_BYTES;
-export const MAX_DRAFT_VIDEO_BYTES = LISTING_MEDIA_VIDEO_MAX_BYTES;
 
 export const DRAFT_STEPS = [
   'basics',
