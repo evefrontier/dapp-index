@@ -35,6 +35,8 @@ Styles are loaded via `@evefrontier/ui` (vendored), which provides:
 
 `src/index.css` sets `body` using DS token variables. In app-owned Tailwind utilities, prefer Figma-named color tokens with Tailwind v4 custom-property shorthand, such as `text-(--color-neutral)`, `bg-(--color-crude-20)`, and `border-(--color-neutral-20)`. Use `.ds-type-*` classes for consistent typography roles.
 
+Repeated UI patterns belong in `src/index.css` under `@layer components`. Broader styling and form conventions for agents are in `site/AGENTS.md`.
+
 The `vendor/@evefrontier/ui` folder is a pre-built snapshot committed to this repo — no external repo access needed. See `vendor/@evefrontier/ui/README.md` for how to update it or switch to the published package.
 
 ## Wallet

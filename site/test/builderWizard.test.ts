@@ -1,24 +1,24 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  createBuilderWizardStepItems,
-  getBuilderWizardAdjacentStep,
-  getBuilderWizardStatusLabel,
-  getBuilderWizardStepLabel,
-  isBuilderWizardPlaceholderStep,
-  resolveBuilderWizardRouteStep,
-} from '../src/builder/builderWizardModel';
+  createWizardStepItems,
+  getWizardAdjacentStep,
+  getWizardStatusLabel,
+  getWizardStepLabel,
+  isWizardPlaceholderStep,
+  resolveWizardRouteStep,
+} from '../src/builder/wizardModel';
 
 describe('builder wizard model', () => {
   test('labels every builder listing step with short screen text', () => {
-    expect(getBuilderWizardStepLabel('basics')).toBe('Basics');
-    expect(getBuilderWizardStepLabel('about')).toBe('About');
-    expect(getBuilderWizardStepLabel('packages')).toBe('Packages');
-    expect(getBuilderWizardStepLabel('media')).toBe('Media');
-    expect(getBuilderWizardStepLabel('publish')).toBe('Publish');
+    expect(getWizardStepLabel('basics')).toBe('Basics');
+    expect(getWizardStepLabel('about')).toBe('About');
+    expect(getWizardStepLabel('packages')).toBe('Packages');
+    expect(getWizardStepLabel('media')).toBe('Media');
+    expect(getWizardStepLabel('publish')).toBe('Publish');
   });
 
   test('builds ordered progress items from active and completed steps', () => {
-    const items = createBuilderWizardStepItems('packages', [
+    const items = createWizardStepItems('packages', [
       'basics',
       'about',
       'about',
@@ -49,34 +49,34 @@ describe('builder wizard model', () => {
   });
 
   test('resolves invalid route steps back to the stored draft step', () => {
-    expect(resolveBuilderWizardRouteStep('media', 'basics')).toEqual({
+    expect(resolveWizardRouteStep('media', 'basics')).toEqual({
       step: 'media',
       shouldRedirect: false,
     });
-    expect(resolveBuilderWizardRouteStep('bad-step', 'about')).toEqual({
+    expect(resolveWizardRouteStep('bad-step', 'about')).toEqual({
       step: 'about',
       shouldRedirect: true,
     });
   });
 
   test('finds adjacent wizard steps without overflowing the wizard order', () => {
-    expect(getBuilderWizardAdjacentStep('basics', 'previous')).toBeNull();
-    expect(getBuilderWizardAdjacentStep('basics', 'next')).toBe('about');
-    expect(getBuilderWizardAdjacentStep('packages', 'next')).toBe('media');
-    expect(getBuilderWizardAdjacentStep('publish', 'next')).toBeNull();
+    expect(getWizardAdjacentStep('basics', 'previous')).toBeNull();
+    expect(getWizardAdjacentStep('basics', 'next')).toBe('about');
+    expect(getWizardAdjacentStep('packages', 'next')).toBe('media');
+    expect(getWizardAdjacentStep('publish', 'next')).toBeNull();
   });
 
   test('maps autosave states to short status labels', () => {
-    expect(getBuilderWizardStatusLabel('idle')).toBe('Saved');
-    expect(getBuilderWizardStatusLabel('pending')).toBe('Unsaved');
-    expect(getBuilderWizardStatusLabel('saving')).toBe('Saving');
-    expect(getBuilderWizardStatusLabel('saved')).toBe('Saved');
-    expect(getBuilderWizardStatusLabel('error')).toBe('Save failed');
+    expect(getWizardStatusLabel('idle')).toBe('Saved');
+    expect(getWizardStatusLabel('pending')).toBe('Unsaved');
+    expect(getWizardStatusLabel('saving')).toBe('Saving');
+    expect(getWizardStatusLabel('saved')).toBe('Saved');
+    expect(getWizardStatusLabel('error')).toBe('Save failed');
   });
 
   test('keeps only future publish screens as placeholders', () => {
-    expect(isBuilderWizardPlaceholderStep('media')).toBe(false);
-    expect(isBuilderWizardPlaceholderStep('review')).toBe(false);
-    expect(isBuilderWizardPlaceholderStep('publish')).toBe(true);
+    expect(isWizardPlaceholderStep('media')).toBe(false);
+    expect(isWizardPlaceholderStep('review')).toBe(false);
+    expect(isWizardPlaceholderStep('publish')).toBe(true);
   });
 });

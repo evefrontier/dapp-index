@@ -1,10 +1,12 @@
 import {
-  DAPP_INDEX_SUI_NETWORKS,
-  DAPP_INDEX_SUI_PACKAGE_ROLES,
   type DappIndexSuiNetwork,
   type DappIndexSuiPackageRole,
 } from '@/types/dapp-index';
-import { isValidMvrName } from '@/chain/moveRegistry';
+import {
+  RegistrationDraftPackageSchema,
+  RegistrationDraftPackageStorageSchema,
+} from '@/schemas/registration-draft-package';
+import { zodIssuesToFieldErrors } from '@/schemas/zodFieldErrors';
 import type {
   MoveRegistryResolvablePackage,
   MoveRegistryVerificationResult,
@@ -62,10 +64,14 @@ export const INITIAL_REGISTRATION_DRAFT_PACKAGE_VERIFICATION: RegistrationDraftP
 
 const DEFAULT_PACKAGE_NETWORK: DappIndexSuiNetwork = 'testnet';
 const DEFAULT_PACKAGE_ROLE: DappIndexSuiPackageRole = 'dependency';
-const SUI_OBJECT_ID_PATTERN = /^0x[0-9a-fA-F]{64}$/;
 
-const SUI_NETWORK_VALUES = new Set<string>(DAPP_INDEX_SUI_NETWORKS);
-const SUI_PACKAGE_ROLE_VALUES = new Set<string>(DAPP_INDEX_SUI_PACKAGE_ROLES);
+const PACKAGE_FIELD_KEYS = [
+  'network',
+  'role',
+  'mvrName',
+  'packageId',
+  'packageInfoId',
+] as const satisfies readonly RegistrationDraftPackageFieldName[];
 
 export function createRegistrationDraftPackage({
   draftPackageId,
@@ -157,59 +163,34 @@ export function toMoveRegistryResolvablePackages(
   );
 }
 
+function validateRegistrationDraftPackage(
+  draftPackage: RegistrationDraftPackage,
+): RegistrationDraftPackageErrors {
+  const result = RegistrationDraftPackageSchema.safeParse(draftPackage);
+  if (result.success) return {};
+  return zodIssuesToFieldErrors(result.error.issues, PACKAGE_FIELD_KEYS);
+}
+
 function readRegistrationDraftPackage(
   value: unknown,
   index: number,
   usedIds: Set<string>,
 ): RegistrationDraftPackage {
-  const item = asRecord(value);
+  const parsed = RegistrationDraftPackageStorageSchema.safeParse(value);
+  const stored = parsed.success
+    ? parsed.data
+    : RegistrationDraftPackageStorageSchema.parse({});
   const fallbackId = `package-${index + 1}`;
   const draftPackageId = uniqueDraftPackageId(
-    readString(item?.draftPackageId) || fallbackId,
+    stored.draftPackageId || fallbackId,
     fallbackId,
     usedIds,
   );
 
   return {
+    ...stored,
     draftPackageId,
-    network: isDappIndexSuiNetwork(item?.network)
-      ? item.network
-      : DEFAULT_PACKAGE_NETWORK,
-    role: isDappIndexSuiPackageRole(item?.role)
-      ? item.role
-      : DEFAULT_PACKAGE_ROLE,
-    mvrName: readString(item?.mvrName),
-    packageId: readString(item?.packageId),
-    packageInfoId: readString(item?.packageInfoId),
   };
-}
-
-function validateRegistrationDraftPackage(
-  draftPackage: RegistrationDraftPackage,
-): RegistrationDraftPackageErrors {
-  const errors: RegistrationDraftPackageErrors = {};
-
-  if (
-    draftPackage.mvrName.trim() &&
-    !isValidMvrName(draftPackage.mvrName)
-  ) {
-    errors.mvrName = 'Use a valid MVR name.';
-  }
-
-  if (!draftPackage.packageId.trim()) {
-    errors.packageId = 'Package ID is required.';
-  } else if (!SUI_OBJECT_ID_PATTERN.test(draftPackage.packageId.trim())) {
-    errors.packageId = 'Use a valid Sui object ID.';
-  }
-
-  if (
-    draftPackage.packageInfoId.trim() &&
-    !SUI_OBJECT_ID_PATTERN.test(draftPackage.packageInfoId.trim())
-  ) {
-    errors.packageInfoId = 'Use a valid Sui object ID.';
-  }
-
-  return errors;
 }
 
 function hasPackageErrors(errors: RegistrationDraftPackageErrors): boolean {
@@ -220,16 +201,6 @@ function hasRequiredPackageErrors(
   errors: RegistrationDraftPackageErrors,
 ): boolean {
   return Boolean(errors.packageId);
-}
-
-function asRecord(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null;
-}
-
-function readString(value: unknown): string {
-  return typeof value === 'string' ? value : '';
 }
 
 function uniqueDraftPackageId(
@@ -255,14 +226,4 @@ function getNewRegistrationDraftPackageDefaultRole(
   return packages.some((draftPackage) => draftPackage.role === 'core')
     ? 'dependency'
     : 'core';
-}
-
-function isDappIndexSuiNetwork(value: unknown): value is DappIndexSuiNetwork {
-  return typeof value === 'string' && SUI_NETWORK_VALUES.has(value);
-}
-
-function isDappIndexSuiPackageRole(
-  value: unknown,
-): value is DappIndexSuiPackageRole {
-  return typeof value === 'string' && SUI_PACKAGE_ROLE_VALUES.has(value);
 }

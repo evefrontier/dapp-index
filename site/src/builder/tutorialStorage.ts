@@ -1,28 +1,28 @@
-export const BUILDER_TUTORIAL_STORAGE_KEY =
+export const TUTORIAL_STORAGE_KEY =
   'dapp-index:builder:tutorial-skipped:v1';
 
 type BrowserStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
-export type BuilderTutorialPreference = {
+export type TutorialPreference = {
   skipped: boolean;
 };
 
-export type BuilderTutorialPreferenceOptions = {
+export type TutorialPreferenceOptions = {
   storage?: BrowserStorage;
 };
 
-export const builderTutorialPreference = {
+export const tutorialPreference = {
   read(
-    options: BuilderTutorialPreferenceOptions = {},
-  ): BuilderTutorialPreference {
+    options: TutorialPreferenceOptions = {},
+  ): TutorialPreference {
     return {
       skipped: readSkipPreference(resolveStorage(options)),
     };
   },
-  skip(options: BuilderTutorialPreferenceOptions = {}): void {
+  skip(options: TutorialPreferenceOptions = {}): void {
     persistSkipPreference(true, resolveStorage(options));
   },
-  show(options: BuilderTutorialPreferenceOptions = {}): void {
+  show(options: TutorialPreferenceOptions = {}): void {
     persistSkipPreference(false, resolveStorage(options));
   },
 };
@@ -31,7 +31,7 @@ function readSkipPreference(storage: BrowserStorage | null): boolean {
   if (!storage) return false;
 
   try {
-    return storage.getItem(BUILDER_TUTORIAL_STORAGE_KEY) === 'true';
+    return storage.getItem(TUTORIAL_STORAGE_KEY) === 'true';
   } catch {
     return false;
   }
@@ -45,18 +45,18 @@ function persistSkipPreference(
 
   try {
     if (skipped) {
-      storage.setItem(BUILDER_TUTORIAL_STORAGE_KEY, 'true');
+      storage.setItem(TUTORIAL_STORAGE_KEY, 'true');
       return;
     }
 
-    storage.removeItem(BUILDER_TUTORIAL_STORAGE_KEY);
+    storage.removeItem(TUTORIAL_STORAGE_KEY);
   } catch {
     // Tutorial visibility is a non-critical preference.
   }
 }
 
 function resolveStorage(
-  options: BuilderTutorialPreferenceOptions,
+  options: TutorialPreferenceOptions,
 ): BrowserStorage | null {
   if (options.storage) return options.storage;
 
