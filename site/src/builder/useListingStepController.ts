@@ -5,6 +5,8 @@ import { verifyMoveRegistryPackage } from '@/chain/moveRegistry';
 import { createMoveRegistryResolver } from '@/chain/moveRegistryResolver';
 import type { WizardShellProps } from './WizardShell';
 import { getErrorMessage } from './errors';
+import { createRegistrationDraftMediaUploadInput } from './registrationDraftMedia';
+import { validateRegistrationDraftMediaStep } from './registrationDraftMedia';
 import { resolveWizardRouteStep } from './wizardModel';
 import {
   createRegistrationDraftFieldPatch,
@@ -25,6 +27,7 @@ import {
   createDraftStorage,
   type Draft,
   type DraftAutosaveStatus,
+  type DraftMediaUpdate,
   type DraftStep,
   type DraftStorage,
 } from '@/storage/draftStorage';
@@ -52,6 +55,7 @@ type ListingStepMessage = Extract<
 type WizardNavigate = ReturnType<typeof useNavigate>;
 type WizardRouteStep = ReturnType<typeof resolveWizardRouteStep>;
 type DraftAutosave = ReturnType<typeof createDraftAutosave>;
+const EMPTY_DRAFT_MEDIA: Draft['media'] = [];
 
 type ListingStepState = {
   draft: Draft | null;
@@ -71,12 +75,22 @@ type ListingStepResultOptions = ListingStepState & {
   autosaveStatus: DraftAutosaveStatus;
   fieldErrors: RegistrationDraftFieldErrors;
   fields: RegistrationDraftFields;
+  mediaError: string | null;
+  mediaErrors: ReturnType<typeof validateRegistrationDraftMediaStep>['errors'];
+  mediaPending: boolean;
+  mediaPreviewUrls: Record<string, string>;
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
+  onUpdateMedia: (
+    mediaId: string,
+    update: DraftMediaUpdate,
+  ) => Promise<void>;
   onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
+  onUploadMedia: (files: File[]) => Promise<void>;
   onVerifyPackages: () => Promise<void>;
 };
 
@@ -100,6 +114,10 @@ export function useListingStepController({
   const { autosave, autosaveError, autosaveStatus, setAutosaveStatus } =
     useDraftAutosaveController(storage, draftId);
   const { fields, fieldErrors } = useRegistrationDraftFields(draft);
+  const mediaErrors = useMemo(
+    () => validateRegistrationDraftMediaStep(draft?.media ?? []).errors,
+    [draft?.media],
+  );
   const moveRegistryResolver = useMemo(() => createMoveRegistryResolver(), []);
   const { loadedDraftId, routeStep } = useRouteStepSync({
     draft,
@@ -107,6 +125,19 @@ export function useListingStepController({
     setDraft,
     setNavigationError,
     step,
+    storage,
+  });
+  const {
+    mediaError,
+    mediaPending,
+    mediaPreviewUrls,
+    onDeleteMedia,
+    onUpdateMedia,
+    onUploadMedia,
+  } = useLocalMediaController({
+    draftMedia: draft?.media ?? EMPTY_DRAFT_MEDIA,
+    loadedDraftId,
+    setDraft,
     storage,
   });
   const onUpdateFields = useUpdateRegistrationDraftFields({
@@ -139,12 +170,19 @@ export function useListingStepController({
     fieldErrors,
     fields,
     loading,
+    mediaError,
+    mediaErrors,
+    mediaPending,
+    mediaPreviewUrls,
     navigationError,
     navigationPending,
     packageVerification,
+    onDeleteMedia,
     onExitWizard,
     onNavigateStep,
+    onUpdateMedia,
     onUpdateFields,
+    onUploadMedia,
     onVerifyPackages,
     routeStep,
   });
@@ -436,6 +474,183 @@ function useVerifyRegistrationDraftPackages({
   }, [fields.suiPackages, moveRegistryResolver, setPackageVerification]);
 }
 
+function useLocalMediaController({
+  draftMedia,
+  loadedDraftId,
+  setDraft,
+  storage,
+}: {
+  draftMedia: Draft['media'];
+  loadedDraftId: string | null;
+  setDraft: Dispatch<SetStateAction<Draft | null>>;
+  storage: DraftStorage;
+}) {
+  const [mediaError, setMediaError] = useState<string | null>(null);
+  const [mediaPending, setMediaPending] = useState(false);
+  const [mediaPreviewUrls, setMediaPreviewUrls] = useState<
+    Record<string, string>
+  >({});
+
+  useEffect(() => {
+    setMediaError(null);
+  }, [loadedDraftId]);
+
+  useEffect(() => {
+    let canceled = false;
+    const objectUrls: string[] = [];
+
+    async function loadMediaPreviews() {
+      if (!loadedDraftId || draftMedia.length === 0) {
+        setMediaPreviewUrls((currentUrls) => {
+          revokeObjectUrls(currentUrls);
+          return {};
+        });
+        return;
+      }
+
+      try {
+        const previewEntries = await Promise.all(
+          draftMedia.map(async (media) => {
+            const content = await storage.getLocalMedia(loadedDraftId, media.id);
+            if (!content) return null;
+
+            const url = URL.createObjectURL(content);
+            objectUrls.push(url);
+            return [media.id, url] as const;
+          }),
+        );
+
+        if (canceled) {
+          objectUrls.forEach((url) => URL.revokeObjectURL(url));
+          return;
+        }
+
+        setMediaPreviewUrls((currentUrls) => {
+          revokeObjectUrls(currentUrls);
+          return Object.fromEntries(previewEntries.filter(isPreviewEntry));
+        });
+      } catch (caughtError) {
+        if (!canceled) {
+          setMediaError(
+            getErrorMessage(
+              caughtError,
+              'Could not load local media previews.',
+            ),
+          );
+        }
+      }
+    }
+
+    void loadMediaPreviews();
+
+    return () => {
+      canceled = true;
+      objectUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [draftMedia, loadedDraftId, storage]);
+
+  const refreshLoadedDraft = useCallback(async () => {
+    if (!loadedDraftId) return;
+
+    const refreshedDraft = await storage.getDraft(loadedDraftId);
+    setDraft(refreshedDraft);
+  }, [loadedDraftId, setDraft, storage]);
+
+  const onUploadMedia = useCallback(
+    async (files: File[]) => {
+      if (!loadedDraftId || files.length === 0 || mediaPending) return;
+
+      setMediaPending(true);
+      setMediaError(null);
+      try {
+        const mediaIds = draftMedia.map((media) => media.id);
+        for (const file of files) {
+          const uploadInput = createRegistrationDraftMediaUploadInput(
+            file,
+            mediaIds,
+          );
+          if (!uploadInput.ok) {
+            throw new Error(`${file.name}: ${uploadInput.errorMessage}`);
+          }
+
+          await storage.saveMedia(loadedDraftId, uploadInput.input, file);
+          mediaIds.push(uploadInput.input.id);
+        }
+
+        await refreshLoadedDraft();
+      } catch (caughtError) {
+        setMediaError(
+          getErrorMessage(caughtError, 'Could not save local media.'),
+        );
+        try {
+          await refreshLoadedDraft();
+        } catch {
+          // Keep the original media error visible.
+        }
+      } finally {
+        setMediaPending(false);
+      }
+    },
+    [
+      draftMedia,
+      loadedDraftId,
+      mediaPending,
+      refreshLoadedDraft,
+      storage,
+    ],
+  );
+
+  const onUpdateMedia = useCallback(
+    async (mediaId: string, update: DraftMediaUpdate) => {
+      if (!loadedDraftId) return;
+
+      setMediaError(null);
+      try {
+        const updatedDraft = await storage.updateMedia(
+          loadedDraftId,
+          mediaId,
+          update,
+        );
+        setDraft(updatedDraft);
+      } catch (caughtError) {
+        setMediaError(
+          getErrorMessage(caughtError, 'Could not update media.'),
+        );
+      }
+    },
+    [loadedDraftId, setDraft, storage],
+  );
+
+  const onDeleteMedia = useCallback(
+    async (mediaId: string) => {
+      if (!loadedDraftId || mediaPending) return;
+
+      setMediaPending(true);
+      setMediaError(null);
+      try {
+        const updatedDraft = await storage.deleteMedia(loadedDraftId, mediaId);
+        setDraft(updatedDraft);
+      } catch (caughtError) {
+        setMediaError(
+          getErrorMessage(caughtError, 'Could not remove media.'),
+        );
+      } finally {
+        setMediaPending(false);
+      }
+    },
+    [loadedDraftId, mediaPending, setDraft, storage],
+  );
+
+  return {
+    mediaError,
+    mediaPending,
+    mediaPreviewUrls,
+    onDeleteMedia,
+    onUpdateMedia,
+    onUploadMedia,
+  };
+}
+
 function useWizardNavigation({
   autosave,
   loadedDraftId,
@@ -550,12 +765,19 @@ function createListingStepControllerResult(
       draft: options.draft,
       fieldErrors: options.fieldErrors,
       fields: options.fields,
+      mediaError: options.mediaError,
+      mediaErrors: options.mediaErrors,
+      mediaPending: options.mediaPending,
+      mediaPreviewUrls: options.mediaPreviewUrls,
       navigationError: options.navigationError,
       navigationPending: options.navigationPending,
       packageVerification: options.packageVerification,
+      onDeleteMedia: options.onDeleteMedia,
       onExitWizard: options.onExitWizard,
       onNavigateStep: options.onNavigateStep,
+      onUpdateMedia: options.onUpdateMedia,
       onUpdateFields: options.onUpdateFields,
+      onUploadMedia: options.onUploadMedia,
       onVerifyPackages: options.onVerifyPackages,
     },
   };
@@ -605,4 +827,14 @@ function getListingStepMessage(
     title: 'Opening step',
     body: 'Returning to the saved draft step.',
   };
+}
+
+function revokeObjectUrls(urls: Record<string, string>): void {
+  Object.values(urls).forEach((url) => URL.revokeObjectURL(url));
+}
+
+function isPreviewEntry(
+  value: readonly [string, string] | null,
+): value is readonly [string, string] {
+  return value !== null;
 }
