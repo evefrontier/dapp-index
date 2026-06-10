@@ -373,7 +373,9 @@ export function createDraftStorage(
     return {
       ...media,
       role: input.role ?? media.role,
-      alt: Object.hasOwn(input, 'alt') ? input.alt : media.alt,
+      alt: Object.hasOwn(input, 'alt')
+        ? normalizeOptionalMediaText(input.alt)
+        : media.alt,
       caption: Object.hasOwn(input, 'caption')
         ? normalizeOptionalMediaText(input.caption)
         : media.caption,
@@ -461,7 +463,12 @@ function normalizeDraftMedia(value: unknown): DraftMedia | null {
   const kind = isDraftMediaKind(media.kind) ? media.kind : null;
   const name = typeof media.name === 'string' ? media.name : null;
   const mimeType = typeof media.mimeType === 'string' ? media.mimeType : null;
-  const size = typeof media.size === 'number' ? media.size : null;
+  const size =
+    typeof media.size === 'number' &&
+    Number.isFinite(media.size) &&
+    media.size >= 0
+      ? media.size
+      : null;
   const createdAt =
     typeof media.createdAt === 'string' ? media.createdAt : null;
   if (!id || !kind || !name || !mimeType || size === null || !createdAt) {
@@ -478,7 +485,7 @@ function normalizeDraftMedia(value: unknown): DraftMedia | null {
     mimeType,
     size,
     createdAt,
-    alt: typeof media.alt === 'string' ? media.alt : undefined,
+    alt: normalizeOptionalMediaText(media.alt),
     caption: normalizeOptionalMediaText(media.caption),
     walrusBlobId:
       typeof media.walrusBlobId === 'string' ? media.walrusBlobId : undefined,
