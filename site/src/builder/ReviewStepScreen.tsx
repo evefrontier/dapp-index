@@ -1,5 +1,6 @@
 import { Button } from '@evefrontier/ui';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { ReviewWarningsModal } from './ReviewWarningsModal';
 import type {
   RegistrationDraftReview,
   RegistrationDraftReviewIssue,
@@ -23,7 +24,15 @@ export function ReviewStepScreen({
   slugCheck,
   onCheckSlug,
 }: ReviewStepScreenProps) {
+  const [warningsOpen, setWarningsOpen] = useState(false);
   const prettyMetadataJson = JSON.stringify(review.metadata, null, 2);
+  const warningIssues = review.issues.filter(
+    (issue) => issue.severity === 'warning',
+  );
+
+  useEffect(() => {
+    void onCheckSlug();
+  }, [onCheckSlug]);
 
   return (
     <div className="grid gap-5">
@@ -34,12 +43,18 @@ export function ReviewStepScreen({
         review={review}
         slugCheck={slugCheck}
         onCheckSlug={onCheckSlug}
+        onViewWarnings={() => setWarningsOpen(true)}
       />
 
       <ReviewIssues issues={review.issues} />
       <ReviewJsonPreview
         canonicalJson={review.canonicalJson}
         prettyMetadataJson={prettyMetadataJson}
+      />
+      <ReviewWarningsModal
+        issues={warningIssues}
+        open={warningsOpen}
+        onClose={() => setWarningsOpen(false)}
       />
     </div>
   );
@@ -49,15 +64,28 @@ function ReviewStatusRows({
   metadataHashError,
   metadataHashHex,
   metadataHashPending,
+  onViewWarnings,
   review,
   slugCheck,
   onCheckSlug,
-}: ReviewStepScreenProps) {
+}: ReviewStepScreenProps & { onViewWarnings: () => void }) {
   const issueCounts = getReviewIssueCounts(review);
 
   return (
     <div className="grid border-y border-(--color-neutral-20)">
       <ReviewStatusRow
+        action={
+          issueCounts.warnings > 0 ? (
+            <Button
+              size="small"
+              type="button"
+              variant="secondary"
+              onClick={onViewWarnings}
+            >
+              View warnings
+            </Button>
+          ) : undefined
+        }
         detail={formatReadinessDetail(issueCounts)}
         label="Readiness"
         status={getReadinessStatusLabel(issueCounts)}
@@ -84,10 +112,10 @@ function ReviewStatusRows({
               void onCheckSlug();
             }}
           >
-            Check slug
+            {getSlugCheckButtonLabel(slugCheck)}
           </Button>
         }
-        detail={slugCheck.message}
+        detail={formatSlugCheckDetail(slugCheck)}
         label="Slug"
         status={getSlugCheckStatusLabel(slugCheck)}
         tone={getSlugCheckTone(slugCheck)}
@@ -141,20 +169,12 @@ function ReviewIssues({
   issues: RegistrationDraftReview['issues'];
 }) {
   const blockingIssues = issues.filter((issue) => issue.severity === 'error');
-  const warningIssues = issues.filter((issue) => issue.severity === 'warning');
 
-  if (blockingIssues.length === 0 && warningIssues.length === 0) {
-    return (
-      <div className="border-b border-(--color-neutral-20) pb-4">
-        <h4>No review notes.</h4>
-      </div>
-    );
-  }
+  if (blockingIssues.length === 0) return null;
 
   return (
     <div className="grid gap-3">
       <ReviewIssueList heading="Missing fields" issues={blockingIssues} />
-      <ReviewIssueList heading="Warnings" issues={warningIssues} />
     </div>
   );
 }
@@ -198,23 +218,62 @@ function ReviewJsonPreview({
   return (
     <div className="grid gap-4">
       <CodePreview label="Metadata JSON" value={prettyMetadataJson} />
-      <CodePreview label="Canonical JSON" value={canonicalJson} />
+      <details className="builder-review-advanced">
+        <summary className="builder-review-advanced-summary">
+          Show extra details
+        </summary>
+        <CodePreview
+          description="Sorted, compact form used to compute the metadata hash."
+          label="Canonical JSON"
+          value={canonicalJson}
+        />
+      </details>
     </div>
   );
 }
 
-function CodePreview({ label, value }: { label: string; value: string }) {
+function CodePreview({
+  description,
+  label,
+  value,
+}: {
+  description?: string;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="grid gap-2">
       <h3 className="text-sm">{label}</h3>
-      <pre className="max-h-80 overflow-auto border border-(--color-neutral-20) bg-(--color-crude-60) p-3 text-xs leading-relaxed text-(--color-neutral-70)">
-        {value}
-      </pre>
+      {description ? (
+        <p className="builder-review-advanced-hint">{description}</p>
+      ) : null}
+      <pre className="builder-review-code">{value}</pre>
     </div>
   );
 }
 
 type ReviewTone = 'ready' | 'warning' | 'error' | 'muted';
+
+function formatSlugCheckDetail(
+  slugCheck: RegistrationDraftSlugCheckState,
+): string {
+  switch (slugCheck.status) {
+    case 'idle':
+      return 'Waiting to check.';
+    case 'checking':
+      return 'Checking registry…';
+    case 'available':
+      return slugCheck.checkedSlug;
+    case 'taken':
+      return `Registered to ${slugCheck.owner}.`;
+    case 'unconfigured':
+      return 'Skipped in local dev.';
+    case 'error':
+      return slugCheck.message;
+    default:
+      return assertNever(slugCheck);
+  }
+}
 
 function getSlugCheckStatusLabel(
   slugCheck: RegistrationDraftSlugCheckState,
@@ -281,7 +340,7 @@ function formatReadinessDetail({
   }
 
   if (warnings > 0) {
-    return `Ready with ${formatCount(warnings, 'warning')}.`;
+    return `${formatCount(warnings, 'optional improvement')}.`;
   }
 
   return 'Metadata is ready for publish.';
@@ -289,26 +348,39 @@ function formatReadinessDetail({
 
 function getReadinessStatusLabel({
   blockers,
-  warnings,
 }: {
   blockers: number;
   warnings: number;
 }): string {
   if (blockers > 0) return 'Needs work';
-  if (warnings > 0) return 'Warnings';
   return 'Ready';
 }
 
 function getReadinessTone({
   blockers,
-  warnings,
 }: {
   blockers: number;
   warnings: number;
 }): ReviewTone {
   if (blockers > 0) return 'error';
-  if (warnings > 0) return 'warning';
   return 'ready';
+}
+
+function getSlugCheckButtonLabel(
+  slugCheck: RegistrationDraftSlugCheckState,
+): string {
+  switch (slugCheck.status) {
+    case 'available':
+    case 'taken':
+    case 'error':
+    case 'unconfigured':
+      return 'Re-check slug';
+    case 'idle':
+    case 'checking':
+      return 'Check slug';
+    default:
+      return assertNever(slugCheck);
+  }
 }
 
 function formatCount(count: number, label: string): string {

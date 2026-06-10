@@ -408,7 +408,7 @@ function useRegistrationDraftSlugCheck(slug: string) {
     requestIdRef.current = requestId;
     setSlugCheck({
       status: 'checking',
-      message: 'Checking registry.',
+      message: 'Checking registry…',
     });
 
     let result: Awaited<ReturnType<typeof lookupRegistrySlug>>;
@@ -438,13 +438,14 @@ function useRegistrationDraftSlugCheck(slug: string) {
           status: 'taken',
           checkedSlug: normalizedSlug,
           owner: result.listing.owner,
-          message: `Owned by ${result.listing.owner}.`,
+          message: 'Slug taken — change it on Basics and re-check.',
         });
         return;
       case 'unconfigured':
         setSlugCheck({
           status: 'unconfigured',
-          message: 'Registry env is not configured.',
+          message:
+            'Registry not configured — slug check skipped for local dev.',
         });
         return;
       case 'error':

@@ -27,9 +27,11 @@ import {
   type RegistrationDraftPackageVerificationState,
 } from './registrationDraftPackages';
 import type { RegistrationDraftMediaErrors } from './registrationDraftMedia';
-import type {
-  RegistrationDraftReview,
-  RegistrationDraftSlugCheckState,
+import {
+  getReviewNextBlockerMessage,
+  isReviewSlugCheckReady,
+  type RegistrationDraftReview,
+  type RegistrationDraftSlugCheckState,
 } from './registrationDraftReview';
 
 export type WizardShellProps = {
@@ -316,6 +318,10 @@ function WizardStepPanel({
   onVerifyPackages: () => Promise<void>;
 }) {
   const isPlaceholderStep = isWizardPlaceholderStep(activeStep);
+  const reviewNextBlocker =
+    activeStep === 'review' && nextStep && !canNavigateNext
+      ? getReviewNextBlockerMessage(review, slugCheck)
+      : null;
   const headerAction =
     activeStep === 'media' ? (
       <MediaUploadAction
@@ -381,7 +387,10 @@ function WizardStepPanel({
         >
           Back to drafts
         </button>
-        <div className="flex flex-wrap gap-2">
+        <div className="builder-wizard-nav-actions">
+          {reviewNextBlocker ? (
+            <p className="builder-wizard-next-blocker">{reviewNextBlocker}</p>
+          ) : null}
           <Button
             variant="secondary"
             size="small"
@@ -465,10 +474,3 @@ function isWizardStepReadyForNext(
   return isRegistrationDraftStepValid(step, fields, media);
 }
 
-function isReviewSlugCheckReady(
-  slugCheck: RegistrationDraftSlugCheckState,
-): boolean {
-  return (
-    slugCheck.status === 'available' || slugCheck.status === 'unconfigured'
-  );
-}

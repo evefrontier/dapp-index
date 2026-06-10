@@ -3,6 +3,9 @@ import {
   buildRegistrationDraftMetadata,
   createRegistrationDraftReview,
   createRegistrationMetadataHashHex,
+  getReviewNextBlockerMessage,
+  INITIAL_REGISTRATION_DRAFT_SLUG_CHECK,
+  isReviewSlugCheckReady,
 } from '../src/builder/registrationDraftReview';
 import type { RegistrationDraftFields } from '../src/builder/registrationDraftFields';
 
@@ -173,5 +176,59 @@ describe('registration draft review', () => {
     await expect(createRegistrationMetadataHashHex(metadata)).resolves.toMatch(
       /^[0-9a-f]{64}$/,
     );
+  });
+
+  test('treats warnings as ready for review navigation', () => {
+    const review = createRegistrationDraftReview({
+      ...validFields,
+      description: '',
+      repositoryUrl: '',
+      documentationUrl: '',
+      smartAssemblyTypes: [],
+    });
+
+    expect(review.ready).toBe(true);
+    expect(
+      getReviewNextBlockerMessage(review, INITIAL_REGISTRATION_DRAFT_SLUG_CHECK),
+    ).toBe('Waiting for slug availability check.');
+    expect(
+      getReviewNextBlockerMessage(review, {
+        status: 'available',
+        checkedSlug: 'frontier-map',
+        message: 'Slug is available.',
+      }),
+    ).toBeNull();
+  });
+
+  test('reports slug and blocker reasons for review navigation', () => {
+    const review = createRegistrationDraftReview(validFields);
+
+    expect(
+      isReviewSlugCheckReady({
+        status: 'unconfigured',
+        message: 'Registry not configured — slug check skipped for local dev.',
+      }),
+    ).toBe(true);
+    expect(
+      getReviewNextBlockerMessage(review, {
+        status: 'taken',
+        checkedSlug: 'frontier-map',
+        owner: packageId,
+        message: 'Slug taken — change it on Basics and re-check.',
+      }),
+    ).toBe('Slug taken — change it on Basics and re-check.');
+    expect(
+      getReviewNextBlockerMessage(
+        createRegistrationDraftReview({
+          ...validFields,
+          name: '',
+        }),
+        {
+          status: 'available',
+          checkedSlug: 'frontier-map',
+          message: 'Slug is available.',
+        },
+      ),
+    ).toBe('Fix 2 required issues to continue.');
   });
 });

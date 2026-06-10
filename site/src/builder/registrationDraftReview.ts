@@ -63,8 +63,47 @@ export type RegistrationDraftSlugCheckState =
 export const INITIAL_REGISTRATION_DRAFT_SLUG_CHECK: RegistrationDraftSlugCheckState =
   {
     status: 'idle',
-    message: 'Not checked.',
+    message: 'Checking slug availability…',
   };
+
+export function isReviewSlugCheckReady(
+  slugCheck: RegistrationDraftSlugCheckState,
+): boolean {
+  return (
+    slugCheck.status === 'available' || slugCheck.status === 'unconfigured'
+  );
+}
+
+export function getReviewNextBlockerMessage(
+  review: RegistrationDraftReview,
+  slugCheck: RegistrationDraftSlugCheckState,
+): string | null {
+  if (review.ready && isReviewSlugCheckReady(slugCheck)) {
+    return null;
+  }
+
+  if (!review.ready) {
+    const blockerCount = review.issues.filter(
+      (issue) => issue.severity === 'error',
+    ).length;
+    if (blockerCount > 0) {
+      return `Fix ${blockerCount} required issue${blockerCount === 1 ? '' : 's'} to continue.`;
+    }
+    return 'Complete required metadata to continue.';
+  }
+
+  switch (slugCheck.status) {
+    case 'idle':
+    case 'checking':
+      return 'Waiting for slug availability check.';
+    case 'taken':
+      return 'Slug taken — change it on Basics and re-check.';
+    case 'error':
+      return slugCheck.message;
+    default:
+      return 'Check slug availability to continue.';
+  }
+}
 
 const FIELD_LABELS = {
   name: 'Name',
