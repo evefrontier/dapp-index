@@ -6,17 +6,16 @@ import {
 } from '@mysten/sui/jsonRpc';
 import { registryConfigured, viteRegistryId, viteSuiNetwork } from '@/chain/env';
 import {
+  type OnChainListing,
+  parseRegistryListingObject,
+} from '@/chain/registryListingObject';
+import { withRpcTimeout } from '@/chain/rpcTimeout';
+import {
   REGISTRY_SLUG_LOOKUP_MAX_PAGES,
   REGISTRY_SLUG_LOOKUP_RPC_TIMEOUT_MS,
 } from '@/constants';
 
-export type OnChainListing = {
-  owner: string;
-  slug: string;
-  metadata_uri: string;
-  metadata_hash: number[];
-  categories: string[];
-};
+export type { OnChainListing };
 
 export type RegistrySlugLookupResult =
   | { status: 'unconfigured' }
@@ -44,121 +43,6 @@ async function mapWithConcurrency<T, R>(
   }
   await Promise.all(Array.from({ length: workers }, () => worker()));
   return results;
-}
-
-async function withTimeout<T>(
-  promise: Promise<T>,
-  timeoutMs: number,
-  label: string,
-): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      reject(new Error(`${label} timed out after ${timeoutMs}ms`));
-    }, timeoutMs);
-  });
-  try {
-    return await Promise.race([promise, timeout]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-}
-
-function asRecord(v: unknown): Record<string, unknown> | null {
-  if (v && typeof v === 'object' && !Array.isArray(v)) {
-    return v as Record<string, unknown>;
-  }
-  return null;
-}
-
-function fromBase64ish(s: string): Uint8Array {
-  const bin = atob(s);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) {
-    out[i] = bin.charCodeAt(i);
-  }
-  return out;
-}
-
-function moveStringToUtf8(value: unknown): string | null {
-  if (typeof value === 'string') return value;
-  const r = asRecord(value);
-  if (!r) return null;
-  if (typeof r.bytes === 'string') {
-    try {
-      return new TextDecoder().decode(fromBase64ish(r.bytes));
-    } catch {
-      return null;
-    }
-  }
-  if (Array.isArray(r.bytes)) {
-    return new TextDecoder().decode(Uint8Array.from(r.bytes));
-  }
-  return null;
-}
-
-function coerceU8Vector(value: unknown): number[] | null {
-  if (!Array.isArray(value)) return null;
-  const out: number[] = [];
-  for (const x of value) {
-    if (typeof x !== 'number' || !Number.isInteger(x) || x < 0 || x > 255) {
-      return null;
-    }
-    out.push(x);
-  }
-  return out;
-}
-
-function parseListingFields(
-  fields: Record<string, unknown>,
-): OnChainListing | null {
-  const owner = typeof fields.owner === 'string' ? fields.owner : null;
-  const slug = moveStringToUtf8(fields.slug);
-  const metadata_uri = moveStringToUtf8(fields.metadata_uri);
-  const metadata_hash = coerceU8Vector(fields.metadata_hash);
-  const catsRaw = fields.categories;
-  if (
-    !owner ||
-    !slug ||
-    !metadata_uri ||
-    !metadata_hash ||
-    !Array.isArray(catsRaw)
-  ) {
-    return null;
-  }
-  const categories: string[] = [];
-  for (const c of catsRaw) {
-    const s = moveStringToUtf8(c);
-    if (!s) return null;
-    categories.push(s);
-  }
-  return { owner, slug, metadata_uri, metadata_hash, categories };
-}
-
-function extractListingFromMoveObjectContent(
-  content: unknown,
-): OnChainListing | null {
-  const c = asRecord(content);
-  if (!c || c.dataType !== 'moveObject') return null;
-  const fields = asRecord(c.fields);
-  if (!fields) return null;
-  if ('value' in fields) {
-    const inner = asRecord(fields.value);
-    if (inner) {
-      const innerFields = asRecord(inner.fields);
-      return parseListingFields(innerFields ?? inner);
-    }
-  }
-  if ('owner' in fields && 'slug' in fields) {
-    return parseListingFields(fields);
-  }
-  return null;
-}
-
-function parseListingObject(resp: SuiObjectResponse): OnChainListing | null {
-  const data = resp.data;
-  if (!data?.content) return null;
-  return extractListingFromMoveObjectContent(data.content);
 }
 
 /**
@@ -207,7 +91,7 @@ export async function lookupRegistrySlug(
 
     let page: DynamicFieldPage;
     try {
-      page = await withTimeout(
+      page = await withRpcTimeout(
         client.getDynamicFields({
           parentId: registryId,
           cursor,
@@ -225,7 +109,7 @@ export async function lookupRegistrySlug(
     for (const df of page.data) {
       let obj: SuiObjectResponse;
       try {
-        obj = await withTimeout(
+        obj = await withRpcTimeout(
           client.getDynamicFieldObject({
             parentId: registryId,
             name: df.name,
@@ -236,7 +120,7 @@ export async function lookupRegistrySlug(
       } catch {
         continue;
       }
-      const listing = parseListingObject(obj);
+      const listing = parseRegistryListingObject(obj);
       if (!listing) continue;
       if (listing.slug.trim().toLowerCase() === normalized) {
         return { status: 'taken', listing };
