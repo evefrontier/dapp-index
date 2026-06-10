@@ -275,6 +275,81 @@ describe('draft storage', () => {
     );
   });
 
+  test('normalizes whitespace-only alt text when updating media metadata', async () => {
+    const { storage } = createTestDraftStorage();
+    const content = new Blob(['image-data'], { type: 'image/png' });
+
+    await storage.saveDraft(draft);
+    await storage.saveMedia(
+      'draft-1',
+      {
+        id: 'screen-1',
+        kind: 'screenshot',
+        name: 'screen.png',
+      },
+      content,
+    );
+
+    const updatedDraft = await storage.updateMedia('draft-1', 'screen-1', {
+      alt: '   ',
+    });
+
+    expect(updatedDraft.media[0]?.alt).toBeUndefined();
+  });
+
+  test('drops draft media entries with invalid size values from persisted storage', async () => {
+    const { localStorage, storage } = createTestDraftStorage();
+
+    localStorage.setItem(
+      DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        'draft-1': {
+          ...draft,
+          media: [
+            {
+              id: 'bad-size',
+              kind: 'screenshot',
+              role: 'gallery',
+              name: 'bad.png',
+              mimeType: 'image/png',
+              size: Number.NaN,
+              createdAt: '2026-05-18T12:00:00.000Z',
+            },
+            {
+              id: 'negative-size',
+              kind: 'screenshot',
+              role: 'gallery',
+              name: 'negative.png',
+              mimeType: 'image/png',
+              size: -1,
+              createdAt: '2026-05-18T12:00:00.000Z',
+            },
+            {
+              id: 'valid',
+              kind: 'screenshot',
+              role: 'gallery',
+              name: 'good.png',
+              mimeType: 'image/png',
+              size: 1024,
+              createdAt: '2026-05-18T12:00:00.000Z',
+              alt: '   ',
+            },
+          ],
+        },
+      }),
+    );
+
+    const loadedDraft = await storage.getDraft('draft-1');
+
+    expect(loadedDraft?.media).toEqual([
+      expect.objectContaining({
+        id: 'valid',
+        size: 1024,
+        alt: undefined,
+      }),
+    ]);
+  });
+
   test('keeps thumbnail and hero media roles exclusive', async () => {
     const { storage } = createTestDraftStorage();
 

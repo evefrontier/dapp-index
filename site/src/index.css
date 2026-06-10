@@ -64,6 +64,19 @@ h3 {
     @apply text-xs font-bold uppercase text-(--color-martian-red);
   }
 
+  .builder-role-filter {
+    @apply flex flex-wrap items-center gap-1;
+  }
+
+  .builder-role-filter [data-size='small'] {
+    padding: 1px;
+  }
+
+  .builder-role-filter [data-size='small'] > span:first-child {
+    padding: 4px 0.5rem;
+    font-size: var(--font-size-sm);
+  }
+
   .builder-wizard-step {
     @apply flex w-full items-center justify-between gap-3 border border-(--color-neutral-20) px-3 py-2 text-left text-sm font-bold uppercase text-(--color-neutral-60) transition-colors hover:border-(--color-neutral-50) disabled:cursor-default;
   }

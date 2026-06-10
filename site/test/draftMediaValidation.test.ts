@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  MAX_DRAFT_SCREENSHOT_BYTES,
-  MAX_DRAFT_VIDEO_BYTES,
-  validateDraftMediaFile,
-} from '../src/storage/draftStorage';
+  LISTING_MEDIA_IMAGE_MAX_BYTES,
+  LISTING_MEDIA_VIDEO_MAX_BYTES,
+} from '@/constants';
+import { validateDraftMediaFile } from '../src/storage/draftStorage';
 import { fileLike } from './draftTestUtils';
 
 describe('draft media validation', () => {
@@ -26,7 +26,7 @@ describe('draft media validation', () => {
       validateDraftMediaFile({
         kind: 'video',
         file: fileLike({
-          size: MAX_DRAFT_VIDEO_BYTES + 1,
+          size: LISTING_MEDIA_VIDEO_MAX_BYTES + 1,
           type: 'video/webm',
         }),
       }).ok,
@@ -43,7 +43,7 @@ describe('draft media validation', () => {
       validateDraftMediaFile({
         kind: 'screenshot',
         file: fileLike({
-          size: MAX_DRAFT_SCREENSHOT_BYTES + 1,
+          size: LISTING_MEDIA_IMAGE_MAX_BYTES + 1,
           type: 'image/png',
         }),
       }).ok,

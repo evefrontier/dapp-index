@@ -243,10 +243,10 @@ function MediaRoleFilter({
     <fieldset
       aria-describedby={errorId}
       aria-invalid={error ? true : undefined}
-      className="builder-fieldset grid gap-3"
+      className="builder-fieldset grid gap-2"
     >
       <legend>Role</legend>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="builder-role-filter">
         {options.map((option) => {
           const selected = value === option.role;
 
