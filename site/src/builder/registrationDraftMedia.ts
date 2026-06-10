@@ -1,7 +1,12 @@
 import type { DraftMedia, DraftMediaInput } from '@/storage/draftStorage';
 import { validateDraftMediaFile } from '@/storage/draftMediaValidation';
-import { DAPP_INDEX_VIDEO_MIME_TYPE } from '@/constants';
-import { getDefaultMediaRoleForKind } from './mediaRoleModel';
+import {
+  DAPP_INDEX_VIDEO_MIME_TYPE,
+  PUBLIC_MEDIA_ITEM_LIMIT,
+  PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES,
+  PUBLIC_MEDIA_VIDEO_LIMIT,
+} from '@/constants';
+import { getDefaultMediaRoleForKind, MEDIA_STEP_GUIDANCE } from './mediaRoleModel';
 import {
   RegistrationDraftMediaItemSchema,
   RegistrationDraftMediaStepSchema,
@@ -29,6 +34,52 @@ export type RegistrationDraftMediaErrors = Record<
 export type RegistrationDraftMediaUploadInputResult =
   | { ok: true; input: DraftMediaInput }
   | { ok: false; errorMessage: string };
+
+export type RegistrationDraftMediaUploadLimitsResult =
+  | { ok: true }
+  | { ok: false; errorMessage: string };
+
+export function validateRegistrationDraftMediaUploadLimits(
+  existingMedia: readonly DraftMedia[],
+  files: readonly File[],
+): RegistrationDraftMediaUploadLimitsResult {
+  if (existingMedia.length + files.length > PUBLIC_MEDIA_ITEM_LIMIT) {
+    return {
+      ok: false,
+      errorMessage: `Listings support up to ${MEDIA_STEP_GUIDANCE.itemLimit} media items.`,
+    };
+  }
+
+  const existingVideoCount = existingMedia.filter(
+    (media) => media.kind === 'video',
+  ).length;
+  const newVideoCount = files.filter(
+    (file) => file.type.toLowerCase() === DAPP_INDEX_VIDEO_MIME_TYPE,
+  ).length;
+  if (existingVideoCount + newVideoCount > PUBLIC_MEDIA_VIDEO_LIMIT) {
+    return {
+      ok: false,
+      errorMessage: `Listings support up to ${MEDIA_STEP_GUIDANCE.videoLimitCount} videos.`,
+    };
+  }
+
+  const existingTotalSize = existingMedia.reduce(
+    (total, media) => total + media.size,
+    0,
+  );
+  const newTotalSize = files.reduce((total, file) => total + file.size, 0);
+  if (
+    existingTotalSize + newTotalSize >
+    PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES
+  ) {
+    return {
+      ok: false,
+      errorMessage: `Total media size must stay under ${MEDIA_STEP_GUIDANCE.totalLimit}.`,
+    };
+  }
+
+  return { ok: true };
+}
 
 export function createRegistrationDraftMediaUploadInput(
   file: File,

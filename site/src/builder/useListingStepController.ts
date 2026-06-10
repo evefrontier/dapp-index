@@ -5,8 +5,11 @@ import { verifyMoveRegistryPackage } from '@/chain/moveRegistry';
 import { createMoveRegistryResolver } from '@/chain/moveRegistryResolver';
 import type { WizardShellProps } from './WizardShell';
 import { getErrorMessage } from './errors';
-import { createRegistrationDraftMediaUploadInput } from './registrationDraftMedia';
-import { validateRegistrationDraftMediaStep } from './registrationDraftMedia';
+import {
+  createRegistrationDraftMediaUploadInput,
+  validateRegistrationDraftMediaUploadLimits,
+  validateRegistrationDraftMediaStep,
+} from './registrationDraftMedia';
 import { resolveWizardRouteStep } from './wizardModel';
 import {
   createRegistrationDraftFieldPatch,
@@ -559,6 +562,15 @@ function useLocalMediaController({
   const onUploadMedia = useCallback(
     async (files: File[]) => {
       if (!loadedDraftId || files.length === 0 || mediaPending) return;
+
+      const limitsValidation = validateRegistrationDraftMediaUploadLimits(
+        draftMedia,
+        files,
+      );
+      if (!limitsValidation.ok) {
+        setMediaError(limitsValidation.errorMessage);
+        return;
+      }
 
       setMediaPending(true);
       setMediaError(null);
