@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   buildRegistrationPublishMetadata,
   createRegistrationPublishReadiness,
+  getPublishNextBlockerMessage,
   hexToBytes,
   resolveRegistrationPublishAction,
 } from '../src/builder/registrationDraftPublish';
@@ -231,5 +232,53 @@ describe('registration draft publish', () => {
       ready: true,
       blockers: [],
     });
+  });
+
+  test('includes wallet balance blockers in publish readiness', () => {
+    expect(
+      createRegistrationPublishReadiness({
+        registryConfigured: true,
+        reviewReady: true,
+        suiNetwork: 'testnet',
+        walletAddress:
+          '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        walletNetwork: 'testnet',
+        walrusAggregatorUrl: 'https://aggregator.test',
+        walletBalanceBlockers: ['Add at least 0.05 SUI for gas and registry fees.'],
+      }),
+    ).toEqual({
+      ready: false,
+      blockers: ['Add at least 0.05 SUI for gas and registry fees.'],
+    });
+  });
+
+  test('returns the first publish blocker for inline UI copy', () => {
+    const readiness = createRegistrationPublishReadiness({
+      registryConfigured: true,
+      reviewReady: false,
+      suiNetwork: 'testnet',
+      walletAddress: null,
+      walrusAggregatorUrl: 'https://aggregator.test',
+    });
+
+    expect(getPublishNextBlockerMessage(readiness)).toBe(
+      'Fix review blockers first.',
+    );
+    expect(
+      getPublishNextBlockerMessage(
+        createRegistrationPublishReadiness({
+          registryConfigured: true,
+          reviewReady: true,
+          suiNetwork: 'testnet',
+          walletAddress:
+            '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          walletNetwork: 'testnet',
+          walrusAggregatorUrl: 'https://aggregator.test',
+        }),
+      ),
+    ).toBeNull();
+    expect(
+      getPublishNextBlockerMessage(readiness, { isPublishing: true }),
+    ).toBeNull();
   });
 });

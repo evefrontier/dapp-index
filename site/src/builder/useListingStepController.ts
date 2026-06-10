@@ -105,6 +105,9 @@ type ListingStepResultOptions = ListingStepState & {
   slugCheck: RegistrationDraftSlugCheckState;
   suiNetwork: string;
   walletAddress: string | null;
+  walletBalanceStatus: ReturnType<
+    typeof useRegistrationDraftPublishController
+  >['walletBalanceStatus'];
   walletNetwork: string | null;
   onCheckSlug: () => Promise<void>;
   onConnectWallet: () => void;
@@ -197,6 +200,7 @@ export function useListingStepController({
     publishState,
     suiNetwork,
     walletAddress,
+    walletBalanceStatus,
     walletNetwork,
     onConnectWallet,
     onPublish,
@@ -233,6 +237,7 @@ export function useListingStepController({
     slugCheck,
     suiNetwork,
     walletAddress,
+    walletBalanceStatus,
     walletNetwork,
     onCheckSlug,
     onConnectWallet,
@@ -975,6 +980,7 @@ function createListingStepControllerResult(
       slugCheck: options.slugCheck,
       suiNetwork: options.suiNetwork,
       walletAddress: options.walletAddress,
+      walletBalanceStatus: options.walletBalanceStatus,
       walletNetwork: options.walletNetwork,
       onCheckSlug: options.onCheckSlug,
       onConnectWallet: options.onConnectWallet,

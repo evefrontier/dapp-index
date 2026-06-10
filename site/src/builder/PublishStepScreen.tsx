@@ -1,4 +1,10 @@
 import { Button } from '@evefrontier/ui';
+import { formatAddress } from '@mysten/sui/utils';
+import type { PublishWalletBalanceUiState } from '@/chain/publishWalletBalances';
+import {
+  getPublishNextBlockerMessage,
+  isWalrusSupportedNetwork,
+} from './registrationDraftPublish';
 import type {
   RegistrationDraftPublishController,
   RegistrationDraftPublishState,
@@ -9,6 +15,7 @@ export type PublishStepScreenProps = {
   publishState: RegistrationDraftPublishState;
   suiNetwork: string;
   walletAddress: string | null;
+  walletBalanceStatus: PublishWalletBalanceUiState;
   walletNetwork: string | null;
   onConnectWallet: () => void;
   onPublish: () => Promise<void>;
@@ -19,11 +26,15 @@ export function PublishStepScreen({
   publishState,
   suiNetwork,
   walletAddress,
+  walletBalanceStatus,
   walletNetwork,
   onConnectWallet,
   onPublish,
 }: PublishStepScreenProps) {
   const isPublishing = publishState.status === 'publishing';
+  const publishBlocker = getPublishNextBlockerMessage(publishReadiness, {
+    isPublishing,
+  });
 
   return (
     <div className="grid gap-5">
@@ -32,37 +43,44 @@ export function PublishStepScreen({
         publishState={publishState}
         suiNetwork={suiNetwork}
         walletAddress={walletAddress}
+        walletBalanceStatus={walletBalanceStatus}
         walletNetwork={walletNetwork}
       />
-      <PublishBlockers blockers={publishReadiness.blockers} />
       <PublishResult publishState={publishState} />
-      <div className="flex flex-wrap items-center gap-3">
-        {!walletAddress ? (
-          <Button
-            disabled={isPublishing}
-            size="small"
-            type="button"
-            variant="primary"
-            onClick={onConnectWallet}
-          >
-            Connect wallet
-          </Button>
-        ) : (
-          <Button
-            disabled={isPublishing || !publishReadiness.ready}
-            size="small"
-            type="button"
-            variant="primary"
-            onClick={() => {
-              void onPublish();
-            }}
-          >
-            {isPublishing ? 'Publishing' : 'Publish listing'}
-          </Button>
-        )}
-        <p className="text-xs text-(--color-neutral-60)">
-          Uploads local media, metadata, then Sui.
-        </p>
+      <div className="builder-publish-actions">
+        <div className="flex flex-wrap items-center gap-3">
+          {!walletAddress ? (
+            <Button
+              disabled={isPublishing}
+              size="small"
+              type="button"
+              variant="primary"
+              onClick={onConnectWallet}
+            >
+              Connect wallet
+            </Button>
+          ) : (
+            <Button
+              disabled={isPublishing || !publishReadiness.ready}
+              size="small"
+              type="button"
+              variant="primary"
+              onClick={() => {
+                void onPublish();
+              }}
+            >
+              {isPublishing ? 'Publishing' : 'Publish listing'}
+            </Button>
+          )}
+          <p className="text-xs text-(--color-neutral-60)">
+            Uploads local media, metadata, then Sui.
+          </p>
+        </div>
+        {publishBlocker ? (
+          <p className="builder-publish-blocker" role="status">
+            {publishBlocker}
+          </p>
+        ) : null}
       </div>
     </div>
   );
@@ -73,43 +91,79 @@ function PublishStatusRows({
   publishState,
   suiNetwork,
   walletAddress,
+  walletBalanceStatus,
   walletNetwork,
 }: {
   publishReadiness: RegistrationDraftPublishController['publishReadiness'];
   publishState: RegistrationDraftPublishState;
   suiNetwork: string;
   walletAddress: string | null;
+  walletBalanceStatus: PublishWalletBalanceUiState;
   walletNetwork: string | null;
 }) {
+  const walletNetworkReady =
+    Boolean(walletAddress) && walletNetwork === suiNetwork;
+  const setupBlockerCount = publishReadiness.blockers.length;
+  const suiBalanceRow = getSuiBalanceRow(walletBalanceStatus);
+  const walBalanceRow = getWalBalanceRow(walletBalanceStatus);
+
   return (
     <div className="grid border-y border-(--color-neutral-20)">
       <PublishStatusRow
-        detail={walletAddress ?? 'Connect before publish.'}
+        detail={
+          walletAddress ? formatWalletAddress(walletAddress) : 'Connect before publish.'
+        }
         label="Wallet"
         status={walletAddress ? 'Connected' : 'Required'}
         tone={walletAddress ? 'ready' : 'warning'}
       />
       <PublishStatusRow
         detail={walletNetwork ?? 'Not connected.'}
-        label="Wallet net"
+        label="Wallet network"
         status={
           !walletAddress
             ? 'Required'
-            : walletNetwork === suiNetwork
+            : walletNetworkReady
               ? 'Ready'
-              : 'Check'
+              : 'Mismatch'
         }
-        tone={walletNetwork === suiNetwork ? 'ready' : 'warning'}
+        tone={walletNetworkReady ? 'ready' : 'warning'}
       />
       <PublishStatusRow
-        detail={suiNetwork}
-        label="Sui"
+        detail={
+          isWalrusSupportedNetwork(suiNetwork)
+            ? 'Walrus publish enabled.'
+            : 'Use testnet or mainnet.'
+        }
+        label="Target network"
+        status={suiNetwork}
+        tone={isWalrusSupportedNetwork(suiNetwork) ? 'ready' : 'warning'}
+      />
+      <PublishStatusRow
+        detail={suiBalanceRow.detail}
+        label="SUI balance"
+        status={suiBalanceRow.status}
+        tone={suiBalanceRow.tone}
+      />
+      <PublishStatusRow
+        detail={walBalanceRow.detail}
+        label="WAL balance"
+        status={walBalanceRow.status}
+        tone={walBalanceRow.tone}
+      />
+      <PublishStatusRow
+        detail={
+          publishReadiness.ready
+            ? 'All prerequisites met.'
+            : `${setupBlockerCount} blocker${setupBlockerCount === 1 ? '' : 's'}.`
+        }
+        label="Publish setup"
         status={publishReadiness.ready ? 'Ready' : 'Pending'}
-        tone={publishReadiness.ready ? 'ready' : 'muted'}
+        tone={publishReadiness.ready ? 'ready' : 'warning'}
       />
       <PublishStatusRow
         detail={publishState.stage}
-        label="Publish"
+        label="Publish job"
         status={getPublishStateLabel(publishState)}
         tone={getPublishStateTone(publishState)}
       />
@@ -137,26 +191,6 @@ function PublishStatusRow({
       <p className="min-w-0 break-words text-sm text-(--color-neutral)">
         {detail}
       </p>
-    </div>
-  );
-}
-
-function PublishBlockers({ blockers }: { blockers: string[] }) {
-  if (blockers.length === 0) return null;
-
-  return (
-    <div className="grid gap-3">
-      <h3 className="text-sm">Needs work</h3>
-      <ul className="grid border-y border-(--color-neutral-20)">
-        {blockers.map((blocker) => (
-          <li
-            key={blocker}
-            className="border-t border-(--color-neutral-20) py-3 text-sm text-(--color-neutral) first:border-t-0"
-          >
-            {blocker}
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
@@ -209,12 +243,88 @@ function PublishResult({
 
 type PublishTone = 'ready' | 'warning' | 'error' | 'muted';
 
+type BalanceRow = {
+  detail: string;
+  status: string;
+  tone: PublishTone;
+};
+
+function getSuiBalanceRow(status: PublishWalletBalanceUiState): BalanceRow {
+  switch (status.kind) {
+    case 'skipped':
+      return {
+        status: '—',
+        detail: status.reason,
+        tone: 'muted',
+      };
+    case 'loading':
+      return {
+        status: 'Checking',
+        detail: 'Reading wallet balance…',
+        tone: 'muted',
+      };
+    case 'error':
+      return {
+        status: 'Error',
+        detail: status.message,
+        tone: 'error',
+      };
+    case 'ready':
+      return {
+        status: status.suiSufficient ? 'Ready' : 'Low',
+        detail: status.suiSufficient
+          ? `${status.suiFormatted} (min ${status.suiMinimumLabel})`
+          : `${status.suiFormatted} — need at least ${status.suiMinimumLabel}`,
+        tone: status.suiSufficient ? 'ready' : 'warning',
+      };
+    default:
+      return assertNever(status);
+  }
+}
+
+function getWalBalanceRow(status: PublishWalletBalanceUiState): BalanceRow {
+  switch (status.kind) {
+    case 'skipped':
+      return {
+        status: '—',
+        detail: status.reason,
+        tone: 'muted',
+      };
+    case 'loading':
+      return {
+        status: 'Checking',
+        detail: 'Reading wallet balance…',
+        tone: 'muted',
+      };
+    case 'error':
+      return {
+        status: 'Error',
+        detail: status.message,
+        tone: 'error',
+      };
+    case 'ready':
+      return {
+        status: status.walSufficient ? 'Ready' : 'Low',
+        detail: status.walSufficient
+          ? `${status.walFormatted} (min ${status.walMinimumLabel})`
+          : `${status.walFormatted} — need at least ${status.walMinimumLabel}`,
+        tone: status.walSufficient ? 'ready' : 'warning',
+      };
+    default:
+      return assertNever(status);
+  }
+}
+
+function formatWalletAddress(address: string): string {
+  return formatAddress(address);
+}
+
 function getPublishStateLabel(
   publishState: RegistrationDraftPublishState,
 ): string {
   switch (publishState.status) {
     case 'idle':
-      return 'Ready';
+      return 'Idle';
     case 'publishing':
       return 'Running';
     case 'success':

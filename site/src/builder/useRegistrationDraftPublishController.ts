@@ -6,6 +6,10 @@ import {
   useDAppKit,
 } from '@mysten/dapp-kit-react';
 import { useCallback, useMemo, useState } from 'react';
+import {
+  getPublishWalletBalanceBlockers,
+  type PublishWalletBalanceUiState,
+} from '@/chain/publishWalletBalances';
 import type { Dispatch, SetStateAction } from 'react';
 import {
   registryConfigured,
@@ -49,6 +53,7 @@ import {
   type RegistrationDraftReview,
   type RegistrationDraftSlugCheckState,
 } from './registrationDraftReview';
+import { usePublishWalletBalances } from './usePublishWalletBalances';
 
 const WALRUS_STORAGE_EPOCHS = 5;
 
@@ -99,6 +104,7 @@ export type RegistrationDraftPublishController = {
   publishState: RegistrationDraftPublishState;
   suiNetwork: string;
   walletAddress: string | null;
+  walletBalanceStatus: PublishWalletBalanceUiState;
   walletNetwork: string | null;
   onConnectWallet: () => void;
   onPublish: () => Promise<void>;
@@ -141,7 +147,7 @@ const INITIAL_PUBLISH_STATE: RegistrationDraftPublishState = {
   metadataHash: null,
   metadataUri: null,
   metadataWalrusUrl: null,
-  stage: 'Ready.',
+  stage: 'Not started.',
   suiTransactionDigest: null,
 };
 
@@ -162,6 +168,15 @@ export function useRegistrationDraftPublishController({
   const suiNetwork = viteSuiNetwork();
   const walrusAggregatorUrl = viteWalrusAggregatorUrl() ?? null;
   const walletAddress = currentAccount?.address ?? null;
+  const walletBalanceStatus = usePublishWalletBalances({
+    targetNetwork: suiNetwork,
+    walletAddress,
+    walletNetwork: walletAddress ? currentWalletNetwork : null,
+  });
+  const walletBalanceBlockers = useMemo(
+    () => getPublishWalletBalanceBlockers(walletBalanceStatus),
+    [walletBalanceStatus],
+  );
   const publishReadiness = useMemo(() => {
     const readiness = createRegistrationPublishReadiness({
       registryConfigured: registryConfigured(),
@@ -170,6 +185,7 @@ export function useRegistrationDraftPublishController({
       walletAddress,
       walletNetwork: walletAddress ? currentWalletNetwork : null,
       walrusAggregatorUrl,
+      walletBalanceBlockers,
     });
     const mediaBlockers = getDraftMediaPublishBlockers(draft?.media ?? []);
 
@@ -183,6 +199,7 @@ export function useRegistrationDraftPublishController({
     review.ready,
     suiNetwork,
     walletAddress,
+    walletBalanceBlockers,
     walrusAggregatorUrl,
   ]);
 
@@ -406,6 +423,7 @@ export function useRegistrationDraftPublishController({
     publishState,
     suiNetwork,
     walletAddress,
+    walletBalanceStatus,
     walletNetwork: walletAddress ? currentWalletNetwork : null,
     onConnectWallet: handleConnect,
     onPublish,

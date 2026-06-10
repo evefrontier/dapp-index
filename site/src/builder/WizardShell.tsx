@@ -59,6 +59,7 @@ export type WizardShellProps = {
   slugCheck: RegistrationDraftSlugCheckState;
   suiNetwork: string;
   walletAddress: string | null;
+  walletBalanceStatus: RegistrationDraftPublishController['walletBalanceStatus'];
   walletNetwork: string | null;
   onCheckSlug: () => Promise<void>;
   onConnectWallet: () => void;
@@ -98,6 +99,7 @@ export function WizardShell({
   slugCheck,
   suiNetwork,
   walletAddress,
+  walletBalanceStatus,
   walletNetwork,
   onCheckSlug,
   onConnectWallet,
@@ -171,6 +173,7 @@ export function WizardShell({
           slugCheck={slugCheck}
           suiNetwork={suiNetwork}
           walletAddress={walletAddress}
+          walletBalanceStatus={walletBalanceStatus}
           walletNetwork={walletNetwork}
           onCheckSlug={onCheckSlug}
           onConnectWallet={onConnectWallet}
@@ -304,6 +307,7 @@ function WizardStepPanel({
   suiNetwork,
   title,
   walletAddress,
+  walletBalanceStatus,
   walletNetwork,
   onCheckSlug,
   onConnectWallet,
@@ -339,6 +343,7 @@ function WizardStepPanel({
   suiNetwork: string;
   title: string;
   walletAddress: string | null;
+  walletBalanceStatus: RegistrationDraftPublishController['walletBalanceStatus'];
   walletNetwork: string | null;
   onCheckSlug: () => Promise<void>;
   onConnectWallet: () => void;
@@ -404,6 +409,7 @@ function WizardStepPanel({
             slugCheck={slugCheck}
             suiNetwork={suiNetwork}
             walletAddress={walletAddress}
+            walletBalanceStatus={walletBalanceStatus}
             walletNetwork={walletNetwork}
             onCheckSlug={onCheckSlug}
             onConnectWallet={onConnectWallet}

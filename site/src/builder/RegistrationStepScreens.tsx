@@ -44,6 +44,7 @@ export type RegistrationStepScreenProps = {
   slugCheck: RegistrationDraftSlugCheckState;
   suiNetwork: string;
   walletAddress: string | null;
+  walletBalanceStatus: RegistrationDraftPublishController['walletBalanceStatus'];
   walletNetwork: string | null;
   onCheckSlug: () => Promise<void>;
   onConnectWallet: () => void;
@@ -76,6 +77,7 @@ export function RegistrationStepScreen({
   slugCheck,
   suiNetwork,
   walletAddress,
+  walletBalanceStatus,
   walletNetwork,
   onCheckSlug,
   onConnectWallet,
@@ -149,6 +151,7 @@ export function RegistrationStepScreen({
           publishState={publishState}
           suiNetwork={suiNetwork}
           walletAddress={walletAddress}
+          walletBalanceStatus={walletBalanceStatus}
           walletNetwork={walletNetwork}
           onConnectWallet={onConnectWallet}
           onPublish={onPublish}

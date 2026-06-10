@@ -139,4 +139,12 @@ h3 {
   .builder-review-issue[data-severity='error'] {
     @apply text-(--color-alert);
   }
+
+  .builder-publish-actions {
+    @apply grid gap-2;
+  }
+
+  .builder-publish-blocker {
+    @apply text-sm text-(--color-neutral);
+  }
 }

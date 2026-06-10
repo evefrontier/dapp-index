@@ -1,3 +1,4 @@
+import { isWalrusChainNetwork } from '@/chain/walrusClient';
 import type { DraftMedia } from '@/storage/draftStorage';
 import type {
   DappIndexImageMediaItem,
@@ -115,6 +116,7 @@ export function createRegistrationPublishReadiness({
   walletAddress,
   walletNetwork,
   walrusAggregatorUrl,
+  walletBalanceBlockers = [],
 }: {
   registryConfigured: boolean;
   reviewReady: boolean;
@@ -122,6 +124,7 @@ export function createRegistrationPublishReadiness({
   walletAddress: string | null;
   walletNetwork?: string | null;
   walrusAggregatorUrl: string | null;
+  walletBalanceBlockers?: string[];
 }): RegistrationPublishReadiness {
   const blockers: string[] = [];
 
@@ -139,11 +142,22 @@ export function createRegistrationPublishReadiness({
   if (walletAddress && walletNetwork && walletNetwork !== suiNetwork) {
     blockers.push(`Switch wallet network to ${suiNetwork}.`);
   }
+  blockers.push(...walletBalanceBlockers);
 
   return {
     blockers,
     ready: blockers.length === 0,
   };
+}
+
+export function getPublishNextBlockerMessage(
+  readiness: RegistrationPublishReadiness,
+  options?: { isPublishing?: boolean },
+): string | null {
+  if (options?.isPublishing || readiness.ready) {
+    return null;
+  }
+  return readiness.blockers[0] ?? null;
 }
 
 export function hexToBytes(hex: string): Uint8Array {
@@ -165,7 +179,7 @@ export function hexToBytes(hex: string): Uint8Array {
 export function isWalrusSupportedNetwork(
   network: string,
 ): network is 'testnet' | 'mainnet' {
-  return network === 'testnet' || network === 'mainnet';
+  return isWalrusChainNetwork(network);
 }
 
 export function walrusBlobUri(blobId: string): `walrus://blob/${string}` {
