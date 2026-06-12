@@ -102,25 +102,6 @@ export function validateRegistrationDraftMediaUploadForSlot(
   return { ok: true };
 }
 
-/** @deprecated Use validateRegistrationDraftMediaUploadForSlot. */
-export function validateRegistrationDraftMediaUploadLimits(
-  existingMedia: readonly DraftMedia[],
-  files: readonly File[],
-): RegistrationDraftMediaUploadLimitsResult {
-  if (files.length !== 1) {
-    return {
-      ok: false,
-      errorMessage: 'Upload one file at a time for each media slot.',
-    };
-  }
-
-  return validateRegistrationDraftMediaUploadForSlot(
-    'gallery-1',
-    existingMedia,
-    files[0]!,
-  );
-}
-
 export function createRegistrationDraftMediaUploadInput(
   file: File,
   slotId: MediaSlotId,
