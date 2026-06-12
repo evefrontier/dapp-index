@@ -7,9 +7,11 @@ import type { WizardShellProps } from './WizardShell';
 import { getErrorMessage } from './errors';
 import {
   createRegistrationDraftMediaUploadInput,
-  validateRegistrationDraftMediaUploadLimits,
+  validateRegistrationDraftMediaUploadForSlot,
   validateRegistrationDraftMediaStep,
 } from './registrationDraftMedia';
+import type { MediaSlotId } from './mediaSlotModel';
+import { getMediaForSlot } from './mediaSlotModel';
 import { resolveWizardRouteStep } from './wizardModel';
 import {
   createRegistrationDraftFieldPatch,
@@ -93,7 +95,10 @@ type ListingStepResultOptions = ListingStepState & {
     update: DraftMediaUpdate,
   ) => Promise<void>;
   onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
-  onUploadMedia: (files: File[]) => Promise<void>;
+  onUploadMediaForSlot: (
+    slotId: MediaSlotId,
+    file: File,
+  ) => Promise<void>;
   onVerifyPackages: () => Promise<void>;
 };
 
@@ -136,7 +141,7 @@ export function useListingStepController({
     mediaPreviewUrls,
     onDeleteMedia,
     onUpdateMedia,
-    onUploadMedia,
+    onUploadMediaForSlot,
   } = useLocalMediaController({
     draftMedia: draft?.media ?? EMPTY_DRAFT_MEDIA,
     loadedDraftId,
@@ -185,7 +190,7 @@ export function useListingStepController({
     onNavigateStep,
     onUpdateMedia,
     onUpdateFields,
-    onUploadMedia,
+    onUploadMediaForSlot,
     onVerifyPackages,
     routeStep,
   });
@@ -559,13 +564,16 @@ function useLocalMediaController({
     setDraft(refreshedDraft);
   }, [loadedDraftId, setDraft, storage]);
 
-  const onUploadMedia = useCallback(
-    async (files: File[]) => {
-      if (!loadedDraftId || files.length === 0 || mediaPending) return;
+  const onUploadMediaForSlot = useCallback(
+    async (slotId: MediaSlotId, file: File) => {
+      if (!loadedDraftId || mediaPending) return;
 
-      const limitsValidation = validateRegistrationDraftMediaUploadLimits(
+      const existingItem = getMediaForSlot(draftMedia, slotId);
+      const limitsValidation = validateRegistrationDraftMediaUploadForSlot(
+        slotId,
         draftMedia,
-        files,
+        file,
+        { replacing: Boolean(existingItem) },
       );
       if (!limitsValidation.ok) {
         setMediaError(limitsValidation.errorMessage);
@@ -575,20 +583,23 @@ function useLocalMediaController({
       setMediaPending(true);
       setMediaError(null);
       try {
-        const mediaIds = draftMedia.map((media) => media.id);
-        for (const file of files) {
-          const uploadInput = createRegistrationDraftMediaUploadInput(
-            file,
-            mediaIds,
-          );
-          if (!uploadInput.ok) {
-            throw new Error(`${file.name}: ${uploadInput.errorMessage}`);
-          }
-
-          await storage.saveMedia(loadedDraftId, uploadInput.input, file);
-          mediaIds.push(uploadInput.input.id);
+        if (existingItem) {
+          await storage.deleteMedia(loadedDraftId, existingItem.id);
         }
 
+        const mediaIds = draftMedia
+          .filter((media) => media.id !== existingItem?.id)
+          .map((media) => media.id);
+        const uploadInput = createRegistrationDraftMediaUploadInput(
+          file,
+          slotId,
+          mediaIds,
+        );
+        if (!uploadInput.ok) {
+          throw new Error(`${file.name}: ${uploadInput.errorMessage}`);
+        }
+
+        await storage.saveMedia(loadedDraftId, uploadInput.input, file);
         await refreshLoadedDraft();
       } catch (caughtError) {
         setMediaError(
@@ -659,7 +670,7 @@ function useLocalMediaController({
     mediaPreviewUrls,
     onDeleteMedia,
     onUpdateMedia,
-    onUploadMedia,
+    onUploadMediaForSlot,
   };
 }
 
@@ -789,7 +800,7 @@ function createListingStepControllerResult(
       onNavigateStep: options.onNavigateStep,
       onUpdateMedia: options.onUpdateMedia,
       onUpdateFields: options.onUpdateFields,
-      onUploadMedia: options.onUploadMedia,
+      onUploadMediaForSlot: options.onUploadMediaForSlot,
       onVerifyPackages: options.onVerifyPackages,
     },
   };

@@ -350,7 +350,7 @@ describe('draft storage', () => {
     ]);
   });
 
-  test('keeps thumbnail and hero media roles exclusive', async () => {
+  test('keeps thumbnail and logo media roles exclusive', async () => {
     const { storage } = createTestDraftStorage();
 
     await storage.saveDraft(draft);
@@ -364,6 +364,7 @@ describe('draft storage', () => {
       id: 'screen-2',
       kind: 'screenshot',
       name: 'screen-2.png',
+      role: 'logo',
     }, new Blob(['image-data-2'], { type: 'image/png' }));
 
     const updatedDraft = await storage.updateMedia('draft-1', 'screen-2', {

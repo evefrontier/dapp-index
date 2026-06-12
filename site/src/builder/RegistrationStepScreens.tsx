@@ -8,6 +8,7 @@ import { BasicsStepScreen } from './BasicsStepScreen';
 import { DiscoveryStepScreen } from './DiscoveryStepScreen';
 import { MediaStepScreen } from './MediaStepScreen';
 import { PackagesStepScreen } from './PackagesStepScreen';
+import type { MediaSlotId } from './mediaSlotModel';
 import type {
   RegistrationDraftFieldErrors,
   RegistrationDraftFields,
@@ -31,6 +32,10 @@ export type RegistrationStepScreenProps = {
     update: DraftMediaUpdate,
   ) => Promise<void>;
   onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
+  onUploadMediaForSlot: (
+    slotId: MediaSlotId,
+    file: File,
+  ) => Promise<void>;
   onVerifyPackages: () => Promise<void>;
 };
 
@@ -47,6 +52,7 @@ export function RegistrationStepScreen({
   onDeleteMedia,
   onUpdateMedia,
   onUpdateFields,
+  onUploadMediaForSlot,
   onVerifyPackages,
 }: RegistrationStepScreenProps) {
   switch (activeStep) {
@@ -93,6 +99,7 @@ export function RegistrationStepScreen({
           previewUrls={mediaPreviewUrls}
           onDeleteMedia={onDeleteMedia}
           onUpdateMedia={onUpdateMedia}
+          onUploadMediaForSlot={onUploadMediaForSlot}
         />
       );
     default:

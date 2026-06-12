@@ -23,7 +23,7 @@ import { validateDraftMediaFile } from './draftMediaValidation';
 const DEFAULT_DRAFT_MEDIA_ROLE: DappIndexMediaRole = 'gallery';
 const EXCLUSIVE_DRAFT_MEDIA_ROLES: ReadonlySet<DappIndexMediaRole> = new Set([
   'thumbnail',
-  'hero',
+  'logo',
 ]);
 const DRAFT_MEDIA_ROLE_VALUES: ReadonlySet<string> = new Set(
   DAPP_INDEX_MEDIA_ROLES,
@@ -522,7 +522,7 @@ function isDappIndexMediaRole(value: unknown): value is DappIndexMediaRole {
 
 function isExclusiveMediaRole(
   value: DappIndexMediaRole,
-): value is 'thumbnail' | 'hero' {
+): value is 'thumbnail' | 'logo' {
   return EXCLUSIVE_DRAFT_MEDIA_ROLES.has(value);
 }
 

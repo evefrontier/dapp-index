@@ -142,11 +142,10 @@ describe('registry metadata media schema', () => {
     expect(validateRegistryMetadataJson(metadata).ok).toBe(false);
   });
 
-  test('rejects more than two videos', () => {
+  test('rejects more than one video', () => {
     const metadata = validMetadata();
     const videoItem = metadata.media.items[1] as DappIndexVideoMediaItem;
     metadata.media.items.push({ ...videoItem, id: 'demo-2' });
-    metadata.media.items.push({ ...videoItem, id: 'demo-3' });
 
     expect(validateRegistryMetadataJson(metadata).ok).toBe(false);
   });

@@ -7,7 +7,6 @@ import type {
   DraftMediaUpdate,
   DraftStep,
 } from '@/storage/draftStorage';
-import { MediaUploadAction } from './MediaStepScreen';
 import { RegistrationStepScreen } from './RegistrationStepScreens';
 import {
   createWizardStepItems,
@@ -27,6 +26,7 @@ import {
   type RegistrationDraftPackageVerificationState,
 } from './registrationDraftPackages';
 import type { RegistrationDraftMediaErrors } from './registrationDraftMedia';
+import type { MediaSlotId } from './mediaSlotModel';
 
 export type WizardShellProps = {
   activeStep: DraftStep;
@@ -50,7 +50,10 @@ export type WizardShellProps = {
     update: DraftMediaUpdate,
   ) => Promise<void>;
   onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
-  onUploadMedia: (files: File[]) => Promise<void>;
+  onUploadMediaForSlot: (
+    slotId: MediaSlotId,
+    file: File,
+  ) => Promise<void>;
   onVerifyPackages: () => Promise<void>;
 };
 
@@ -73,7 +76,7 @@ export function WizardShell({
   onNavigateStep,
   onUpdateMedia,
   onUpdateFields,
-  onUploadMedia,
+  onUploadMediaForSlot,
   onVerifyPackages,
 }: WizardShellProps) {
   const stepItems = createWizardStepItems(
@@ -116,7 +119,7 @@ export function WizardShell({
           onNavigateStep={onNavigateStep}
           onUpdateMedia={onUpdateMedia}
           onUpdateFields={onUpdateFields}
-          onUploadMedia={onUploadMedia}
+          onUploadMediaForSlot={onUploadMediaForSlot}
           mediaError={mediaError}
           mediaErrors={mediaErrors}
           mediaPending={mediaPending}
@@ -247,7 +250,7 @@ function WizardStepPanel({
   onNavigateStep,
   onUpdateMedia,
   onUpdateFields,
-  onUploadMedia,
+  onUploadMediaForSlot,
   onVerifyPackages,
 }: {
   activeStep: DraftStep;
@@ -272,17 +275,15 @@ function WizardStepPanel({
     update: DraftMediaUpdate,
   ) => Promise<void>;
   onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
-  onUploadMedia: (files: File[]) => Promise<void>;
+  onUploadMediaForSlot: (
+    slotId: MediaSlotId,
+    file: File,
+  ) => Promise<void>;
   onVerifyPackages: () => Promise<void>;
 }) {
   const isPlaceholderStep = isWizardPlaceholderStep(activeStep);
   const headerAction =
-    activeStep === 'media' ? (
-      <MediaUploadAction
-        disabled={mediaPending}
-        onUploadMedia={onUploadMedia}
-      />
-    ) : activeStep === 'packages' ? (
+    activeStep === 'packages' ? (
       <Button
         variant="secondary"
         size="small"
@@ -319,6 +320,7 @@ function WizardStepPanel({
             onDeleteMedia={onDeleteMedia}
             onUpdateMedia={onUpdateMedia}
             onUpdateFields={onUpdateFields}
+            onUploadMediaForSlot={onUploadMediaForSlot}
             onVerifyPackages={onVerifyPackages}
           />
         </div>

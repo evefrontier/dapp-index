@@ -3,35 +3,31 @@ import {
   createRegistrationDraftMediaUploadInput,
   createRegistrationMediaId,
   validateRegistrationDraftMediaStep,
-  validateRegistrationDraftMediaUploadLimits,
+  validateRegistrationDraftMediaUploadForSlot,
 } from '../src/builder/registrationDraftMedia';
-import {
-  LISTING_MEDIA_IMAGE_MAX_BYTES,
-  PUBLIC_MEDIA_ITEM_LIMIT,
-  PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES,
-  PUBLIC_MEDIA_VIDEO_LIMIT,
-} from '@/constants';
+import { LISTING_MEDIA_IMAGE_MAX_BYTES } from '@/constants';
 
 describe('registration draft media', () => {
-  test('creates local screenshot media input from supported image files', () => {
+  test('creates slot-scoped screenshot media input', () => {
     const result = createRegistrationDraftMediaUploadInput(
       new File(['image'], 'Fleet Ops Screenshot.PNG', { type: 'image/png' }),
+      'thumbnail',
       [],
     );
 
     expect(result).toEqual({
       ok: true,
       input: {
-        id: 'fleet-ops-screenshot',
+        id: 'thumbnail',
         kind: 'screenshot',
-        role: 'gallery',
+        role: 'thumbnail',
         name: 'Fleet Ops Screenshot.PNG',
         mimeType: 'image/png',
       },
     });
   });
 
-  test('creates unique schema-safe media ids', () => {
+  test('creates unique schema-safe media ids when stable slot id is taken', () => {
     expect(
       createRegistrationMediaId('Fleet Ops Screenshot.PNG', [
         'fleet-ops-screenshot',
@@ -41,16 +37,17 @@ describe('registration draft media', () => {
     expect(createRegistrationMediaId('---.png', [])).toBe('media');
   });
 
-  test('creates local video media input from supported WebM files', () => {
+  test('creates slot-scoped video media input from supported WebM files', () => {
     const result = createRegistrationDraftMediaUploadInput(
       new File(['video'], 'Trailer.webm', { type: 'video/webm' }),
+      'video',
       [],
     );
 
     expect(result).toEqual({
       ok: true,
       input: {
-        id: 'trailer',
+        id: 'video',
         kind: 'video',
         role: 'demo',
         name: 'Trailer.webm',
@@ -59,15 +56,16 @@ describe('registration draft media', () => {
     });
   });
 
-  test('rejects unsupported local media file types before storage', () => {
+  test('rejects unsupported file types for a slot', () => {
     expect(
       createRegistrationDraftMediaUploadInput(
         new File(['video'], 'trailer.mp4', { type: 'video/mp4' }),
+        'video',
         [],
       ),
     ).toEqual({
       ok: false,
-      errorMessage: 'Use PNG, JPEG, WebP, or WebM media.',
+      errorMessage: 'Use a WebM video file.',
     });
   });
 
@@ -78,14 +76,16 @@ describe('registration draft media', () => {
       { type: 'image/png' },
     );
 
-    expect(createRegistrationDraftMediaUploadInput(oversized, [])).toEqual({
+    expect(
+      createRegistrationDraftMediaUploadInput(oversized, 'logo', []),
+    ).toEqual({
       ok: false,
       errorMessage: 'Screenshots must be 5 MB or smaller.',
     });
   });
 
-  test('rejects uploads that exceed published media item limits', () => {
-    const existingMedia = Array.from({ length: PUBLIC_MEDIA_ITEM_LIMIT }, (_, index) => ({
+  test('rejects uploads when the listing is full', () => {
+    const existingMedia = Array.from({ length: 6 }, (_, index) => ({
       id: `media-${index}`,
       kind: 'screenshot' as const,
       role: 'gallery' as const,
@@ -96,77 +96,72 @@ describe('registration draft media', () => {
     }));
 
     expect(
-      validateRegistrationDraftMediaUploadLimits(existingMedia, [
+      validateRegistrationDraftMediaUploadForSlot(
+        'gallery-1',
+        existingMedia,
         new File(['image'], 'extra.png', { type: 'image/png' }),
-      ]),
+      ),
     ).toEqual({
       ok: false,
-      errorMessage: `Listings support up to ${PUBLIC_MEDIA_ITEM_LIMIT} media items.`,
+      errorMessage: 'Listings support up to 6 media items.',
     });
   });
 
-  test('rejects uploads that exceed published video count limits', () => {
-    const existingMedia = Array.from({ length: PUBLIC_MEDIA_VIDEO_LIMIT }, (_, index) => ({
-      id: `video-${index}`,
-      kind: 'video' as const,
-      role: 'demo' as const,
-      name: `video-${index}.webm`,
-      mimeType: 'video/webm',
-      size: 1024,
-      createdAt: '2026-05-19T09:00:00.000Z',
-    }));
-
-    expect(
-      validateRegistrationDraftMediaUploadLimits(existingMedia, [
-        new File(['video'], 'extra.webm', { type: 'video/webm' }),
-      ]),
-    ).toEqual({
-      ok: false,
-      errorMessage: `Listings support up to ${PUBLIC_MEDIA_VIDEO_LIMIT} videos.`,
-    });
-  });
-
-  test('rejects uploads that exceed published total media size limits', () => {
-    const existingMedia = [
-      {
-        id: 'large-image',
-        kind: 'screenshot' as const,
-        role: 'gallery' as const,
-        name: 'large.png',
-        mimeType: 'image/png',
-        size: PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES - 1024,
-        createdAt: '2026-05-19T09:00:00.000Z',
-      },
-    ];
-
-    expect(
-      validateRegistrationDraftMediaUploadLimits(existingMedia, [
-        new File([new Uint8Array(2048)], 'extra.png', { type: 'image/png' }),
-      ]),
-    ).toEqual({
-      ok: false,
-      errorMessage: 'Total media size must stay under 143 MB.',
-    });
-  });
-
-  test('validates media metadata for the media wizard step', () => {
+  test('validates required slots and alt text for the media wizard step', () => {
     expect(
       validateRegistrationDraftMediaStep([
         {
-          id: 'hero-shot',
+          id: 'logo',
           kind: 'screenshot',
-          role: 'gallery',
-          name: 'Hero.png',
+          role: 'logo',
+          name: 'Logo.png',
+          mimeType: 'image/png',
+          size: 1024,
+          createdAt: '2026-05-19T09:00:00.000Z',
+          alt: 'Logo',
+        },
+      ]),
+    ).toMatchObject({
+      ok: false,
+    });
+
+    expect(
+      validateRegistrationDraftMediaStep([
+        {
+          id: 'logo',
+          kind: 'screenshot',
+          role: 'logo',
+          name: 'Logo.png',
           mimeType: 'image/png',
           size: 1024,
           createdAt: '2026-05-19T09:00:00.000Z',
           alt: 'a'.repeat(241),
         },
+        {
+          id: 'thumbnail',
+          kind: 'screenshot',
+          role: 'thumbnail',
+          name: 'Card.png',
+          mimeType: 'image/png',
+          size: 1024,
+          createdAt: '2026-05-19T09:00:00.000Z',
+          alt: 'Card',
+        },
+        {
+          id: 'gallery-1',
+          kind: 'screenshot',
+          role: 'gallery',
+          name: 'Gallery.png',
+          mimeType: 'image/png',
+          size: 1024,
+          createdAt: '2026-05-19T09:00:00.000Z',
+          alt: 'Gallery',
+        },
       ]),
     ).toMatchObject({
       ok: false,
       errors: {
-        'hero-shot': {
+        logo: {
           alt: 'Alt text must be 240 characters or fewer.',
         },
       },
