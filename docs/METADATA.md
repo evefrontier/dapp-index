@@ -154,7 +154,5 @@ manifest fields and the registry record should treat the listing as invalid.
   gallery images, and one optional video) and at most `1` video.
 - Total public media across screenshots, posters, and video sources is limited
   to `150 MB`.
-- Gallery `thumbnail` must reference an id in `media.items`. Legacy listings
-  may still include a `hero` pointer; new builder listings do not upload hero
-  media.
+- Gallery `thumbnail` must reference an id in `media.items`.
 - Media IDs must be unique within the listing.
