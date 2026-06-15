@@ -397,7 +397,7 @@ describe('draft storage', () => {
     expect(await storage.getLocalMedia('draft-1', 'screen-1')).toBeNull();
   });
 
-  test('restores replaced media metadata when local media storage fails', async () => {
+  test('restores replaced media metadata when local media storage fails on saveMedia', async () => {
     let putCount = 0;
     const { storage } = createTestDraftStorage({
       localMediaStore: {

@@ -1,18 +1,18 @@
 import { describe, expect, test } from 'bun:test';
 import {
   createRegistrationDraftMediaUploadInput,
-  createRegistrationMediaId,
+  replaceRegistrationDraftMediaForSlot,
   validateRegistrationDraftMediaStep,
   validateRegistrationDraftMediaUploadForSlot,
 } from '../src/builder/registrationDraftMedia';
 import { LISTING_MEDIA_IMAGE_MAX_BYTES } from '@/constants';
+import { createTestDraftStorage, draft } from './draftTestUtils';
 
 describe('registration draft media', () => {
   test('creates slot-scoped screenshot media input', () => {
     const result = createRegistrationDraftMediaUploadInput(
       new File(['image'], 'Fleet Ops Screenshot.PNG', { type: 'image/png' }),
       'thumbnail',
-      [],
     );
 
     expect(result).toEqual({
@@ -27,21 +27,52 @@ describe('registration draft media', () => {
     });
   });
 
-  test('creates unique schema-safe media ids when stable slot id is taken', () => {
-    expect(
-      createRegistrationMediaId('Fleet Ops Screenshot.PNG', [
-        'fleet-ops-screenshot',
-        'fleet-ops-screenshot-2',
-      ]),
-    ).toBe('fleet-ops-screenshot-3');
-    expect(createRegistrationMediaId('---.png', [])).toBe('media');
+  test('preserves existing slot media when replacement save fails', async () => {
+    let putCount = 0;
+    const { storage } = createTestDraftStorage({
+      localMediaStore: {
+        put: async () => {
+          putCount += 1;
+          if (putCount > 1) {
+            throw new Error('put failed');
+          }
+        },
+        get: async () => null,
+        delete: async () => {},
+        deleteDraft: async () => {},
+        clear: async () => {},
+      },
+    });
+
+    await storage.saveDraft(draft);
+    const originalMedia = await storage.saveMedia(
+      'draft-1',
+      {
+        id: 'logo',
+        kind: 'screenshot',
+        role: 'logo',
+        name: 'original.png',
+        mimeType: 'image/png',
+      },
+      new Blob(['original'], { type: 'image/png' }),
+    );
+
+    await expect(
+      replaceRegistrationDraftMediaForSlot(
+        storage,
+        'draft-1',
+        'logo',
+        new File(['replacement'], 'replacement.png', { type: 'image/png' }),
+      ),
+    ).rejects.toThrow('put failed');
+
+    expect((await storage.getDraft('draft-1'))?.media).toEqual([originalMedia]);
   });
 
   test('creates slot-scoped video media input from supported WebM files', () => {
     const result = createRegistrationDraftMediaUploadInput(
       new File(['video'], 'Trailer.webm', { type: 'video/webm' }),
       'video',
-      [],
     );
 
     expect(result).toEqual({
@@ -61,7 +92,6 @@ describe('registration draft media', () => {
       createRegistrationDraftMediaUploadInput(
         new File(['video'], 'trailer.mp4', { type: 'video/mp4' }),
         'video',
-        [],
       ),
     ).toEqual({
       ok: false,
@@ -76,9 +106,7 @@ describe('registration draft media', () => {
       { type: 'image/png' },
     );
 
-    expect(
-      createRegistrationDraftMediaUploadInput(oversized, 'logo', []),
-    ).toEqual({
+    expect(createRegistrationDraftMediaUploadInput(oversized, 'logo')).toEqual({
       ok: false,
       errorMessage: 'Screenshots must be 5 MB or smaller.',
     });

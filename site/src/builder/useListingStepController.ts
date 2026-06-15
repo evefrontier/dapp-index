@@ -6,7 +6,7 @@ import { createMoveRegistryResolver } from '@/chain/moveRegistryResolver';
 import type { WizardShellProps } from './WizardShell';
 import { getErrorMessage } from './errors';
 import {
-  createRegistrationDraftMediaUploadInput,
+  replaceRegistrationDraftMediaForSlot,
   validateRegistrationDraftMediaUploadForSlot,
   validateRegistrationDraftMediaStep,
 } from './registrationDraftMedia';
@@ -583,23 +583,12 @@ function useLocalMediaController({
       setMediaPending(true);
       setMediaError(null);
       try {
-        if (existingItem) {
-          await storage.deleteMedia(loadedDraftId, existingItem.id);
-        }
-
-        const mediaIds = draftMedia
-          .filter((media) => media.id !== existingItem?.id)
-          .map((media) => media.id);
-        const uploadInput = createRegistrationDraftMediaUploadInput(
-          file,
+        await replaceRegistrationDraftMediaForSlot(
+          storage,
+          loadedDraftId,
           slotId,
-          mediaIds,
+          file,
         );
-        if (!uploadInput.ok) {
-          throw new Error(`${file.name}: ${uploadInput.errorMessage}`);
-        }
-
-        await storage.saveMedia(loadedDraftId, uploadInput.input, file);
         await refreshLoadedDraft();
       } catch (caughtError) {
         setMediaError(

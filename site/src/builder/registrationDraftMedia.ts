@@ -1,4 +1,5 @@
 import type { DraftMedia, DraftMediaInput } from '@/storage/draftStorage';
+import type { DraftStorage } from '@/storage/draftTypes';
 import { validateDraftMediaFile } from '@/storage/draftMediaValidation';
 import {
   PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES,
@@ -105,7 +106,6 @@ export function validateRegistrationDraftMediaUploadForSlot(
 export function createRegistrationDraftMediaUploadInput(
   file: File,
   slotId: MediaSlotId,
-  existingMediaIds: readonly string[],
 ): RegistrationDraftMediaUploadInputResult {
   const slot = getMediaSlotDefinition(slotId);
   const mimeType = file.type.toLowerCase();
@@ -138,15 +138,10 @@ export function createRegistrationDraftMediaUploadInput(
     };
   }
 
-  const stableId = getStableMediaIdForSlot(slotId);
-  const id = existingMediaIds.includes(stableId)
-    ? createRegistrationMediaId(file.name, existingMediaIds)
-    : stableId;
-
   return {
     ok: true,
     input: {
-      id,
+      id: getStableMediaIdForSlot(slotId),
       kind: slot.kind,
       role: slot.role,
       name: file.name,
@@ -155,18 +150,18 @@ export function createRegistrationDraftMediaUploadInput(
   };
 }
 
-export function createRegistrationMediaId(
-  fileName: string,
-  existingMediaIds: readonly string[],
-): string {
-  const existingIds = new Set(existingMediaIds);
-  const baseId = normalizeMediaId(stripFileExtension(fileName));
-
-  for (let index = 1; ; index += 1) {
-    const suffix = index === 1 ? '' : `-${index}`;
-    const id = `${baseId.slice(0, 64 - suffix.length)}${suffix}`;
-    if (!existingIds.has(id)) return id;
+export async function replaceRegistrationDraftMediaForSlot(
+  storage: Pick<DraftStorage, 'saveMedia'>,
+  draftId: string,
+  slotId: MediaSlotId,
+  file: File,
+): Promise<void> {
+  const uploadInput = createRegistrationDraftMediaUploadInput(file, slotId);
+  if (!uploadInput.ok) {
+    throw new Error(`${file.name}: ${uploadInput.errorMessage}`);
   }
+
+  await storage.saveMedia(draftId, uploadInput.input, file);
 }
 
 export function validateRegistrationDraftMediaStep(
@@ -242,19 +237,4 @@ function zodMediaStepErrors(
   }
 
   return errors;
-}
-
-function stripFileExtension(fileName: string): string {
-  return fileName.replace(/\.[^.]+$/, '');
-}
-
-function normalizeMediaId(value: string): string {
-  const id = value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 64)
-    .replace(/-+$/g, '');
-
-  return id || 'media';
 }

@@ -162,28 +162,13 @@ export function getAcceptAttributeForSlot(slotId: MediaSlotId): string {
   return getMediaSlotDefinition(slotId).acceptMime.join(',');
 }
 
+/** Matches draft media by stable slot id only (`logo`, `gallery-1`, …). */
 export function getMediaForSlot(
   media: readonly DraftMedia[],
   slotId: MediaSlotId,
 ): DraftMedia | null {
   const stableId = getStableMediaIdForSlot(slotId);
-  const byStableId = media.find((item) => item.id === stableId);
-  if (byStableId) return byStableId;
-
-  if (isGalleryMediaSlot(slotId)) {
-    return null;
-  }
-
-  const slot = getMediaSlotDefinition(slotId);
-  if (slot.kind === 'video') {
-    return media.find((item) => item.kind === 'video') ?? null;
-  }
-
-  return (
-    media.find(
-      (item) => item.role === slot.role && item.kind === slot.kind,
-    ) ?? null
-  );
+  return media.find((item) => item.id === stableId) ?? null;
 }
 
 export function getMediaSlotStatus(
@@ -235,9 +220,5 @@ export function canAddMediaToSlot(
   slotId: MediaSlotId,
 ): boolean {
   if (getMediaForSlot(media, slotId)) return true;
-  if (media.length >= PUBLIC_MEDIA_ITEM_LIMIT) return false;
-  if (getMediaSlotDefinition(slotId).kind === 'video') {
-    return !media.some((item) => item.kind === 'video');
-  }
-  return true;
+  return media.length < PUBLIC_MEDIA_ITEM_LIMIT;
 }
