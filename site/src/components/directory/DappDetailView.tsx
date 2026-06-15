@@ -51,13 +51,6 @@ function DappDetailIdentity({ model }: { model: DappDetailViewModel }) {
                 variant="secondary"
               />
             ))}
-            {model.serverTenantLabel ? (
-              <Tag
-                size="small"
-                text={model.serverTenantLabel}
-                variant="secondary"
-              />
-            ) : null}
           </div>
         </div>
       </div>

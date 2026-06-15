@@ -19,7 +19,6 @@ describe('getDappDetailViewModel', () => {
     expect(model.liveUrl).toBe('https://frontier-library.example');
     expect(model.repositoryUrl).toBe('https://github.com/example/frontier-library');
     expect(model.documentationUrl).toBe('https://docs.frontier-library.example');
-    expect(model.serverTenantLabel).toBe('Stillness');
     expect(model.smartAssemblyTypes).toEqual([
       { id: 'storage-unit', label: 'Storage unit' },
     ]);

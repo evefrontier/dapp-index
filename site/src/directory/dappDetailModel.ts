@@ -10,7 +10,6 @@ import type {
 } from '@/types/dapp-index';
 import {
   getDappCategoryLabel,
-  getServerTenantLabel,
   getSmartAssemblyTypeLabel,
   suivisionTestnetPackageUrl,
 } from '@/types/dapp-index';
@@ -36,7 +35,6 @@ export type DappDetailViewModel = {
   logoUrl: string | null;
   categories: readonly { id: string; label: string }[];
   smartAssemblyTypes: readonly { id: string; label: string }[];
-  serverTenantLabel: string;
   gallerySlides: DappDetailGallerySlide[];
   packages: DappDetailPackageView[];
   notes: string | null;
@@ -84,7 +82,6 @@ export function getDappDetailViewModel(
       id: assembly,
       label: getSmartAssemblyTypeLabel(assembly),
     })),
-    serverTenantLabel: getServerTenantLabel(entry.serverTenant),
     gallerySlides: resolveDetailGallerySlides(entry),
     packages: (entry.suiPackages ?? []).map(mapPackageView),
     notes: entry.notes?.trim() || null,
