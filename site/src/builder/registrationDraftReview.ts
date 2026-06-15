@@ -13,6 +13,23 @@ import {
   type RegistrationDraftFieldName,
   type RegistrationDraftFields,
 } from './registrationDraftFields';
+import {
+  getReviewSlugBlockerMessage,
+  isReviewSlugCheckReady,
+  type RegistrationDraftSlugCheckState,
+} from './registrationDraftSlugCheck';
+
+export type {
+  RegistrationDraftSlugCheckState,
+  ReviewTone,
+  SlugCheckPresentation,
+  SlugCheckStatus,
+} from './registrationDraftSlugCheck';
+export {
+  getSlugCheckPresentation,
+  INITIAL_REGISTRATION_DRAFT_SLUG_CHECK,
+  isReviewSlugCheckReady,
+} from './registrationDraftSlugCheck';
 
 export type RegistrationDraftMetadataJson = Record<string, unknown>;
 
@@ -30,49 +47,6 @@ export type RegistrationDraftReview = {
   ready: boolean;
   schemaValidation: RegistryMetadataValidation;
 };
-
-export type RegistrationDraftSlugCheckState =
-  | {
-      status: 'idle';
-      message: string;
-    }
-  | {
-      status: 'checking';
-      message: string;
-    }
-  | {
-      status: 'available';
-      checkedSlug: string;
-      message: string;
-    }
-  | {
-      status: 'taken';
-      checkedSlug: string;
-      owner: string;
-      message: string;
-    }
-  | {
-      status: 'unconfigured';
-      message: string;
-    }
-  | {
-      status: 'error';
-      message: string;
-    };
-
-export const INITIAL_REGISTRATION_DRAFT_SLUG_CHECK: RegistrationDraftSlugCheckState =
-  {
-    status: 'idle',
-    message: 'Checking slug availability…',
-  };
-
-export function isReviewSlugCheckReady(
-  slugCheck: RegistrationDraftSlugCheckState,
-): boolean {
-  return (
-    slugCheck.status === 'available' || slugCheck.status === 'unconfigured'
-  );
-}
 
 export function getReviewNextBlockerMessage(
   review: RegistrationDraftReview,
@@ -92,17 +66,7 @@ export function getReviewNextBlockerMessage(
     return 'Complete required metadata to continue.';
   }
 
-  switch (slugCheck.status) {
-    case 'idle':
-    case 'checking':
-      return 'Waiting for slug availability check.';
-    case 'taken':
-      return 'Slug taken — change it on Basics and re-check.';
-    case 'error':
-      return slugCheck.message;
-    default:
-      return 'Check slug availability to continue.';
-  }
+  return getReviewSlugBlockerMessage(slugCheck);
 }
 
 const FIELD_LABELS = {
@@ -266,35 +230,62 @@ function createOptionalFieldWarnings(
     }
   }
 
-  if (!fields.description.trim()) {
-    issues.push({
+  issues.push(
+    ...OPTIONAL_FIELD_WARNINGS.flatMap((warning) =>
+      warning.isMissing(fields) ? [warning.toIssue()] : [],
+    ),
+  );
+
+  return issues;
+}
+
+type OptionalFieldWarning = {
+  id: string;
+  isMissing: (fields: RegistrationDraftFields) => boolean;
+  label: string;
+  message: string;
+  toIssue: () => RegistrationDraftReviewIssue;
+};
+
+const OPTIONAL_FIELD_WARNINGS: OptionalFieldWarning[] = [
+  {
+    id: 'optional.description',
+    isMissing: (fields: RegistrationDraftFields) => !fields.description.trim(),
+    label: 'Description',
+    message: 'Add a description if this listing needs more context.',
+    toIssue: () => ({
       id: 'optional.description',
       label: 'Description',
       message: 'Add a description if this listing needs more context.',
       severity: 'warning',
-    });
-  }
-
-  if (!fields.repositoryUrl.trim()) {
-    issues.push({
+    }),
+  },
+  {
+    id: 'optional.repositoryUrl',
+    isMissing: (fields: RegistrationDraftFields) => !fields.repositoryUrl.trim(),
+    label: 'Repo URL',
+    message: 'Add a repo URL if the dapp code is public.',
+    toIssue: () => ({
       id: 'optional.repositoryUrl',
       label: 'Repo URL',
       message: 'Add a repo URL if the dapp code is public.',
       severity: 'warning',
-    });
-  }
-
-  if (!fields.documentationUrl.trim()) {
-    issues.push({
+    }),
+  },
+  {
+    id: 'optional.documentationUrl',
+    isMissing: (fields: RegistrationDraftFields) =>
+      !fields.documentationUrl.trim(),
+    label: 'Docs URL',
+    message: 'Add docs if setup or usage needs explanation.',
+    toIssue: () => ({
       id: 'optional.documentationUrl',
       label: 'Docs URL',
       message: 'Add docs if setup or usage needs explanation.',
       severity: 'warning',
-    });
-  }
-
-  return issues;
-}
+    }),
+  },
+];
 
 function createSchemaIssues(
   schemaValidation: RegistryMetadataValidation,

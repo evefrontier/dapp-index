@@ -1,4 +1,5 @@
 import { useEffect, useId } from 'react';
+import { ReviewIssueList } from './ReviewIssueList';
 import type { RegistrationDraftReviewIssue } from './registrationDraftReview';
 
 export function ReviewWarningsModal({
@@ -50,19 +51,11 @@ export function ReviewWarningsModal({
           These items are optional. You can publish without fixing them.
         </p>
 
-        <ul className="builder-review-modal-list">
-          {issues.map((issue) => (
-            <li
-              key={`${issue.id}:${issue.message}`}
-              className="builder-review-modal-item"
-            >
-              <p className="builder-review-issue" data-severity={issue.severity}>
-                {issue.label}
-              </p>
-              <p className="text-sm text-(--color-neutral)">{issue.message}</p>
-            </li>
-          ))}
-        </ul>
+        <ReviewIssueList
+          issues={issues}
+          listClassName="builder-review-modal-list"
+          itemClassName="builder-review-modal-item"
+        />
       </div>
     </div>
   );
