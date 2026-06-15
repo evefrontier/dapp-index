@@ -1,8 +1,6 @@
 import { DirectoryCategoryNav } from '@/components/directory/DirectoryCategoryNav';
-import { DirectoryPageHeader } from '@/components/directory/DirectoryPageHeader';
 import { DirectoryResultsSection } from '@/components/directory/DirectoryResultsSection';
 import { DirectorySearchField } from '@/components/directory/DirectorySearchField';
-import { DirectorySmartAssemblyFilters } from '@/components/directory/DirectorySmartAssemblyFilters';
 import { DirectoryStatusMessage } from '@/components/directory/DirectoryStatusMessage';
 import { useDirectoryController } from '@/directory/useDirectoryController';
 
@@ -14,27 +12,25 @@ function DirectoryReadyView({
     { status: 'ready' }
   >;
 }) {
-  const { filters, actions, entries, totalCount, isFiltered } = controller;
+  const { filters, entries, totalCount, isFiltered } = controller;
 
   return (
     <div className="min-w-0 space-y-8">
-      <DirectoryPageHeader />
-      <DirectorySearchField
-        value={filters.search}
-        onChange={actions.setSearch}
-      />
-      <DirectorySmartAssemblyFilters filters={filters} actions={actions} />
-      <section className="min-w-0">
+      <div className="directory-toolbar">
+        <DirectorySearchField
+          value={filters.search}
+          onChange={controller.actions.setSearch}
+        />
         <DirectoryCategoryNav
           categoryFilter={filters.categoryFilter}
-          onCategoryFilterChange={actions.setCategoryFilter}
+          onCategoryFilterChange={controller.actions.setCategoryFilter}
         />
-        <DirectoryResultsSection
-          entries={entries}
-          totalCount={totalCount}
-          isFiltered={isFiltered}
-        />
-      </section>
+      </div>
+      <DirectoryResultsSection
+        entries={entries}
+        totalCount={totalCount}
+        isFiltered={isFiltered}
+      />
     </div>
   );
 }

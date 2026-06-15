@@ -11,7 +11,7 @@ export function DirectorySearchField({
   onChange,
 }: DirectorySearchFieldProps) {
   return (
-    <section aria-label="Search catalog">
+    <section aria-label="Search catalog" className="directory-toolbar-search">
       <TextField
         autoComplete="off"
         fullWidth

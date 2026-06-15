@@ -14,8 +14,10 @@ export function DirectoryCategoryNav({
   onCategoryFilterChange,
 }: DirectoryCategoryNavProps) {
   return (
-    <nav aria-label="Filter by category" className="mb-8 min-w-0">
-      <h2 className="ds-type-label mb-3 text-(--color-neutral)">Categories</h2>
+    <nav
+      aria-label="Filter by category"
+      className="directory-toolbar-filters min-w-0"
+    >
       <ul className="m-0 flex list-none flex-row flex-wrap gap-2 p-0">
         <li className="shrink-0">
           <Button

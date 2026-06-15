@@ -140,6 +140,18 @@ h4 {
     @apply grid gap-6 sm:grid-cols-2 xl:grid-cols-3;
   }
 
+  .directory-toolbar {
+    @apply flex min-w-0 flex-col gap-4 lg:flex-row lg:items-end lg:gap-6;
+  }
+
+  .directory-toolbar-search {
+    @apply min-w-0 lg:w-80 lg:shrink-0;
+  }
+
+  .directory-toolbar-filters {
+    @apply min-w-0 lg:flex-1;
+  }
+
   .directory-card {
     @apply min-w-0 border border-(--color-neutral-20) bg-(--color-crude-60);
   }
