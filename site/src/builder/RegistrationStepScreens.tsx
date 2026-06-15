@@ -8,13 +8,18 @@ import { BasicsStepScreen } from './BasicsStepScreen';
 import { DiscoveryStepScreen } from './DiscoveryStepScreen';
 import { MediaStepScreen } from './MediaStepScreen';
 import { PackagesStepScreen } from './PackagesStepScreen';
+import { ReviewStepScreen } from './ReviewStepScreen';
 import type { MediaSlotId } from './mediaSlotModel';
 import type {
   RegistrationDraftFieldErrors,
   RegistrationDraftFields,
 } from './registrationDraftFields';
-import type { RegistrationDraftPackageVerificationState } from './registrationDraftPackages';
 import type { RegistrationDraftMediaErrors } from './registrationDraftMedia';
+import type { RegistrationDraftPackageVerificationState } from './registrationDraftPackages';
+import type {
+  RegistrationDraftReview,
+  RegistrationDraftSlugCheckState,
+} from './registrationDraftReview';
 
 export type RegistrationStepScreenProps = {
   activeStep: DraftStep;
@@ -25,7 +30,13 @@ export type RegistrationStepScreenProps = {
   mediaErrors: RegistrationDraftMediaErrors;
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
+  metadataHashError: string | null;
+  metadataHashHex: string | null;
+  metadataHashPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  review: RegistrationDraftReview;
+  slugCheck: RegistrationDraftSlugCheckState;
+  onCheckSlug: () => Promise<void>;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onUpdateMedia: (
     mediaId: string,
@@ -48,7 +59,13 @@ export function RegistrationStepScreen({
   mediaErrors,
   mediaPending,
   mediaPreviewUrls,
+  metadataHashError,
+  metadataHashHex,
+  metadataHashPending,
   packageVerification,
+  review,
+  slugCheck,
+  onCheckSlug,
   onDeleteMedia,
   onUpdateMedia,
   onUpdateFields,
@@ -100,6 +117,17 @@ export function RegistrationStepScreen({
           onDeleteMedia={onDeleteMedia}
           onUpdateMedia={onUpdateMedia}
           onUploadMediaForSlot={onUploadMediaForSlot}
+        />
+      );
+    case 'review':
+      return (
+        <ReviewStepScreen
+          metadataHashError={metadataHashError}
+          metadataHashHex={metadataHashHex}
+          metadataHashPending={metadataHashPending}
+          review={review}
+          slugCheck={slugCheck}
+          onCheckSlug={onCheckSlug}
         />
       );
     default:
