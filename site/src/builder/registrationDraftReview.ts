@@ -190,7 +190,7 @@ function createOptionalFieldWarnings(
     issues.push({
       id: 'optional.suiPackages',
       label: 'Packages',
-      message: 'Add a Sui package only if this dapp publishes Move code.',
+      message: 'Add a Sui package only if this dapp publishes or depends on Move code.',
       severity: 'warning',
     });
   } else {
