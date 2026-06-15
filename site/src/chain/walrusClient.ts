@@ -60,3 +60,7 @@ export function walrusBlobReadUrl(
   const base = aggregatorBaseUrl.trim().replace(/\/+$/, '');
   return `${base}/v1/blobs/${blobId}`;
 }
+
+export function walrusBlobUri(blobId: string): `walrus://blob/${string}` {
+  return `walrus://blob/${blobId}`;
+}

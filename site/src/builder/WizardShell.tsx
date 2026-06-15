@@ -33,6 +33,7 @@ import {
   type RegistrationDraftReview,
   type RegistrationDraftSlugCheckState,
 } from './registrationDraftReview';
+import type { PublishStepControllerState } from './publishStepPresentation';
 import type { ReviewStepControllerState } from './reviewStepPresentation';
 
 export type WizardShellProps = {
@@ -49,6 +50,7 @@ export type WizardShellProps = {
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  publishStep: PublishStepControllerState;
   reviewStep: ReviewStepControllerState;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
@@ -79,6 +81,7 @@ export function WizardShell({
   navigationError,
   navigationPending,
   packageVerification,
+  publishStep,
   reviewStep,
   onDeleteMedia,
   onExitWizard,
@@ -140,6 +143,7 @@ export function WizardShell({
           mediaPending={mediaPending}
           mediaPreviewUrls={mediaPreviewUrls}
           packageVerification={packageVerification}
+          publishStep={publishStep}
           reviewStep={reviewStep}
           onVerifyPackages={onVerifyPackages}
         />
@@ -260,6 +264,7 @@ function WizardStepPanel({
   navigationPending,
   packageVerification,
   previousStep,
+  publishStep,
   reviewStep,
   title,
   onDeleteMedia,
@@ -283,6 +288,7 @@ function WizardStepPanel({
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
   previousStep: DraftStep | null;
+  publishStep: PublishStepControllerState;
   reviewStep: ReviewStepControllerState;
   title: string;
   onDeleteMedia: (mediaId: string) => Promise<void>;
@@ -339,6 +345,7 @@ function WizardStepPanel({
             mediaPending={mediaPending}
             mediaPreviewUrls={mediaPreviewUrls}
             packageVerification={packageVerification}
+            publishStep={publishStep}
             reviewStep={reviewStep}
             onDeleteMedia={onDeleteMedia}
             onUpdateMedia={onUpdateMedia}
@@ -446,4 +453,3 @@ function isWizardStepReadyForNext(
 
   return isRegistrationDraftStepValid(step, fields, media);
 }
-

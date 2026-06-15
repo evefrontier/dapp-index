@@ -27,9 +27,13 @@ import {
   toMoveRegistryResolvablePackages,
   type RegistrationDraftPackageVerificationState,
 } from './registrationDraftPackages';
+import { createPublishStepState } from './publishStepPresentation';
 import type { ReviewStepControllerState } from './reviewStepPresentation';
 import { useRegistrationDraftReview } from './useRegistrationDraftReview';
 import { useRegistrationDraftSlugCheck } from './useRegistrationDraftSlugCheck';
+import {
+  useRegistrationDraftPublishController,
+} from './useRegistrationDraftPublishController';
 import {
   createDraftAutosave,
   createDraftStorage,
@@ -90,6 +94,7 @@ type ListingStepResultOptions = ListingStepState & {
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  publishStep: ReturnType<typeof createPublishStepState>;
   reviewStep: ReviewStepControllerState;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
@@ -184,6 +189,46 @@ export function useListingStepController({
     setNavigationPending,
     storage,
   });
+  const {
+    publishReadiness,
+    publishState,
+    suiNetwork,
+    walletAddress,
+    walletBalanceStatus,
+    walletNetwork,
+    onConnectWallet,
+    onPublish,
+  } = useRegistrationDraftPublishController({
+    autosave,
+    draft,
+    fields,
+    review,
+    setDraft,
+    storage,
+  });
+  const publishStep = useMemo(
+    () =>
+      createPublishStepState({
+        publishReadiness,
+        publishState,
+        suiNetwork,
+        walletAddress,
+        walletBalanceStatus,
+        walletNetwork,
+        onConnectWallet,
+        onPublish,
+      }),
+    [
+      onConnectWallet,
+      onPublish,
+      publishReadiness,
+      publishState,
+      suiNetwork,
+      walletAddress,
+      walletBalanceStatus,
+      walletNetwork,
+    ],
+  );
 
   return createListingStepControllerResult({
     autosaveError,
@@ -200,6 +245,7 @@ export function useListingStepController({
     navigationError,
     navigationPending,
     packageVerification,
+    publishStep,
     reviewStep,
     onDeleteMedia,
     onExitWizard,
@@ -800,6 +846,7 @@ function createListingStepControllerResult(
       navigationError: options.navigationError,
       navigationPending: options.navigationPending,
       packageVerification: options.packageVerification,
+      publishStep: options.publishStep,
       reviewStep: options.reviewStep,
       onDeleteMedia: options.onDeleteMedia,
       onExitWizard: options.onExitWizard,
