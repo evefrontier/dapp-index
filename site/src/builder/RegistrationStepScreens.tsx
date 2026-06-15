@@ -20,6 +20,7 @@ import type {
   RegistrationDraftReview,
   RegistrationDraftSlugCheckState,
 } from './registrationDraftReview';
+import type { RegistrationDraftMetadataHashPreview } from './reviewStepPresentation';
 
 export type RegistrationStepScreenProps = {
   activeStep: DraftStep;
@@ -30,9 +31,7 @@ export type RegistrationStepScreenProps = {
   mediaErrors: RegistrationDraftMediaErrors;
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
-  metadataHashError: string | null;
-  metadataHashHex: string | null;
-  metadataHashPending: boolean;
+  metadataHashPreview: RegistrationDraftMetadataHashPreview;
   packageVerification: RegistrationDraftPackageVerificationState;
   review: RegistrationDraftReview;
   slugCheck: RegistrationDraftSlugCheckState;
@@ -59,9 +58,7 @@ export function RegistrationStepScreen({
   mediaErrors,
   mediaPending,
   mediaPreviewUrls,
-  metadataHashError,
-  metadataHashHex,
-  metadataHashPending,
+  metadataHashPreview,
   packageVerification,
   review,
   slugCheck,
@@ -122,9 +119,7 @@ export function RegistrationStepScreen({
     case 'review':
       return (
         <ReviewStepScreen
-          metadataHashError={metadataHashError}
-          metadataHashHex={metadataHashHex}
-          metadataHashPending={metadataHashPending}
+          metadataHashPreview={metadataHashPreview}
           review={review}
           slugCheck={slugCheck}
           onCheckSlug={onCheckSlug}

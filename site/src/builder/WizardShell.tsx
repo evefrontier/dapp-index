@@ -33,6 +33,7 @@ import {
   type RegistrationDraftReview,
   type RegistrationDraftSlugCheckState,
 } from './registrationDraftReview';
+import type { RegistrationDraftMetadataHashPreview } from './reviewStepPresentation';
 
 export type WizardShellProps = {
   activeStep: DraftStep;
@@ -45,9 +46,7 @@ export type WizardShellProps = {
   mediaErrors: RegistrationDraftMediaErrors;
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
-  metadataHashError: string | null;
-  metadataHashHex: string | null;
-  metadataHashPending: boolean;
+  metadataHashPreview: RegistrationDraftMetadataHashPreview;
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
@@ -80,9 +79,7 @@ export function WizardShell({
   mediaErrors,
   mediaPending,
   mediaPreviewUrls,
-  metadataHashError,
-  metadataHashHex,
-  metadataHashPending,
+  metadataHashPreview,
   navigationError,
   navigationPending,
   packageVerification,
@@ -148,9 +145,7 @@ export function WizardShell({
           mediaErrors={mediaErrors}
           mediaPending={mediaPending}
           mediaPreviewUrls={mediaPreviewUrls}
-          metadataHashError={metadataHashError}
-          metadataHashHex={metadataHashHex}
-          metadataHashPending={metadataHashPending}
+          metadataHashPreview={metadataHashPreview}
           packageVerification={packageVerification}
           review={review}
           slugCheck={slugCheck}
@@ -270,9 +265,7 @@ function WizardStepPanel({
   mediaErrors,
   mediaPending,
   mediaPreviewUrls,
-  metadataHashError,
-  metadataHashHex,
-  metadataHashPending,
+  metadataHashPreview,
   nextStep,
   navigationPending,
   packageVerification,
@@ -298,9 +291,7 @@ function WizardStepPanel({
   mediaErrors: RegistrationDraftMediaErrors;
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
-  metadataHashError: string | null;
-  metadataHashHex: string | null;
-  metadataHashPending: boolean;
+  metadataHashPreview: RegistrationDraftMetadataHashPreview;
   nextStep: DraftStep | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
@@ -362,9 +353,7 @@ function WizardStepPanel({
             mediaErrors={mediaErrors}
             mediaPending={mediaPending}
             mediaPreviewUrls={mediaPreviewUrls}
-            metadataHashError={metadataHashError}
-            metadataHashHex={metadataHashHex}
-            metadataHashPending={metadataHashPending}
+            metadataHashPreview={metadataHashPreview}
             packageVerification={packageVerification}
             review={review}
             slugCheck={slugCheck}
