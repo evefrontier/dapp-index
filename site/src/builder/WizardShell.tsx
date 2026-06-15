@@ -33,6 +33,10 @@ import {
   type RegistrationDraftReview,
   type RegistrationDraftSlugCheckState,
 } from './registrationDraftReview';
+import type {
+  RegistrationDraftPublishState,
+  RegistrationDraftPublishController,
+} from './useRegistrationDraftPublishController';
 
 export type WizardShellProps = {
   activeStep: DraftStep;
@@ -51,12 +55,20 @@ export type WizardShellProps = {
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  publishReadiness: RegistrationDraftPublishController['publishReadiness'];
+  publishState: RegistrationDraftPublishState;
   review: RegistrationDraftReview;
   slugCheck: RegistrationDraftSlugCheckState;
+  suiNetwork: string;
+  walletAddress: string | null;
+  walletBalanceStatus: RegistrationDraftPublishController['walletBalanceStatus'];
+  walletNetwork: string | null;
   onCheckSlug: () => Promise<void>;
+  onConnectWallet: () => void;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
+  onPublish: () => Promise<void>;
   onUpdateMedia: (
     mediaId: string,
     update: DraftMediaUpdate,
@@ -86,12 +98,20 @@ export function WizardShell({
   navigationError,
   navigationPending,
   packageVerification,
+  publishReadiness,
+  publishState,
   review,
   slugCheck,
+  suiNetwork,
+  walletAddress,
+  walletBalanceStatus,
+  walletNetwork,
   onCheckSlug,
+  onConnectWallet,
   onDeleteMedia,
   onExitWizard,
   onNavigateStep,
+  onPublish,
   onUpdateMedia,
   onUpdateFields,
   onUploadMediaForSlot,
@@ -152,10 +172,18 @@ export function WizardShell({
           metadataHashHex={metadataHashHex}
           metadataHashPending={metadataHashPending}
           packageVerification={packageVerification}
+          publishReadiness={publishReadiness}
+          publishState={publishState}
           review={review}
           slugCheck={slugCheck}
+          suiNetwork={suiNetwork}
+          walletAddress={walletAddress}
+          walletBalanceStatus={walletBalanceStatus}
+          walletNetwork={walletNetwork}
           onCheckSlug={onCheckSlug}
+          onConnectWallet={onConnectWallet}
           onVerifyPackages={onVerifyPackages}
+          onPublish={onPublish}
         />
       </div>
     </div>
@@ -276,14 +304,22 @@ function WizardStepPanel({
   nextStep,
   navigationPending,
   packageVerification,
+  publishReadiness,
+  publishState,
   previousStep,
   review,
   slugCheck,
+  suiNetwork,
   title,
+  walletAddress,
+  walletBalanceStatus,
+  walletNetwork,
   onCheckSlug,
+  onConnectWallet,
   onDeleteMedia,
   onExitWizard,
   onNavigateStep,
+  onPublish,
   onUpdateMedia,
   onUpdateFields,
   onUploadMediaForSlot,
@@ -304,14 +340,22 @@ function WizardStepPanel({
   nextStep: DraftStep | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  publishReadiness: RegistrationDraftPublishController['publishReadiness'];
+  publishState: RegistrationDraftPublishState;
   previousStep: DraftStep | null;
   review: RegistrationDraftReview;
   slugCheck: RegistrationDraftSlugCheckState;
+  suiNetwork: string;
   title: string;
+  walletAddress: string | null;
+  walletBalanceStatus: RegistrationDraftPublishController['walletBalanceStatus'];
+  walletNetwork: string | null;
   onCheckSlug: () => Promise<void>;
+  onConnectWallet: () => void;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
+  onPublish: () => Promise<void>;
   onUpdateMedia: (
     mediaId: string,
     update: DraftMediaUpdate,
@@ -366,10 +410,18 @@ function WizardStepPanel({
             metadataHashHex={metadataHashHex}
             metadataHashPending={metadataHashPending}
             packageVerification={packageVerification}
+            publishReadiness={publishReadiness}
+            publishState={publishState}
             review={review}
             slugCheck={slugCheck}
+            suiNetwork={suiNetwork}
+            walletAddress={walletAddress}
+            walletBalanceStatus={walletBalanceStatus}
+            walletNetwork={walletNetwork}
             onCheckSlug={onCheckSlug}
+            onConnectWallet={onConnectWallet}
             onDeleteMedia={onDeleteMedia}
+            onPublish={onPublish}
             onUpdateMedia={onUpdateMedia}
             onUpdateFields={onUpdateFields}
             onUploadMediaForSlot={onUploadMediaForSlot}
@@ -475,4 +527,3 @@ function isWizardStepReadyForNext(
 
   return isRegistrationDraftStepValid(step, fields, media);
 }
-

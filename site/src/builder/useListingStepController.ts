@@ -36,6 +36,10 @@ import {
   type RegistrationDraftSlugCheckState,
 } from './registrationDraftReview';
 import {
+  useRegistrationDraftPublishController,
+  type RegistrationDraftPublishState,
+} from './useRegistrationDraftPublishController';
+import {
   createDraftAutosave,
   createDraftStorage,
   type Draft,
@@ -98,12 +102,24 @@ type ListingStepResultOptions = ListingStepState & {
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  publishReadiness: ReturnType<
+    typeof useRegistrationDraftPublishController
+  >['publishReadiness'];
+  publishState: RegistrationDraftPublishState;
   review: RegistrationDraftReview;
   slugCheck: RegistrationDraftSlugCheckState;
+  suiNetwork: string;
+  walletAddress: string | null;
+  walletBalanceStatus: ReturnType<
+    typeof useRegistrationDraftPublishController
+  >['walletBalanceStatus'];
+  walletNetwork: string | null;
   onCheckSlug: () => Promise<void>;
+  onConnectWallet: () => void;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
+  onPublish: () => Promise<void>;
   onUpdateMedia: (
     mediaId: string,
     update: DraftMediaUpdate,
@@ -187,6 +203,23 @@ export function useListingStepController({
     setNavigationPending,
     storage,
   });
+  const {
+    publishReadiness,
+    publishState,
+    suiNetwork,
+    walletAddress,
+    walletBalanceStatus,
+    walletNetwork,
+    onConnectWallet,
+    onPublish,
+  } = useRegistrationDraftPublishController({
+    autosave,
+    draft,
+    fields,
+    review,
+    setDraft,
+    storage,
+  });
 
   return createListingStepControllerResult({
     autosaveError,
@@ -206,12 +239,20 @@ export function useListingStepController({
     navigationError,
     navigationPending,
     packageVerification,
+    publishReadiness,
+    publishState,
     review,
     slugCheck,
+    suiNetwork,
+    walletAddress,
+    walletBalanceStatus,
+    walletNetwork,
     onCheckSlug,
+    onConnectWallet,
     onDeleteMedia,
     onExitWizard,
     onNavigateStep,
+    onPublish,
     onUpdateMedia,
     onUpdateFields,
     onUploadMediaForSlot,
@@ -957,12 +998,20 @@ function createListingStepControllerResult(
       navigationError: options.navigationError,
       navigationPending: options.navigationPending,
       packageVerification: options.packageVerification,
+      publishReadiness: options.publishReadiness,
+      publishState: options.publishState,
       review: options.review,
       slugCheck: options.slugCheck,
+      suiNetwork: options.suiNetwork,
+      walletAddress: options.walletAddress,
+      walletBalanceStatus: options.walletBalanceStatus,
+      walletNetwork: options.walletNetwork,
       onCheckSlug: options.onCheckSlug,
+      onConnectWallet: options.onConnectWallet,
       onDeleteMedia: options.onDeleteMedia,
       onExitWizard: options.onExitWizard,
       onNavigateStep: options.onNavigateStep,
+      onPublish: options.onPublish,
       onUpdateMedia: options.onUpdateMedia,
       onUpdateFields: options.onUpdateFields,
       onUploadMediaForSlot: options.onUploadMediaForSlot,
