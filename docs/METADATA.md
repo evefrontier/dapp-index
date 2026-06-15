@@ -142,6 +142,13 @@ manifest fields and the registry record should treat the listing as invalid.
 }
 ```
 
+`suiPackages` is optional. Use it when the dapp publishes or depends on Sui
+Move packages that should be surfaced with the listing. Each package entry
+requires `network`, `role`, and `packageId`; `mvrName` and `packageInfoId` are
+recommended when available because they make Move Registry verification more
+useful, but they are not required for listings that only know the published
+package object ID.
+
 ## Public Media Rules
 
 - Public media source URIs must use `walrus://blob/<blobId>`.

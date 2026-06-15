@@ -176,7 +176,7 @@ describe('registration draft packages', () => {
     });
   });
 
-  test('requires MVR names only for package verification', () => {
+  test('does not require MVR names before package verification', () => {
     const packageIdOnly = {
       draftPackageId: 'package-1',
       network: 'mainnet' as const,
@@ -191,7 +191,7 @@ describe('registration draft packages', () => {
     );
     expect(
       getRegistrationDraftPackageVerificationBlocker([packageIdOnly]),
-    ).toBe('Add MVR names to verify packages.');
+    ).toBeNull();
     expect(
       getRegistrationDraftPackageVerificationBlocker([
         { ...packageIdOnly, mvrName: '@frontier/map' },
