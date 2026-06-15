@@ -20,7 +20,7 @@ export function useRegistrationDraftReview(fields: RegistrationDraftFields): {
     useState<RegistrationDraftMetadataHashPreview>({
       error: null,
       hex: null,
-      pending: false,
+      pending: true,
     });
 
   useEffect(() => {

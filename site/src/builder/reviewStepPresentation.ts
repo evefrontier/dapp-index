@@ -102,19 +102,10 @@ export function getHashPresentation(
     };
   }
 
-  if (preview.pending) {
-    return {
-      detail: 'Building preview.',
-      label: 'Hash',
-      status: 'Building',
-      tone: 'muted',
-    };
-  }
-
   return {
     detail: 'Building preview.',
     label: 'Hash',
-    status: 'Unavailable',
+    status: 'Building',
     tone: 'muted',
   };
 }
