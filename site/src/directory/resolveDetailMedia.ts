@@ -1,12 +1,9 @@
 import {
-  findMediaItemById,
-  firstImageReadUrlByRole,
   imageMediaItemReadUrl,
   resolveWalrusBlobReadUrl,
 } from '@/directory/resolveWalrusMediaUrl';
 import type {
   DappIndexEntry,
-  DappIndexImageMediaItem,
   DappIndexMediaRole,
 } from '@/types/dapp-index';
 
@@ -27,15 +24,6 @@ export type DappDetailGallerySlide =
       sourceUrl: string;
       caption: string | null;
     };
-
-export function resolveHeroUrl(entry: DappIndexEntry): string | null {
-  const heroItem = findMediaItemById(entry, entry.media?.hero);
-  const heroByPointer = imageMediaItemReadUrl(
-    heroItem as DappIndexImageMediaItem | undefined,
-  );
-  if (heroByPointer) return heroByPointer;
-  return firstImageReadUrlByRole(entry, 'hero');
-}
 
 export function resolveDetailGallerySlides(
   entry: DappIndexEntry,

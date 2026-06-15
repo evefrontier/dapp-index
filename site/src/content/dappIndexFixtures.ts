@@ -36,12 +36,11 @@ const FIXTURE_ENTRIES: DappIndexEntry[] = [
     ],
     media: {
       thumbnail: 'dashboard',
-      hero: 'dashboard',
       items: [
         {
           id: 'dashboard',
           kind: 'image',
-          role: 'hero',
+          role: 'thumbnail',
           uri: 'walrus://blob/dashboardBlobId',
           mimeType: 'image/webp',
           sha256: HEX_32,
@@ -105,12 +104,12 @@ const FIXTURE_ENTRIES: DappIndexEntry[] = [
     liveUrl: 'https://monkey-show.example',
     suiPackages: [],
     media: {
-      thumbnail: 'hero',
+      thumbnail: 'thumbnail',
       items: [
         {
-          id: 'hero',
+          id: 'thumbnail',
           kind: 'image',
-          role: 'hero',
+          role: 'thumbnail',
           uri: 'walrus://blob/monkeyHeroBlobId',
           mimeType: 'image/jpeg',
           sha256: HEX_32,

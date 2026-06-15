@@ -216,14 +216,6 @@ h4 {
     @apply space-y-6;
   }
 
-  .directory-detail-hero {
-    @apply overflow-hidden border border-(--color-neutral-20) bg-(--color-crude-60);
-  }
-
-  .directory-detail-hero-image {
-    @apply aspect-[16/9] max-h-[480px] w-full object-cover;
-  }
-
   .directory-detail-identity {
     @apply space-y-4;
   }

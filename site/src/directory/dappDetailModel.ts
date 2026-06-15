@@ -1,6 +1,5 @@
 import {
   resolveDetailGallerySlides,
-  resolveHeroUrl,
   type DappDetailGallerySlide,
 } from '@/directory/resolveDetailMedia';
 import { resolveListingMediaUrls } from '@/directory/resolveListingMediaUrls';
@@ -34,7 +33,6 @@ export type DappDetailViewModel = {
   documentationUrl: string | null;
   metadataUri: string | null;
   metadataReadUrl: string | null;
-  heroUrl: string | null;
   logoUrl: string | null;
   categories: readonly { id: string; label: string }[];
   smartAssemblyTypes: readonly { id: string; label: string }[];
@@ -77,7 +75,6 @@ export function getDappDetailViewModel(
     metadataReadUrl: entry.metadataUri
       ? resolveWalrusMetadataReadUrl(entry.metadataUri)
       : null,
-    heroUrl: resolveHeroUrl(entry),
     logoUrl,
     categories: entry.categories.map((category) => ({
       id: category,

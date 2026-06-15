@@ -14,11 +14,9 @@ export function resolveListingMediaUrls(
   entry: DappIndexEntry,
 ): ListingMediaUrls {
   const thumbnailItem = findMediaItemById(entry, entry.media?.thumbnail);
-  const heroItem = findMediaItemById(entry, entry.media?.hero);
   const firstImage = entry.media?.items.find((item) => item.kind === 'image');
   const thumbnailUrl =
     imageMediaItemReadUrl(thumbnailItem as DappIndexImageMediaItem | undefined) ??
-    imageMediaItemReadUrl(heroItem as DappIndexImageMediaItem | undefined) ??
     firstImageReadUrlByRole(entry, 'gallery') ??
     imageMediaItemReadUrl(firstImage as DappIndexImageMediaItem | undefined);
 

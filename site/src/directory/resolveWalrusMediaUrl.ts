@@ -62,7 +62,7 @@ export function imageMediaItemReadUrl(
 
 export function firstImageReadUrlByRole(
   entry: DappIndexEntry,
-  role: 'logo' | 'thumbnail' | 'hero' | 'gallery',
+  role: 'logo' | 'thumbnail' | 'gallery',
 ): string | null {
   const item = entry.media?.items.find(
     (media) => media.kind === 'image' && media.role === role,

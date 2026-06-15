@@ -33,10 +33,10 @@ describe('dev catalog fixtures', () => {
   test('maps dev fixture blob ids to local media urls in development', () => {
     if (!import.meta.env.DEV) return;
 
-    expect(resolveDevCatalogMediaUrl('dev-frontier-hero')).toBe(
+    expect(resolveDevCatalogMediaUrl('dev-frontier-thumbnail')).toBe(
       '/dev-catalog/eve-frontier-dashboard.png',
     );
-    expect(resolveWalrusBlobReadUrl('walrus://blob/dev-frontier-hero')).toBe(
+    expect(resolveWalrusBlobReadUrl('walrus://blob/dev-frontier-thumbnail')).toBe(
       '/dev-catalog/eve-frontier-dashboard.png',
     );
   });

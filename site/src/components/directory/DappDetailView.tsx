@@ -19,17 +19,6 @@ function DirectoryBackLink() {
   );
 }
 
-function DappDetailHero({ heroUrl, name }: { heroUrl: string | null; name: string }) {
-  if (!heroUrl) return null;
-
-  return (
-    <div className="directory-detail-hero">
-      <img alt="" className="directory-detail-hero-image" src={heroUrl} />
-      <span className="sr-only">{name} hero image</span>
-    </div>
-  );
-}
-
 function DappDetailIdentity({ model }: { model: DappDetailViewModel }) {
   return (
     <header className="directory-detail-identity">
@@ -208,7 +197,6 @@ export function DappDetailView({ entry }: { entry: DappIndexEntry }) {
   return (
     <div className="directory-detail-page">
       <DirectoryBackLink />
-      <DappDetailHero heroUrl={model.heroUrl} name={model.name} />
       <DappDetailIdentity model={model} />
       <DappDetailGallery slides={model.gallerySlides} />
       <DappDetailLinks model={model} />

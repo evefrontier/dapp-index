@@ -43,20 +43,19 @@ const DEV_CATALOG_FIXTURE_ENTRIES: DappIndexEntry[] = [
       },
     ],
     media: {
-      thumbnail: 'hero',
-      hero: 'hero',
+      thumbnail: 'thumbnail',
       items: [
         {
-          id: 'hero',
+          id: 'thumbnail',
           kind: 'image',
-          role: 'hero',
-          uri: 'walrus://blob/dev-frontier-hero',
+          role: 'thumbnail',
+          uri: 'walrus://blob/dev-frontier-thumbnail',
           mimeType: 'image/webp',
           sha256: HEX_32,
           sizeBytes: 824_512,
           width: 1600,
           height: 900,
-          alt: 'Frontier Library hero banner',
+          alt: 'Frontier Library catalog card image',
         },
         {
           id: 'logo',
@@ -81,7 +80,7 @@ const DEV_CATALOG_FIXTURE_ENTRIES: DappIndexEntry[] = [
           width: 1600,
           height: 900,
           alt: 'EVE Frontier dashboard screenshot',
-          caption: 'EVE Frontier dashboard — reference layout for hero and gallery styling.',
+          caption: 'EVE Frontier dashboard — reference layout for gallery styling.',
         },
         {
           id: 'gallery-detail',
@@ -115,14 +114,13 @@ const DEV_CATALOG_FIXTURE_ENTRIES: DappIndexEntry[] = [
     documentationUrl: 'https://docs.monkey-show.example',
     suiPackages: [],
     media: {
-      thumbnail: 'hero',
-      hero: 'hero',
+      thumbnail: 'thumbnail',
       items: [
         {
-          id: 'hero',
+          id: 'thumbnail',
           kind: 'image',
-          role: 'hero',
-          uri: 'walrus://blob/dev-monkey-hero',
+          role: 'thumbnail',
+          uri: 'walrus://blob/dev-monkey-thumbnail',
           mimeType: 'image/jpeg',
           sha256: HEX_32,
           sizeBytes: 512_000,

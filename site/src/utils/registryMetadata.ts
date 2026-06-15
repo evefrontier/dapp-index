@@ -100,7 +100,7 @@ function validateRegistryMetadataSemantics(data: unknown): ErrorObject[] {
     });
   });
 
-  for (const key of ['thumbnail', 'hero'] as const) {
+  for (const key of ['thumbnail'] as const) {
     const referencedId = media[key];
     if (typeof referencedId === 'string' && !mediaIds.has(referencedId)) {
       errors.push(
