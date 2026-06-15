@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { verifyMoveRegistryPackage } from '@/chain/moveRegistry';
 import { createMoveRegistryResolver } from '@/chain/moveRegistryResolver';
+import { lookupRegistrySlug } from '@/chain/slugLookup';
 import type { WizardShellProps } from './WizardShell';
 import { getErrorMessage } from './errors';
 import {
@@ -27,6 +28,13 @@ import {
   toMoveRegistryResolvablePackages,
   type RegistrationDraftPackageVerificationState,
 } from './registrationDraftPackages';
+import {
+  createRegistrationDraftReview,
+  createRegistrationMetadataHashHex,
+  INITIAL_REGISTRATION_DRAFT_SLUG_CHECK,
+  type RegistrationDraftReview,
+  type RegistrationDraftSlugCheckState,
+} from './registrationDraftReview';
 import {
   createDraftAutosave,
   createDraftStorage,
@@ -84,9 +92,15 @@ type ListingStepResultOptions = ListingStepState & {
   mediaErrors: ReturnType<typeof validateRegistrationDraftMediaStep>['errors'];
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
+  metadataHashError: string | null;
+  metadataHashHex: string | null;
+  metadataHashPending: boolean;
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  review: RegistrationDraftReview;
+  slugCheck: RegistrationDraftSlugCheckState;
+  onCheckSlug: () => Promise<void>;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
@@ -122,6 +136,10 @@ export function useListingStepController({
   const { autosave, autosaveError, autosaveStatus, setAutosaveStatus } =
     useDraftAutosaveController(storage, draftId);
   const { fields, fieldErrors } = useRegistrationDraftFields(draft);
+  const { metadataHashError, metadataHashHex, metadataHashPending, review } =
+    useRegistrationDraftReview(fields);
+  const { slugCheck, onCheckSlug } =
+    useRegistrationDraftSlugCheck(fields.slug);
   const mediaErrors = useMemo(
     () => validateRegistrationDraftMediaStep(draft?.media ?? []).errors,
     [draft?.media],
@@ -182,9 +200,15 @@ export function useListingStepController({
     mediaErrors,
     mediaPending,
     mediaPreviewUrls,
+    metadataHashError,
+    metadataHashHex,
+    metadataHashPending,
     navigationError,
     navigationPending,
     packageVerification,
+    review,
+    slugCheck,
+    onCheckSlug,
     onDeleteMedia,
     onExitWizard,
     onNavigateStep,
@@ -308,6 +332,141 @@ function useRegistrationDraftFields(draft: Draft | null) {
   return {
     fieldErrors,
     fields,
+  };
+}
+
+function useRegistrationDraftReview(fields: RegistrationDraftFields) {
+  const review = useMemo(
+    () => createRegistrationDraftReview(fields),
+    [fields],
+  );
+  const [metadataHashHex, setMetadataHashHex] = useState<string | null>(null);
+  const [metadataHashError, setMetadataHashError] = useState<string | null>(
+    null,
+  );
+  const [metadataHashPending, setMetadataHashPending] = useState(false);
+
+  useEffect(() => {
+    let canceled = false;
+
+    async function createHashPreview() {
+      setMetadataHashPending(true);
+      setMetadataHashError(null);
+      try {
+        const hashHex = await createRegistrationMetadataHashHex(
+          review.metadata,
+        );
+        if (!canceled) setMetadataHashHex(hashHex);
+      } catch (caughtError) {
+        if (!canceled) {
+          setMetadataHashHex(null);
+          setMetadataHashError(
+            getErrorMessage(
+              caughtError,
+              'Could not build metadata hash.',
+            ),
+          );
+        }
+      } finally {
+        if (!canceled) setMetadataHashPending(false);
+      }
+    }
+
+    void createHashPreview();
+
+    return () => {
+      canceled = true;
+    };
+  }, [review.metadata]);
+
+  return {
+    metadataHashError,
+    metadataHashHex,
+    metadataHashPending,
+    review,
+  };
+}
+
+function useRegistrationDraftSlugCheck(slug: string) {
+  const [slugCheck, setSlugCheck] =
+    useState<RegistrationDraftSlugCheckState>(
+      INITIAL_REGISTRATION_DRAFT_SLUG_CHECK,
+    );
+  const requestIdRef = useRef(0);
+
+  useEffect(() => {
+    requestIdRef.current += 1;
+    setSlugCheck(INITIAL_REGISTRATION_DRAFT_SLUG_CHECK);
+  }, [slug]);
+
+  const onCheckSlug = useCallback(async () => {
+    const normalizedSlug = slug.trim().toLowerCase();
+    if (!normalizedSlug) {
+      setSlugCheck({
+        status: 'error',
+        message: 'Add a slug first.',
+      });
+      return;
+    }
+
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
+    setSlugCheck({
+      status: 'checking',
+      message: 'Checking registry…',
+    });
+
+    let result: Awaited<ReturnType<typeof lookupRegistrySlug>>;
+    try {
+      result = await lookupRegistrySlug(normalizedSlug);
+    } catch (caughtError) {
+      if (requestId !== requestIdRef.current) return;
+      setSlugCheck({
+        status: 'error',
+        message: getErrorMessage(caughtError, 'Could not check slug.'),
+      });
+      return;
+    }
+
+    if (requestId !== requestIdRef.current) return;
+
+    switch (result.status) {
+      case 'available':
+        setSlugCheck({
+          status: 'available',
+          checkedSlug: normalizedSlug,
+          message: 'Slug is available.',
+        });
+        return;
+      case 'taken':
+        setSlugCheck({
+          status: 'taken',
+          checkedSlug: normalizedSlug,
+          owner: result.listing.owner,
+          message: 'Slug taken — change it on Basics and re-check.',
+        });
+        return;
+      case 'unconfigured':
+        setSlugCheck({
+          status: 'unconfigured',
+          message:
+            'Registry not configured — slug check skipped for local dev.',
+        });
+        return;
+      case 'error':
+        setSlugCheck({
+          status: 'error',
+          message: result.message,
+        });
+        return;
+      default:
+        assertNever(result);
+    }
+  }, [slug]);
+
+  return {
+    slugCheck,
+    onCheckSlug,
   };
 }
 
@@ -792,9 +951,15 @@ function createListingStepControllerResult(
       mediaErrors: options.mediaErrors,
       mediaPending: options.mediaPending,
       mediaPreviewUrls: options.mediaPreviewUrls,
+      metadataHashError: options.metadataHashError,
+      metadataHashHex: options.metadataHashHex,
+      metadataHashPending: options.metadataHashPending,
       navigationError: options.navigationError,
       navigationPending: options.navigationPending,
       packageVerification: options.packageVerification,
+      review: options.review,
+      slugCheck: options.slugCheck,
+      onCheckSlug: options.onCheckSlug,
       onDeleteMedia: options.onDeleteMedia,
       onExitWizard: options.onExitWizard,
       onNavigateStep: options.onNavigateStep,
@@ -860,4 +1025,8 @@ function isPreviewEntry(
   value: readonly [string, string] | null,
 ): value is readonly [string, string] {
   return value !== null;
+}
+
+function assertNever(value: never): never {
+  throw new Error(`Unhandled builder controller state: ${String(value)}`);
 }

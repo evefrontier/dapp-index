@@ -91,6 +91,13 @@ function getPackageVerificationPresentation(
 function getResultPresentation(
   result: MoveRegistryVerificationResult,
 ): PackageVerificationPresentation {
+  if (result.reason === 'missing-mvr-name') {
+    return {
+      title: 'MVR skipped',
+      body: 'Package ID is declared. Add MVR to verify registry identity.',
+    };
+  }
+
   switch (result.status) {
     case 'verified':
       return {
