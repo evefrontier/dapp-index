@@ -8,6 +8,7 @@ import { BasicsStepScreen } from './BasicsStepScreen';
 import { DiscoveryStepScreen } from './DiscoveryStepScreen';
 import { MediaStepScreen } from './MediaStepScreen';
 import { PackagesStepScreen } from './PackagesStepScreen';
+import { PublishStepScreen } from './PublishStepScreen';
 import { ReviewStepScreen } from './ReviewStepScreen';
 import type { MediaSlotId } from './mediaSlotModel';
 import type {
@@ -20,6 +21,10 @@ import type {
   RegistrationDraftReview,
   RegistrationDraftSlugCheckState,
 } from './registrationDraftReview';
+import type {
+  RegistrationDraftPublishController,
+  RegistrationDraftPublishState,
+} from './useRegistrationDraftPublishController';
 
 export type RegistrationStepScreenProps = {
   activeStep: DraftStep;
@@ -34,10 +39,18 @@ export type RegistrationStepScreenProps = {
   metadataHashHex: string | null;
   metadataHashPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  publishReadiness: RegistrationDraftPublishController['publishReadiness'];
+  publishState: RegistrationDraftPublishState;
   review: RegistrationDraftReview;
   slugCheck: RegistrationDraftSlugCheckState;
+  suiNetwork: string;
+  walletAddress: string | null;
+  walletBalanceStatus: RegistrationDraftPublishController['walletBalanceStatus'];
+  walletNetwork: string | null;
   onCheckSlug: () => Promise<void>;
+  onConnectWallet: () => void;
   onDeleteMedia: (mediaId: string) => Promise<void>;
+  onPublish: () => Promise<void>;
   onUpdateMedia: (
     mediaId: string,
     update: DraftMediaUpdate,
@@ -63,10 +76,18 @@ export function RegistrationStepScreen({
   metadataHashHex,
   metadataHashPending,
   packageVerification,
+  publishReadiness,
+  publishState,
   review,
   slugCheck,
+  suiNetwork,
+  walletAddress,
+  walletBalanceStatus,
+  walletNetwork,
   onCheckSlug,
+  onConnectWallet,
   onDeleteMedia,
+  onPublish,
   onUpdateMedia,
   onUpdateFields,
   onUploadMediaForSlot,
@@ -128,6 +149,19 @@ export function RegistrationStepScreen({
           review={review}
           slugCheck={slugCheck}
           onCheckSlug={onCheckSlug}
+        />
+      );
+    case 'publish':
+      return (
+        <PublishStepScreen
+          publishReadiness={publishReadiness}
+          publishState={publishState}
+          suiNetwork={suiNetwork}
+          walletAddress={walletAddress}
+          walletBalanceStatus={walletBalanceStatus}
+          walletNetwork={walletNetwork}
+          onConnectWallet={onConnectWallet}
+          onPublish={onPublish}
         />
       );
     default:

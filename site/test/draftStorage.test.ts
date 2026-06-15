@@ -199,8 +199,20 @@ describe('draft storage', () => {
 
     await storage.saveDraft(draft);
     await storage.savePublishCheckpoint('draft-1', {
+      media: [
+        {
+          mediaId: 'dashboard',
+          walrusBlobId: 'media-blob-1',
+          walrusUrl: 'https://aggregator.test/v1/blobs/media-blob-1',
+          sha256: '0'.repeat(64),
+          sizeBytes: 824_512,
+          width: 1600,
+          height: 900,
+        },
+      ],
+      metadataUri: 'walrus://blob/blob-1',
       walrusBlobId: 'blob-1',
-      walrusUrl: 'walrus://blob-1',
+      walrusUrl: 'https://aggregator.test/v1/blobs/blob-1',
       metadataHash: 'abc123',
     });
     const updatedDraft = await storage.savePublishCheckpoint('draft-1', {
@@ -208,8 +220,20 @@ describe('draft storage', () => {
     });
 
     expect(updatedDraft.publish).toEqual({
+      media: [
+        {
+          mediaId: 'dashboard',
+          walrusBlobId: 'media-blob-1',
+          walrusUrl: 'https://aggregator.test/v1/blobs/media-blob-1',
+          sha256: '0'.repeat(64),
+          sizeBytes: 824_512,
+          width: 1600,
+          height: 900,
+        },
+      ],
+      metadataUri: 'walrus://blob/blob-1',
       walrusBlobId: 'blob-1',
-      walrusUrl: 'walrus://blob-1',
+      walrusUrl: 'https://aggregator.test/v1/blobs/blob-1',
       metadataHash: 'abc123',
       suiTransactionDigest: 'tx-1',
     });
