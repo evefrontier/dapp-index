@@ -226,6 +226,7 @@ describe('draft storage', () => {
       kind: 'video',
       name: 'trailer.webm',
       role: 'demo',
+      alt: '   ',
       caption: 'Launch trailer',
     }, content);
 
@@ -234,6 +235,7 @@ describe('draft storage', () => {
 
     expect(media.mimeType).toBe('video/webm');
     expect(media.role).toBe('demo');
+    expect(media.alt).toBeUndefined();
     expect(media.caption).toBe('Launch trailer');
     expect(media.size).toBe(9);
     expect(savedDraft?.media).toEqual([media]);

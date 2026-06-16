@@ -41,7 +41,7 @@ export function getMediaRoleLabel(role: DappIndexMediaRole): string {
 }
 
 function formatMediaByteLimit(bytes: number): string {
-  return `${Math.round(bytes / (1024 * 1024))} MB`;
+  return `${Math.round(bytes / 1_000_000)} MB`;
 }
 
 /** Copy and limits for the builder media step (aligned with published metadata). */

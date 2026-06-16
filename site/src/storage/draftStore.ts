@@ -332,7 +332,7 @@ export function createDraftStorage(
       mimeType,
       size: content.size,
       createdAt: now().toISOString(),
-      alt: input.alt,
+      alt: normalizeOptionalMediaText(input.alt),
       caption: normalizeOptionalMediaText(input.caption),
     };
   }

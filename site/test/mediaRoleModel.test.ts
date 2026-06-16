@@ -21,6 +21,9 @@ describe('media role model', () => {
   });
 
   test('exposes slot-based media limits in guidance copy', () => {
+    expect(MEDIA_STEP_GUIDANCE.imageLimit).toBe('5 MB');
+    expect(MEDIA_STEP_GUIDANCE.videoLimit).toBe('60 MB');
+    expect(MEDIA_STEP_GUIDANCE.totalLimit).toBe('150 MB');
     expect(MEDIA_STEP_GUIDANCE.itemLimit).toBe(6);
     expect(MEDIA_STEP_GUIDANCE.galleryLimit).toBe(3);
     expect(MEDIA_STEP_GUIDANCE.videoLimitCount).toBe(1);

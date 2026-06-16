@@ -44,5 +44,5 @@ export function validateDraftMediaFile(input: {
 }
 
 function formatBytes(bytes: number): string {
-  return `${Math.round(bytes / (1024 * 1024))} MB`;
+  return `${Math.round(bytes / 1_000_000)} MB`;
 }
