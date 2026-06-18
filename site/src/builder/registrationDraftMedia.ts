@@ -10,6 +10,7 @@ import {
   getMediaSlotDefinition,
   getStableMediaIdForSlot,
   validateMediaSlots,
+  type MediaSlotDefinition,
   type MediaSlotId,
 } from './mediaSlotModel';
 import { MEDIA_STEP_GUIDANCE } from './mediaRoleModel';
@@ -42,6 +43,37 @@ export type RegistrationDraftMediaUploadLimitsResult =
   | { ok: true }
   | { ok: false; errorMessage: string };
 
+type SlotMediaFileValidation =
+  | { ok: true; mimeType: string }
+  | { ok: false; errorMessage: string };
+
+function validateSlotMediaFile(
+  slot: MediaSlotDefinition,
+  file: File,
+): SlotMediaFileValidation {
+  const mimeType = file.type.toLowerCase();
+  if (!slot.acceptMime.includes(mimeType)) {
+    return {
+      ok: false,
+      errorMessage:
+        slot.kind === 'video'
+          ? 'Use a WebM video file.'
+          : 'Use PNG, JPEG, or WebP images.',
+    };
+  }
+
+  const sizeValidation = validateDraftMediaFile({
+    kind: slot.kind,
+    file,
+    mimeType,
+  });
+  if (!sizeValidation.ok) {
+    return { ok: false, errorMessage: sizeValidation.reason };
+  }
+
+  return { ok: true, mimeType };
+}
+
 export function validateRegistrationDraftMediaUploadForSlot(
   slotId: MediaSlotId,
   existingMedia: readonly DraftMedia[],
@@ -64,24 +96,9 @@ export function validateRegistrationDraftMediaUploadForSlot(
     };
   }
 
-  const mimeType = file.type.toLowerCase();
-  if (!slot.acceptMime.includes(mimeType)) {
-    return {
-      ok: false,
-      errorMessage:
-        slot.kind === 'video'
-          ? 'Use a WebM video file.'
-          : 'Use PNG, JPEG, or WebP images.',
-    };
-  }
-
-  const sizeValidation = validateDraftMediaFile({
-    kind: slot.kind,
-    file,
-    mimeType,
-  });
-  if (!sizeValidation.ok) {
-    return { ok: false, errorMessage: sizeValidation.reason };
+  const fileValidation = validateSlotMediaFile(slot, file);
+  if (!fileValidation.ok) {
+    return { ok: false, errorMessage: fileValidation.errorMessage };
   }
 
   const existingTotalSize = existingMedia.reduce(
@@ -108,33 +125,17 @@ export function createRegistrationDraftMediaUploadInput(
   slotId: MediaSlotId,
 ): RegistrationDraftMediaUploadInputResult {
   const slot = getMediaSlotDefinition(slotId);
-  const mimeType = file.type.toLowerCase();
-  if (!slot.acceptMime.includes(mimeType)) {
-    return {
-      ok: false,
-      errorMessage:
-        slot.kind === 'video'
-          ? 'Use a WebM video file.'
-          : 'Use PNG, JPEG, or WebP images.',
-    };
+  const fileValidation = validateSlotMediaFile(slot, file);
+  if (!fileValidation.ok) {
+    return { ok: false, errorMessage: fileValidation.errorMessage };
   }
+
+  const { mimeType } = fileValidation;
 
   if (!RegistrationDraftMediaUploadMimeSchema.safeParse(mimeType).success) {
     return {
       ok: false,
       errorMessage: 'Use PNG, JPEG, WebP, or WebM media.',
-    };
-  }
-
-  const sizeValidation = validateDraftMediaFile({
-    kind: slot.kind,
-    file,
-    mimeType,
-  });
-  if (!sizeValidation.ok) {
-    return {
-      ok: false,
-      errorMessage: sizeValidation.reason,
     };
   }
 

@@ -43,6 +43,11 @@ export function validateDraftMediaFile(input: {
   return { ok: true };
 }
 
-function formatBytes(bytes: number): string {
+/** Formats byte limits as decimal megabytes (matches constants and public docs). */
+export function formatDecimalMegabytes(bytes: number): string {
   return `${Math.round(bytes / 1_000_000)} MB`;
+}
+
+function formatBytes(bytes: number): string {
+  return formatDecimalMegabytes(bytes);
 }

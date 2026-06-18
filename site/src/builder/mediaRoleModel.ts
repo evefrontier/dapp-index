@@ -1,4 +1,3 @@
-import type { DraftMediaKind } from '@/storage/draftStorage';
 import {
   LISTING_MEDIA_IMAGE_MAX_BYTES,
   LISTING_MEDIA_VIDEO_MAX_BYTES,
@@ -7,14 +6,9 @@ import {
   PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES,
   PUBLIC_MEDIA_VIDEO_LIMIT,
 } from '@/constants';
+import { formatDecimalMegabytes } from '@/storage/draftMediaValidation';
 import type { DappIndexMediaRole } from '@/types/dapp-index';
 import { MEDIA_SLOT_DEFINITIONS } from './mediaSlotModel';
-
-export function getDefaultMediaRoleForKind(
-  kind: DraftMediaKind,
-): DappIndexMediaRole {
-  return kind === 'video' ? 'demo' : 'gallery';
-}
 
 let mediaRoleLabelsCache: Partial<Record<DappIndexMediaRole, string>> | null =
   null;
@@ -40,15 +34,11 @@ export function getMediaRoleLabel(role: DappIndexMediaRole): string {
   return getMediaRoleLabels()[role] ?? role;
 }
 
-function formatMediaByteLimit(bytes: number): string {
-  return `${Math.round(bytes / 1_000_000)} MB`;
-}
-
 /** Copy and limits for the builder media step (aligned with published metadata). */
 export const MEDIA_STEP_GUIDANCE = {
-  imageLimit: formatMediaByteLimit(LISTING_MEDIA_IMAGE_MAX_BYTES),
-  videoLimit: formatMediaByteLimit(LISTING_MEDIA_VIDEO_MAX_BYTES),
-  totalLimit: formatMediaByteLimit(PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES),
+  imageLimit: formatDecimalMegabytes(LISTING_MEDIA_IMAGE_MAX_BYTES),
+  videoLimit: formatDecimalMegabytes(LISTING_MEDIA_VIDEO_MAX_BYTES),
+  totalLimit: formatDecimalMegabytes(PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES),
   itemLimit: PUBLIC_MEDIA_ITEM_LIMIT,
   galleryLimit: PUBLIC_MEDIA_GALLERY_IMAGE_LIMIT,
   videoLimitCount: PUBLIC_MEDIA_VIDEO_LIMIT,

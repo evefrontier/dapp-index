@@ -54,19 +54,6 @@ function gallerySlotId(index: number): GalleryMediaSlotId {
   return `gallery-${index + 1}`;
 }
 
-function parseGallerySlotIndex(slotId: MediaSlotId): number | null {
-  if (!slotId.startsWith('gallery-')) return null;
-  const index = Number(slotId.slice('gallery-'.length));
-  if (
-    !Number.isInteger(index) ||
-    index < 1 ||
-    index > PUBLIC_MEDIA_GALLERY_IMAGE_LIMIT
-  ) {
-    return null;
-  }
-  return index - 1;
-}
-
 function createGallerySlotDefinition(index: number): MediaSlotDefinition {
   const id = gallerySlotId(index);
   const position = index + 1;
@@ -141,10 +128,6 @@ const MEDIA_SLOT_BY_ID = new Map<MediaSlotId, MediaSlotDefinition>(
   MEDIA_SLOT_DEFINITIONS.map((slot) => [slot.id, slot]),
 );
 
-export function isGalleryMediaSlot(slotId: MediaSlotId): slotId is GalleryMediaSlotId {
-  return parseGallerySlotIndex(slotId) !== null;
-}
-
 export function getMediaSlotDefinition(slotId: MediaSlotId): MediaSlotDefinition {
   const slot = MEDIA_SLOT_BY_ID.get(slotId);
   if (!slot) {
@@ -209,10 +192,6 @@ export function validateMediaSlots(
     missingRequiredSlots,
     altErrors,
   };
-}
-
-export function estimatePublishBlobCount(media: readonly DraftMedia[]): number {
-  return media.length;
 }
 
 export function canAddMediaToSlot(

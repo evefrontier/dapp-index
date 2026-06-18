@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import type { DraftMedia } from '@/storage/draftStorage';
 import {
-  estimatePublishBlobCount,
   getMediaForSlot,
   getMediaSlotDefinition,
   getMediaSlotStatus,
@@ -120,6 +119,5 @@ describe('media slot model', () => {
 
     expect(validateMediaSlots(media)).toEqual({ ok: true });
     expect(getMediaSlotStatus(media, 'gallery-2')).toBe('empty');
-    expect(estimatePublishBlobCount(media)).toBe(3);
   });
 });
