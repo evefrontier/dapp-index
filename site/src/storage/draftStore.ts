@@ -20,8 +20,8 @@ import {
 import { createIndexedDbDraftLocalMediaStore } from './draftLocalMediaStore';
 import { validateDraftMediaFileForKind } from './draftMediaValidation';
 
-/** Fallback when persisted drafts omit role; builder uploads always pass slot.role. */
-const DEFAULT_DRAFT_MEDIA_ROLE: DappIndexMediaRole = 'gallery';
+/** Used when parsing legacy drafts and demoting exclusive roles — not for new uploads. */
+const LEGACY_DEFAULT_DRAFT_MEDIA_ROLE: DappIndexMediaRole = 'gallery';
 const EXCLUSIVE_DRAFT_MEDIA_ROLES: ReadonlySet<DappIndexMediaRole> = new Set([
   'thumbnail',
   'logo',
@@ -186,7 +186,7 @@ export function createDraftStorage(
         }
 
         if (roleToMakeExclusive && item.role === roleToMakeExclusive) {
-          return { ...item, role: DEFAULT_DRAFT_MEDIA_ROLE };
+          return { ...item, role: LEGACY_DEFAULT_DRAFT_MEDIA_ROLE };
         }
 
         return item;
@@ -343,10 +343,14 @@ export function createDraftStorage(
       throw new Error(validation.reason);
     }
 
+    if (!input.role) {
+      throw new Error('Draft media role is required.');
+    }
+
     return {
       id: input.id,
       kind: input.kind,
-      role: input.role ?? DEFAULT_DRAFT_MEDIA_ROLE,
+      role: input.role,
       name: input.name,
       mimeType,
       size: content.size,
@@ -499,7 +503,7 @@ function normalizeDraftMedia(value: unknown): DraftMedia | null {
     kind,
     role: isDappIndexMediaRole(media.role)
       ? media.role
-      : DEFAULT_DRAFT_MEDIA_ROLE,
+      : LEGACY_DEFAULT_DRAFT_MEDIA_ROLE,
     name,
     mimeType,
     size,
