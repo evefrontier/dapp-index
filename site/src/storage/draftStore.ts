@@ -20,8 +20,8 @@ import {
 import { createIndexedDbDraftLocalMediaStore } from './draftLocalMediaStore';
 import { validateDraftMediaFileForKind } from './draftMediaValidation';
 
-/** Used when parsing legacy drafts and demoting exclusive roles — not for new uploads. */
-const LEGACY_DEFAULT_DRAFT_MEDIA_ROLE: DappIndexMediaRole = 'gallery';
+/** Role assigned when another item takes thumbnail or logo exclusivity. */
+const EXCLUSIVE_ROLE_DEMOTION_ROLE: DappIndexMediaRole = 'gallery';
 const EXCLUSIVE_DRAFT_MEDIA_ROLES: ReadonlySet<DappIndexMediaRole> = new Set([
   'thumbnail',
   'logo',
@@ -169,7 +169,7 @@ export function createDraftStorage(
         }
 
         if (roleToMakeExclusive && item.role === roleToMakeExclusive) {
-          return { ...item, role: LEGACY_DEFAULT_DRAFT_MEDIA_ROLE };
+          return { ...item, role: EXCLUSIVE_ROLE_DEMOTION_ROLE };
         }
 
         return item;
@@ -474,18 +474,17 @@ function normalizeDraftMedia(value: unknown): DraftMedia | null {
     media.size >= 0
       ? media.size
       : null;
+  const role = isDappIndexMediaRole(media.role) ? media.role : null;
   const createdAt =
     typeof media.createdAt === 'string' ? media.createdAt : null;
-  if (!id || !kind || !name || !mimeType || size === null || !createdAt) {
+  if (!id || !kind || !name || !mimeType || size === null || !createdAt || !role) {
     return null;
   }
 
   return {
     id,
     kind,
-    role: isDappIndexMediaRole(media.role)
-      ? media.role
-      : LEGACY_DEFAULT_DRAFT_MEDIA_ROLE,
+    role,
     name,
     mimeType,
     size,
