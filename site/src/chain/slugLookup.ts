@@ -15,8 +15,6 @@ import {
   REGISTRY_SLUG_LOOKUP_RPC_TIMEOUT_MS,
 } from '@/constants';
 
-export type { OnChainListing };
-
 export type RegistrySlugLookupResult =
   | { status: 'unconfigured' }
   | { status: 'available' }
