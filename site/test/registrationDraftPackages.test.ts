@@ -7,6 +7,7 @@ import {
   readRegistrationDraftPackages,
   validateRegistrationDraftPackages,
 } from '../src/builder/registrationDraftPackages';
+import { RegistrationDraftPackageSchema } from '../src/schemas/registration-draft-package';
 
 const packageId =
   '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
@@ -174,6 +175,17 @@ describe('registration draft packages', () => {
         },
       ],
     });
+  });
+
+  test('accepts package rows without optional MVR identity fields in schema input', () => {
+    expect(
+      RegistrationDraftPackageSchema.safeParse({
+        draftPackageId: 'package-1',
+        network: 'mainnet',
+        role: 'core',
+        packageId,
+      }).success,
+    ).toBe(true);
   });
 
   test('does not require MVR names before package verification', () => {
