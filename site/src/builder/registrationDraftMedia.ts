@@ -1,6 +1,6 @@
 import type { DraftMedia, DraftMediaInput } from '@/storage/draftStorage';
 import type { DraftStorage } from '@/storage/draftTypes';
-import { validateDraftMediaFile } from '@/storage/draftMediaValidation';
+import { getDraftMediaFileLimits, validateDraftMediaFile } from '@/storage/draftMediaValidation';
 import {
   PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES,
 } from '@/constants';
@@ -50,16 +50,15 @@ function validateSlotMediaFile(
   file: File,
 ): SlotMediaFileValidation {
   const mimeType = file.type.toLowerCase();
+  const limits = getDraftMediaFileLimits(slot.kind);
   const validation = validateDraftMediaFile({
     acceptMime: slot.acceptMime,
     maxBytes: slot.maxBytes,
     file,
     mimeType,
     unsupportedMessage:
-      slot.kind === 'video'
-        ? 'Use a WebM video file.'
-        : 'Use PNG, JPEG, or WebP images.',
-    sizeLabel: slot.kind === 'video' ? 'Videos' : 'Screenshots',
+      slot.kind === 'video' ? 'Use a WebM video file.' : limits.unsupportedMessage,
+    sizeLabel: limits.sizeLabel,
   });
   if (!validation.ok) {
     return { ok: false, errorMessage: validation.reason };
@@ -74,6 +73,7 @@ export function buildRegistrationDraftMediaUploadInput(
   mimeType: string,
 ): DraftMediaInput {
   const slot = getMediaSlotDefinition(slotId);
+  // Builder uploads always derive role from the slot definition.
   return {
     id: slotId,
     kind: slot.kind,

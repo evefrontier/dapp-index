@@ -1,18 +1,9 @@
 import { z } from 'zod';
-import {
-  DAPP_INDEX_IMAGE_MIME_TYPES,
-  DAPP_INDEX_MEDIA_ROLES,
-  DAPP_INDEX_VIDEO_MIME_TYPE,
-} from '@/constants';
+import { DAPP_INDEX_MEDIA_ROLES } from '@/constants';
 
 export const REGISTRATION_DRAFT_MEDIA_TEXT_MAX_LENGTH = 240;
 
 export const RegistrationDraftMediaRoleSchema = z.enum(DAPP_INDEX_MEDIA_ROLES);
-
-export const RegistrationDraftMediaUploadMimeSchema = z.enum([
-  ...DAPP_INDEX_IMAGE_MIME_TYPES,
-  DAPP_INDEX_VIDEO_MIME_TYPE,
-]);
 
 export const RegistrationDraftMediaItemSchema = z.object({
   id: z.string().min(1).max(64),

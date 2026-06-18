@@ -256,6 +256,7 @@ describe('draft storage', () => {
       id: 'screen-1',
       kind: 'screenshot',
       name: 'screen.png',
+      role: 'gallery',
     }, content);
     const updatedDraft = await storage.updateMedia('draft-1', 'screen-1', {
       role: 'thumbnail',
@@ -288,6 +289,7 @@ describe('draft storage', () => {
         id: 'screen-1',
         kind: 'screenshot',
         name: 'screen.png',
+        role: 'gallery',
       },
       content,
     );
@@ -391,6 +393,7 @@ describe('draft storage', () => {
       id: 'screen-1',
       kind: 'screenshot',
       name: 'screen.png',
+      role: 'gallery',
     }, new Blob(['image-data'], { type: 'image/png' }));
 
     const updatedDraft = await storage.deleteMedia('draft-1', 'screen-1');
@@ -421,6 +424,7 @@ describe('draft storage', () => {
       id: 'screen-1',
       kind: 'screenshot',
       name: 'original.png',
+      role: 'gallery',
     }, new Blob(['original'], { type: 'image/png' }));
 
     await expect(
@@ -428,6 +432,7 @@ describe('draft storage', () => {
         id: 'screen-1',
         kind: 'screenshot',
         name: 'replacement.png',
+        role: 'gallery',
       }, new Blob(['replacement'], { type: 'image/png' })),
     ).rejects.toThrow('put failed');
 
@@ -447,6 +452,7 @@ describe('draft storage', () => {
           kind: 'screenshot',
           name: 'screen.png',
           mimeType: 'image/jpeg',
+          role: 'gallery',
         },
         new Blob(['image-data'], { type: 'image/png' }),
       ),
@@ -461,6 +467,7 @@ describe('draft storage', () => {
       id: 'screen-1',
       kind: 'screenshot',
       name: 'screen.png',
+      role: 'gallery',
     }, new Blob(['image-data'], { type: 'image/png' }));
 
     await storage.clearPublishedDraft('draft-1');
@@ -486,12 +493,12 @@ describe('draft storage', () => {
     await Promise.all([
       storage.saveMedia(
         'draft-1',
-        { id: 'screen-1', kind: 'screenshot', name: 'screen-1.png' },
+        { id: 'screen-1', kind: 'screenshot', name: 'screen-1.png', role: 'gallery' },
         new Blob(['image-data-1'], { type: 'image/png' }),
       ),
       storage.saveMedia(
         'draft-1',
-        { id: 'screen-2', kind: 'screenshot', name: 'screen-2.png' },
+        { id: 'screen-2', kind: 'screenshot', name: 'screen-2.png', role: 'gallery' },
         new Blob(['image-data-2'], { type: 'image/png' }),
       ),
     ]);
