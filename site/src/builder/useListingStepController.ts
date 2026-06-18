@@ -727,6 +727,7 @@ function useLocalMediaController({
           loadedDraftId,
           slotId,
           file,
+          limitsValidation.mimeType,
         );
         await refreshLoadedDraft();
       } catch (caughtError) {

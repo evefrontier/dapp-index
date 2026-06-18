@@ -63,6 +63,7 @@ describe('registration draft media', () => {
         'draft-1',
         'logo',
         new File(['replacement'], 'replacement.png', { type: 'image/png' }),
+        'image/png',
       ),
     ).rejects.toThrow('put failed');
 
