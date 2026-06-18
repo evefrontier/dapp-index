@@ -62,5 +62,18 @@ describe('publish wallet balances', () => {
         reason: 'Connect a wallet to check balances.',
       }),
     ).toEqual([]);
+    expect(
+      getPublishWalletBalanceBlockers({
+        kind: 'ready',
+        snapshot: {
+          suiTotalMist: PUBLISH_MIN_SUI_MIST - 1n,
+          walTotalMist: PUBLISH_MIN_WAL_MIST,
+        },
+        ...evaluatePublishWalletBalances({
+          suiTotalMist: PUBLISH_MIN_SUI_MIST - 1n,
+          walTotalMist: PUBLISH_MIN_WAL_MIST,
+        }),
+      }),
+    ).toHaveLength(1);
   });
 });

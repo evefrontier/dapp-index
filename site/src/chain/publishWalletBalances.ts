@@ -5,6 +5,7 @@ import {
   SUI_TYPE_ARG,
 } from '@mysten/sui/utils';
 import type { CoreClient } from '@mysten/sui/client';
+import { assertNever } from '@/utils/assertNever';
 import { formatUnits } from './coinAmount';
 
 export const WAL_COIN_TYPE_SUFFIX = '::wal::WAL';
@@ -41,6 +42,7 @@ export type PublishWalletBalanceUiState =
       walSufficient: boolean;
       suiMinimumLabel: string;
       walMinimumLabel: string;
+      blockers: string[];
     };
 
 export function isWalCoinType(coinType: string): boolean {
@@ -120,7 +122,7 @@ export function getPublishWalletBalanceBlockers(
 ): string[] {
   switch (state.kind) {
     case 'ready':
-      return evaluatePublishWalletBalances(state.snapshot).blockers;
+      return state.blockers;
     case 'loading':
       return ['Checking wallet balances.'];
     case 'error':
@@ -130,8 +132,4 @@ export function getPublishWalletBalanceBlockers(
     default:
       return assertNever(state);
   }
-}
-
-function assertNever(value: never): never {
-  throw new Error(`Unhandled wallet balance state: ${String(value)}`);
 }
