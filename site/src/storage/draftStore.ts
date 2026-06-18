@@ -18,8 +18,9 @@ import {
   type DappIndexMediaRole,
 } from '@/types/dapp-index';
 import { createIndexedDbDraftLocalMediaStore } from './draftLocalMediaStore';
-import { validateDraftMediaFile } from './draftMediaValidation';
+import { validateDraftMediaFileForKind } from './draftMediaValidation';
 
+/** Fallback when persisted drafts omit role; builder uploads always pass slot.role. */
 const DEFAULT_DRAFT_MEDIA_ROLE: DappIndexMediaRole = 'gallery';
 const EXCLUSIVE_DRAFT_MEDIA_ROLES: ReadonlySet<DappIndexMediaRole> = new Set([
   'thumbnail',
@@ -315,7 +316,7 @@ export function createDraftStorage(
     content: Blob,
   ): DraftMedia {
     const mimeType = resolveMediaMimeType(input, content);
-    const validation = validateDraftMediaFile({
+    const validation = validateDraftMediaFileForKind({
       kind: input.kind,
       file: content,
       mimeType,

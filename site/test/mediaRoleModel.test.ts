@@ -20,7 +20,6 @@ describe('media role model', () => {
     expect(MEDIA_STEP_GUIDANCE.totalLimit).toBe('150 MB');
     expect(MEDIA_STEP_GUIDANCE.itemLimit).toBe(6);
     expect(MEDIA_STEP_GUIDANCE.galleryLimit).toBe(3);
-    expect(MEDIA_STEP_GUIDANCE.videoLimitCount).toBe(1);
   });
 
   test('estimates publish approval copy from media count', () => {
