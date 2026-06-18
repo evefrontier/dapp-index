@@ -1,17 +1,29 @@
 import type { RegistrationDraftReview } from './registrationDraftReview';
-import type { ReviewTone } from './registrationDraftSlugCheck';
+import {
+  getSlugCheckPresentation,
+  type RegistrationDraftSlugCheckState,
+  type ReviewTone,
+  type SlugCheckPresentation,
+} from './registrationDraftSlugCheck';
+
+export type RegistrationDraftMetadataHashPreview = {
+  error: string | null;
+  hex: string | null;
+  pending: boolean;
+};
+
+export type ReviewStepControllerState = {
+  metadataHashPreview: RegistrationDraftMetadataHashPreview;
+  onCheckSlug: () => Promise<void>;
+  review: RegistrationDraftReview;
+  slugCheck: RegistrationDraftSlugCheckState;
+};
 
 export type ReviewStatusRowModel = {
   detail: string;
   label: string;
   status: string;
   tone: ReviewTone;
-};
-
-export type RegistrationDraftMetadataHashPreview = {
-  error: string | null;
-  hex: string | null;
-  pending: boolean;
 };
 
 export type ReviewIssueCounts = {
@@ -30,6 +42,36 @@ export function getReviewIssueCounts(
     },
     { blockers: 0, warnings: 0 },
   );
+}
+
+export function getWarningIssues(
+  review: RegistrationDraftReview,
+): RegistrationDraftReview['issues'] {
+  return review.issues.filter((issue) => issue.severity === 'warning');
+}
+
+export type ReviewStatusRowsModel = {
+  hash: ReviewStatusRowModel;
+  issueCounts: ReviewIssueCounts;
+  readiness: ReviewStatusRowModel;
+  schema: ReviewStatusRowModel;
+  slug: SlugCheckPresentation;
+};
+
+export function getReviewStatusRows(
+  review: RegistrationDraftReview,
+  slugCheck: RegistrationDraftSlugCheckState,
+  metadataHashPreview: RegistrationDraftMetadataHashPreview,
+): ReviewStatusRowsModel {
+  const issueCounts = getReviewIssueCounts(review);
+
+  return {
+    issueCounts,
+    readiness: getReadinessPresentation(issueCounts),
+    schema: getSchemaPresentation(review),
+    slug: getSlugCheckPresentation(slugCheck),
+    hash: getHashPresentation(metadataHashPreview),
+  };
 }
 
 export function getReadinessPresentation(

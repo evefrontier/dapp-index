@@ -3,37 +3,24 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { ReviewIssueList } from './ReviewIssueList';
 import { ReviewWarningsModal } from './ReviewWarningsModal';
 import type { RegistrationDraftReview } from './registrationDraftReview';
+import type { ReviewTone } from './registrationDraftSlugCheck';
 import {
-  getSlugCheckPresentation,
-  type RegistrationDraftSlugCheckState,
-  type ReviewTone,
-} from './registrationDraftSlugCheck';
-import {
-  getHashPresentation,
-  getReadinessPresentation,
-  getReviewIssueCounts,
-  getSchemaPresentation,
-  type RegistrationDraftMetadataHashPreview,
+  getReviewStatusRows,
+  getWarningIssues,
+  type ReviewStepControllerState,
 } from './reviewStepPresentation';
 
-export type ReviewStepScreenProps = {
-  metadataHashPreview: RegistrationDraftMetadataHashPreview;
-  review: RegistrationDraftReview;
-  slugCheck: RegistrationDraftSlugCheckState;
-  onCheckSlug: () => Promise<void>;
-};
+export type ReviewStepScreenProps = ReviewStepControllerState;
 
 export function ReviewStepScreen({
   metadataHashPreview,
+  onCheckSlug,
   review,
   slugCheck,
-  onCheckSlug,
 }: ReviewStepScreenProps) {
   const [warningsOpen, setWarningsOpen] = useState(false);
   const prettyMetadataJson = JSON.stringify(review.metadata, null, 2);
-  const warningIssues = review.issues.filter(
-    (issue) => issue.severity === 'warning',
-  );
+  const warningIssues = getWarningIssues(review);
 
   useEffect(() => {
     void onCheckSlug();
@@ -66,21 +53,17 @@ export function ReviewStepScreen({
 function ReviewStatusRows({
   metadataHashPreview,
   onViewWarnings,
+  onCheckSlug,
   review,
   slugCheck,
-  onCheckSlug,
 }: ReviewStepScreenProps & { onViewWarnings: () => void }) {
-  const issueCounts = getReviewIssueCounts(review);
-  const readiness = getReadinessPresentation(issueCounts);
-  const schema = getSchemaPresentation(review);
-  const slugPresentation = getSlugCheckPresentation(slugCheck);
-  const hash = getHashPresentation(metadataHashPreview);
+  const statusRows = getReviewStatusRows(review, slugCheck, metadataHashPreview);
 
   return (
     <div className="grid border-y border-(--color-neutral-20)">
       <ReviewStatusRow
         action={
-          issueCounts.warnings > 0 ? (
+          statusRows.issueCounts.warnings > 0 ? (
             <Button
               size="small"
               type="button"
@@ -91,16 +74,16 @@ function ReviewStatusRows({
             </Button>
           ) : undefined
         }
-        detail={readiness.detail}
-        label={readiness.label}
-        status={readiness.status}
-        tone={readiness.tone}
+        detail={statusRows.readiness.detail}
+        label={statusRows.readiness.label}
+        status={statusRows.readiness.status}
+        tone={statusRows.readiness.tone}
       />
       <ReviewStatusRow
-        detail={schema.detail}
-        label={schema.label}
-        status={schema.status}
-        tone={schema.tone}
+        detail={statusRows.schema.detail}
+        label={statusRows.schema.label}
+        status={statusRows.schema.status}
+        tone={statusRows.schema.tone}
       />
       <ReviewStatusRow
         action={
@@ -113,19 +96,19 @@ function ReviewStatusRows({
               void onCheckSlug();
             }}
           >
-            {slugPresentation.button}
+            {statusRows.slug.button}
           </Button>
         }
-        detail={slugPresentation.detail}
+        detail={statusRows.slug.detail}
         label="Slug"
-        status={slugPresentation.status}
-        tone={slugPresentation.tone}
+        status={statusRows.slug.status}
+        tone={statusRows.slug.tone}
       />
       <ReviewStatusRow
-        detail={hash.detail}
-        label={hash.label}
-        status={hash.status}
-        tone={hash.tone}
+        detail={statusRows.hash.detail}
+        label={statusRows.hash.label}
+        status={statusRows.hash.status}
+        tone={statusRows.hash.tone}
       />
     </div>
   );

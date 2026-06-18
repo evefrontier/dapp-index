@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useCancellableAsync } from './cancellableAsync';
 import { getErrorMessage } from './errors';
 import type { RegistrationDraftMetadataHashPreview } from './reviewStepPresentation';
 import type { RegistrationDraftFields } from './registrationDraftFields';
@@ -22,9 +23,10 @@ export function useRegistrationDraftReview(fields: RegistrationDraftFields): {
       hex: null,
       pending: true,
     });
+  const asyncTracker = useCancellableAsync();
 
   useEffect(() => {
-    let canceled = false;
+    const requestId = asyncTracker.begin();
 
     async function createHashPreview() {
       setMetadataHashPreview({
@@ -36,33 +38,31 @@ export function useRegistrationDraftReview(fields: RegistrationDraftFields): {
         const hashHex = await createRegistrationMetadataHashHex(
           review.metadata,
         );
-        if (!canceled) {
-          setMetadataHashPreview({
-            error: null,
-            hex: hashHex,
-            pending: false,
-          });
-        }
+        if (!asyncTracker.isCurrent(requestId)) return;
+        setMetadataHashPreview({
+          error: null,
+          hex: hashHex,
+          pending: false,
+        });
       } catch (caughtError) {
-        if (!canceled) {
-          setMetadataHashPreview({
-            error: getErrorMessage(
-              caughtError,
-              'Could not build metadata hash.',
-            ),
-            hex: null,
-            pending: false,
-          });
-        }
+        if (!asyncTracker.isCurrent(requestId)) return;
+        setMetadataHashPreview({
+          error: getErrorMessage(
+            caughtError,
+            'Could not build metadata hash.',
+          ),
+          hex: null,
+          pending: false,
+        });
       }
     }
 
     void createHashPreview();
 
     return () => {
-      canceled = true;
+      asyncTracker.cancel();
     };
-  }, [review.metadata]);
+  }, [asyncTracker, review.metadata]);
 
   return {
     metadataHashPreview,

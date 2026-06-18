@@ -33,7 +33,7 @@ import {
   type RegistrationDraftReview,
   type RegistrationDraftSlugCheckState,
 } from './registrationDraftReview';
-import type { RegistrationDraftMetadataHashPreview } from './reviewStepPresentation';
+import type { ReviewStepControllerState } from './reviewStepPresentation';
 
 export type WizardShellProps = {
   activeStep: DraftStep;
@@ -46,13 +46,10 @@ export type WizardShellProps = {
   mediaErrors: RegistrationDraftMediaErrors;
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
-  metadataHashPreview: RegistrationDraftMetadataHashPreview;
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
-  review: RegistrationDraftReview;
-  slugCheck: RegistrationDraftSlugCheckState;
-  onCheckSlug: () => Promise<void>;
+  reviewStep: ReviewStepControllerState;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
@@ -79,13 +76,10 @@ export function WizardShell({
   mediaErrors,
   mediaPending,
   mediaPreviewUrls,
-  metadataHashPreview,
   navigationError,
   navigationPending,
   packageVerification,
-  review,
-  slugCheck,
-  onCheckSlug,
+  reviewStep,
   onDeleteMedia,
   onExitWizard,
   onNavigateStep,
@@ -109,8 +103,8 @@ export function WizardShell({
       activeStep,
       fields,
       draft.media,
-      review,
-      slugCheck,
+      reviewStep.review,
+      reviewStep.slugCheck,
     );
 
   return (
@@ -145,11 +139,8 @@ export function WizardShell({
           mediaErrors={mediaErrors}
           mediaPending={mediaPending}
           mediaPreviewUrls={mediaPreviewUrls}
-          metadataHashPreview={metadataHashPreview}
           packageVerification={packageVerification}
-          review={review}
-          slugCheck={slugCheck}
-          onCheckSlug={onCheckSlug}
+          reviewStep={reviewStep}
           onVerifyPackages={onVerifyPackages}
         />
       </div>
@@ -265,15 +256,12 @@ function WizardStepPanel({
   mediaErrors,
   mediaPending,
   mediaPreviewUrls,
-  metadataHashPreview,
   nextStep,
   navigationPending,
   packageVerification,
   previousStep,
-  review,
-  slugCheck,
+  reviewStep,
   title,
-  onCheckSlug,
   onDeleteMedia,
   onExitWizard,
   onNavigateStep,
@@ -291,15 +279,12 @@ function WizardStepPanel({
   mediaErrors: RegistrationDraftMediaErrors;
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
-  metadataHashPreview: RegistrationDraftMetadataHashPreview;
   nextStep: DraftStep | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
   previousStep: DraftStep | null;
-  review: RegistrationDraftReview;
-  slugCheck: RegistrationDraftSlugCheckState;
+  reviewStep: ReviewStepControllerState;
   title: string;
-  onCheckSlug: () => Promise<void>;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
@@ -317,7 +302,7 @@ function WizardStepPanel({
   const isPlaceholderStep = isWizardPlaceholderStep(activeStep);
   const reviewNextBlocker =
     activeStep === 'review' && nextStep && !canNavigateNext
-      ? getReviewNextBlockerMessage(review, slugCheck)
+      ? getReviewNextBlockerMessage(reviewStep.review, reviewStep.slugCheck)
       : null;
   const headerAction =
     activeStep === 'packages' ? (
@@ -353,11 +338,8 @@ function WizardStepPanel({
             mediaErrors={mediaErrors}
             mediaPending={mediaPending}
             mediaPreviewUrls={mediaPreviewUrls}
-            metadataHashPreview={metadataHashPreview}
             packageVerification={packageVerification}
-            review={review}
-            slugCheck={slugCheck}
-            onCheckSlug={onCheckSlug}
+            reviewStep={reviewStep}
             onDeleteMedia={onDeleteMedia}
             onUpdateMedia={onUpdateMedia}
             onUpdateFields={onUpdateFields}

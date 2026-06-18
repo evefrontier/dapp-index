@@ -16,11 +16,7 @@ import type {
 } from './registrationDraftFields';
 import type { RegistrationDraftMediaErrors } from './registrationDraftMedia';
 import type { RegistrationDraftPackageVerificationState } from './registrationDraftPackages';
-import type {
-  RegistrationDraftReview,
-  RegistrationDraftSlugCheckState,
-} from './registrationDraftReview';
-import type { RegistrationDraftMetadataHashPreview } from './reviewStepPresentation';
+import type { ReviewStepControllerState } from './reviewStepPresentation';
 
 export type RegistrationStepScreenProps = {
   activeStep: DraftStep;
@@ -31,11 +27,8 @@ export type RegistrationStepScreenProps = {
   mediaErrors: RegistrationDraftMediaErrors;
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
-  metadataHashPreview: RegistrationDraftMetadataHashPreview;
   packageVerification: RegistrationDraftPackageVerificationState;
-  review: RegistrationDraftReview;
-  slugCheck: RegistrationDraftSlugCheckState;
-  onCheckSlug: () => Promise<void>;
+  reviewStep: ReviewStepControllerState;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onUpdateMedia: (
     mediaId: string,
@@ -58,11 +51,8 @@ export function RegistrationStepScreen({
   mediaErrors,
   mediaPending,
   mediaPreviewUrls,
-  metadataHashPreview,
   packageVerification,
-  review,
-  slugCheck,
-  onCheckSlug,
+  reviewStep,
   onDeleteMedia,
   onUpdateMedia,
   onUpdateFields,
@@ -117,14 +107,7 @@ export function RegistrationStepScreen({
         />
       );
     case 'review':
-      return (
-        <ReviewStepScreen
-          metadataHashPreview={metadataHashPreview}
-          review={review}
-          slugCheck={slugCheck}
-          onCheckSlug={onCheckSlug}
-        />
-      );
+      return <ReviewStepScreen {...reviewStep} />;
     default:
       return (
         <p className="text-sm text-(--color-neutral-60)">
