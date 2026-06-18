@@ -11,6 +11,7 @@ import {
   validateRegistryMetadataJson,
   type RegistryMetadataValidation,
 } from '@/utils/registryMetadata';
+import { createSchemaValidationIssues } from '@/utils/schemaValidationIssues';
 import type {
   RegistrationDraftMetadataJson,
   RegistrationDraftSlugCheckState,
@@ -48,6 +49,20 @@ export type RegistrationPublishReadiness = {
   blockers: string[];
   ready: boolean;
 };
+
+export const VIDEO_POSTER_BLOCKER_MESSAGE =
+  'Add at least one image so videos have a poster.';
+
+export function getDraftVideoPosterBlockers(
+  media: Pick<DraftMedia, 'kind'>[],
+): string[] {
+  const hasVideo = media.some((item) => item.kind === 'video');
+  const hasImage = media.some((item) => item.kind === 'screenshot');
+  if (hasVideo && !hasImage) {
+    return [VIDEO_POSTER_BLOCKER_MESSAGE];
+  }
+  return [];
+}
 
 export type RegistrationPublishActionResult =
   | { ok: true; action: RegistrationPublishAction }
@@ -133,7 +148,7 @@ export function createRegistrationPublishReadiness({
   if (!registryConfigured) {
     blockers.push('Configure registry package and object env vars.');
   }
-  if (!isWalrusSupportedNetwork(suiNetwork)) {
+  if (!isWalrusChainNetwork(suiNetwork)) {
     blockers.push('Walrus publish supports testnet or mainnet.');
   }
   if (!walrusAggregatorUrl) {
@@ -160,29 +175,7 @@ export function getPublishNextBlockerMessage(
   return readiness.blockers[0] ?? null;
 }
 
-export function hexToBytes(hex: string): Uint8Array {
-  const value = hex.trim();
-  if (value.length % 2 !== 0) {
-    throw new Error('Hex strings must have an even number of characters.');
-  }
-  if (!/^[0-9a-fA-F]*$/.test(value)) {
-    throw new Error('Metadata hash must be valid hex.');
-  }
-
-  const bytes = new Uint8Array(value.length / 2);
-  for (let index = 0; index < value.length; index += 2) {
-    bytes[index / 2] = Number.parseInt(value.slice(index, index + 2), 16);
-  }
-  return bytes;
-}
-
-export function isWalrusSupportedNetwork(
-  network: string,
-): network is 'testnet' | 'mainnet' {
-  return isWalrusChainNetwork(network);
-}
-
-export function walrusBlobUri(blobId: string): `walrus://blob/${string}` {
+function walrusBlobUri(blobId: string): `walrus://blob/${string}` {
   return `walrus://blob/${blobId}`;
 }
 
@@ -201,7 +194,7 @@ function buildMediaGallery(
         issues.push({
           id: 'media.videoPoster',
           label: 'Video poster',
-          message: 'Add at least one image so videos have a poster.',
+          message: VIDEO_POSTER_BLOCKER_MESSAGE,
           severity: 'error',
         });
         return [];
@@ -323,14 +316,7 @@ function optionalCodecs(codecs: string | undefined): { codecs?: string } {
 function createSchemaPublishIssues(
   schemaValidation: Extract<RegistryMetadataValidation, { ok: false }>,
 ): RegistrationPublishIssue[] {
-  return (schemaValidation.errors ?? []).map((error, index) => ({
-    id: `schema.${error.instancePath || 'root'}.${error.keyword}.${index}`,
-    label: 'Metadata',
-    message: error.message
-      ? `Schema ${error.message}.`
-      : 'Schema validation failed.',
-    severity: 'error',
-  }));
+  return createSchemaValidationIssues(schemaValidation);
 }
 
 function normalizedAddress(address: string): string {

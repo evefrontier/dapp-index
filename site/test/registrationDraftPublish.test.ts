@@ -1,9 +1,10 @@
 import { describe, expect, test } from 'bun:test';
+import { hexToBytes } from '../src/chain/bytes';
 import {
   buildRegistrationPublishMetadata,
   createRegistrationPublishReadiness,
+  getDraftVideoPosterBlockers,
   getPublishNextBlockerMessage,
-  hexToBytes,
   resolveRegistrationPublishAction,
 } from '../src/builder/registrationDraftPublish';
 import type { DraftMedia } from '../src/storage/draftStorage';
