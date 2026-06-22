@@ -94,7 +94,7 @@ function getResultPresentation(
   if (result.reason === 'missing-mvr-name') {
     return {
       title: 'MVR skipped',
-      body: 'Package ID is declared. Add MVR to verify registry identity.',
+      body: 'Package ID is declared. Add an MVR name to verify Move Registry identity.',
     };
   }
 
