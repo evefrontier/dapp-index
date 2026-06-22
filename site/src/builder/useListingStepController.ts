@@ -25,6 +25,9 @@ import {
   toMoveRegistryResolvablePackages,
   type RegistrationDraftPackageVerificationState,
 } from './registrationDraftPackages';
+import type { ReviewStepControllerState } from './reviewStepPresentation';
+import { useRegistrationDraftReview } from './useRegistrationDraftReview';
+import { useRegistrationDraftSlugCheck } from './useRegistrationDraftSlugCheck';
 import {
   createDraftAutosave,
   createDraftStorage,
@@ -85,6 +88,7 @@ type ListingStepResultOptions = ListingStepState & {
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  reviewStep: ReviewStepControllerState;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
@@ -120,6 +124,17 @@ export function useListingStepController({
   const { autosave, autosaveError, autosaveStatus, setAutosaveStatus } =
     useDraftAutosaveController(storage, draftId);
   const { fields, fieldErrors } = useRegistrationDraftFields(draft);
+  const { metadataHashPreview, review } = useRegistrationDraftReview(fields);
+  const { slugCheck, onCheckSlug } = useRegistrationDraftSlugCheck(fields.slug);
+  const reviewStep = useMemo(
+    () => ({
+      metadataHashPreview,
+      onCheckSlug,
+      review,
+      slugCheck,
+    }),
+    [metadataHashPreview, onCheckSlug, review, slugCheck],
+  );
   const mediaErrors = useMemo(
     () => validateRegistrationDraftMediaStep(draft?.media ?? []).errors,
     [draft?.media],
@@ -183,6 +198,7 @@ export function useListingStepController({
     navigationError,
     navigationPending,
     packageVerification,
+    reviewStep,
     onDeleteMedia,
     onExitWizard,
     onNavigateStep,
@@ -601,6 +617,7 @@ function createListingStepControllerResult(
       navigationError: options.navigationError,
       navigationPending: options.navigationPending,
       packageVerification: options.packageVerification,
+      reviewStep: options.reviewStep,
       onDeleteMedia: options.onDeleteMedia,
       onExitWizard: options.onExitWizard,
       onNavigateStep: options.onNavigateStep,

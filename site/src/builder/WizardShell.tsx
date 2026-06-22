@@ -27,6 +27,15 @@ import {
 } from './registrationDraftPackages';
 import type { RegistrationDraftMediaErrors } from './registrationDraftMedia';
 import type { MediaSlotId } from './mediaSlotModel';
+import {
+  getReviewNextBlockerMessage,
+  type RegistrationDraftReview,
+} from './registrationDraftReview';
+import {
+  isReviewSlugCheckReady,
+  type RegistrationDraftSlugCheckState,
+} from './registrationDraftSlugCheck';
+import type { ReviewStepControllerState } from './reviewStepPresentation';
 
 export type WizardShellProps = {
   activeStep: DraftStep;
@@ -42,6 +51,7 @@ export type WizardShellProps = {
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  reviewStep: ReviewStepControllerState;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
@@ -71,6 +81,7 @@ export function WizardShell({
   navigationError,
   navigationPending,
   packageVerification,
+  reviewStep,
   onDeleteMedia,
   onExitWizard,
   onNavigateStep,
@@ -90,7 +101,13 @@ export function WizardShell({
   const errorMessage = navigationError ?? autosaveError;
   const canNavigateNext =
     !nextStep ||
-    isRegistrationDraftStepValid(activeStep, fields, draft.media);
+    isWizardStepReadyForNext(
+      activeStep,
+      fields,
+      draft.media,
+      reviewStep.review,
+      reviewStep.slugCheck,
+    );
 
   return (
     <div className="space-y-6">
@@ -125,6 +142,7 @@ export function WizardShell({
           mediaPending={mediaPending}
           mediaPreviewUrls={mediaPreviewUrls}
           packageVerification={packageVerification}
+          reviewStep={reviewStep}
           onVerifyPackages={onVerifyPackages}
         />
       </div>
@@ -244,6 +262,7 @@ function WizardStepPanel({
   navigationPending,
   packageVerification,
   previousStep,
+  reviewStep,
   title,
   onDeleteMedia,
   onExitWizard,
@@ -266,6 +285,7 @@ function WizardStepPanel({
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
   previousStep: DraftStep | null;
+  reviewStep: ReviewStepControllerState;
   title: string;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
@@ -282,6 +302,10 @@ function WizardStepPanel({
   onVerifyPackages: () => Promise<void>;
 }) {
   const isPlaceholderStep = isWizardPlaceholderStep(activeStep);
+  const reviewNextBlocker =
+    activeStep === 'review' && nextStep && !canNavigateNext
+      ? getReviewNextBlockerMessage(reviewStep.review, reviewStep.slugCheck)
+      : null;
   const headerAction =
     activeStep === 'packages' ? (
       <Button
@@ -317,6 +341,7 @@ function WizardStepPanel({
             mediaPending={mediaPending}
             mediaPreviewUrls={mediaPreviewUrls}
             packageVerification={packageVerification}
+            reviewStep={reviewStep}
             onDeleteMedia={onDeleteMedia}
             onUpdateMedia={onUpdateMedia}
             onUpdateFields={onUpdateFields}
@@ -337,7 +362,10 @@ function WizardStepPanel({
         >
           Back to drafts
         </button>
-        <div className="flex flex-wrap gap-2">
+        <div className="builder-wizard-nav-actions">
+          {reviewNextBlocker ? (
+            <p className="builder-wizard-next-blocker">{reviewNextBlocker}</p>
+          ) : null}
           <Button
             variant="secondary"
             size="small"
@@ -406,3 +434,18 @@ function StepStateLabel({ item }: { item: WizardStepItem }) {
 
   return <span className="text-xs">{label}</span>;
 }
+
+function isWizardStepReadyForNext(
+  step: DraftStep,
+  fields: RegistrationDraftFields,
+  media: Draft['media'],
+  review: RegistrationDraftReview,
+  slugCheck: RegistrationDraftSlugCheckState,
+): boolean {
+  if (step === 'review') {
+    return review.ready && isReviewSlugCheckReady(slugCheck);
+  }
+
+  return isRegistrationDraftStepValid(step, fields, media);
+}
+
