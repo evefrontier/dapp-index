@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { lookupRegistrySlug } from '@/chain/slugLookup';
+import { normalizeRegistrySlug } from '@/chain/normalizeRegistrySlug';
+import { useCancellableAsync } from './cancellableAsync';
 import { getErrorMessage } from './errors';
 import {
   createSlugCheckCheckingState,
@@ -19,29 +21,28 @@ export function useRegistrationDraftSlugCheck(slug: string): {
     useState<RegistrationDraftSlugCheckState>(
       INITIAL_REGISTRATION_DRAFT_SLUG_CHECK,
     );
-  const requestIdRef = useRef(0);
+  const asyncTracker = useCancellableAsync();
 
   useEffect(() => {
-    requestIdRef.current += 1;
+    asyncTracker.cancel();
     setSlugCheck(INITIAL_REGISTRATION_DRAFT_SLUG_CHECK);
-  }, [slug]);
+  }, [asyncTracker, slug]);
 
   const onCheckSlug = useCallback(async () => {
-    const normalizedSlug = slug.trim().toLowerCase();
+    const normalizedSlug = normalizeRegistrySlug(slug);
     if (!normalizedSlug) {
       setSlugCheck(createSlugCheckErrorState(getMissingSlugCheckErrorMessage()));
       return;
     }
 
-    const requestId = requestIdRef.current + 1;
-    requestIdRef.current = requestId;
+    const requestId = asyncTracker.begin();
     setSlugCheck(createSlugCheckCheckingState());
 
     let result: Awaited<ReturnType<typeof lookupRegistrySlug>>;
     try {
       result = await lookupRegistrySlug(normalizedSlug);
     } catch (caughtError) {
-      if (requestId !== requestIdRef.current) return;
+      if (!asyncTracker.isCurrent(requestId)) return;
       setSlugCheck(
         createSlugCheckErrorState(
           getErrorMessage(caughtError, getSlugLookupFailureMessage()),
@@ -50,10 +51,10 @@ export function useRegistrationDraftSlugCheck(slug: string): {
       return;
     }
 
-    if (requestId !== requestIdRef.current) return;
+    if (!asyncTracker.isCurrent(requestId)) return;
 
     setSlugCheck(createSlugCheckFromLookupResult(normalizedSlug, result));
-  }, [slug]);
+  }, [asyncTracker, slug]);
 
   return {
     onCheckSlug,

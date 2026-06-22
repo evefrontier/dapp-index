@@ -9,6 +9,7 @@ import {
   type OnChainListing,
   parseRegistryListingObject,
 } from '@/chain/registryListingObject';
+import { normalizeRegistrySlug } from '@/chain/normalizeRegistrySlug';
 import { withRpcTimeout } from '@/chain/rpcTimeout';
 import {
   REGISTRY_SLUG_LOOKUP_MAX_PAGES,
@@ -52,7 +53,7 @@ async function mapWithConcurrency<T, R>(
 export async function lookupRegistrySlug(
   slug: string,
 ): Promise<RegistrySlugLookupResult> {
-  const normalized = slug.trim().toLowerCase();
+  const normalized = normalizeRegistrySlug(slug);
   if (!normalized) {
     return { status: 'error', message: 'Slug is empty.' };
   }
@@ -120,7 +121,7 @@ export async function lookupRegistrySlug(
       }
       const listing = parseRegistryListingObject(obj);
       if (!listing) continue;
-      if (listing.slug.trim().toLowerCase() === normalized) {
+      if (normalizeRegistrySlug(listing.slug) === normalized) {
         return { status: 'taken', listing };
       }
     }

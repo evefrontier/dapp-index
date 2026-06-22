@@ -25,11 +25,7 @@ import {
   toMoveRegistryResolvablePackages,
   type RegistrationDraftPackageVerificationState,
 } from './registrationDraftPackages';
-import {
-  type RegistrationDraftReview,
-  type RegistrationDraftSlugCheckState,
-} from './registrationDraftReview';
-import type { RegistrationDraftMetadataHashPreview } from './reviewStepPresentation';
+import type { ReviewStepControllerState } from './reviewStepPresentation';
 import { useRegistrationDraftReview } from './useRegistrationDraftReview';
 import { useRegistrationDraftSlugCheck } from './useRegistrationDraftSlugCheck';
 import {
@@ -89,13 +85,10 @@ type ListingStepResultOptions = ListingStepState & {
   mediaErrors: ReturnType<typeof validateRegistrationDraftMediaStep>['errors'];
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
-  metadataHashPreview: RegistrationDraftMetadataHashPreview;
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
-  review: RegistrationDraftReview;
-  slugCheck: RegistrationDraftSlugCheckState;
-  onCheckSlug: () => Promise<void>;
+  reviewStep: ReviewStepControllerState;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
@@ -133,6 +126,15 @@ export function useListingStepController({
   const { fields, fieldErrors } = useRegistrationDraftFields(draft);
   const { metadataHashPreview, review } = useRegistrationDraftReview(fields);
   const { slugCheck, onCheckSlug } = useRegistrationDraftSlugCheck(fields.slug);
+  const reviewStep = useMemo(
+    () => ({
+      metadataHashPreview,
+      onCheckSlug,
+      review,
+      slugCheck,
+    }),
+    [metadataHashPreview, onCheckSlug, review, slugCheck],
+  );
   const mediaErrors = useMemo(
     () => validateRegistrationDraftMediaStep(draft?.media ?? []).errors,
     [draft?.media],
@@ -193,13 +195,10 @@ export function useListingStepController({
     mediaErrors,
     mediaPending,
     mediaPreviewUrls,
-    metadataHashPreview,
     navigationError,
     navigationPending,
     packageVerification,
-    review,
-    slugCheck,
-    onCheckSlug,
+    reviewStep,
     onDeleteMedia,
     onExitWizard,
     onNavigateStep,
@@ -615,13 +614,10 @@ function createListingStepControllerResult(
       mediaErrors: options.mediaErrors,
       mediaPending: options.mediaPending,
       mediaPreviewUrls: options.mediaPreviewUrls,
-      metadataHashPreview: options.metadataHashPreview,
       navigationError: options.navigationError,
       navigationPending: options.navigationPending,
       packageVerification: options.packageVerification,
-      review: options.review,
-      slugCheck: options.slugCheck,
-      onCheckSlug: options.onCheckSlug,
+      reviewStep: options.reviewStep,
       onDeleteMedia: options.onDeleteMedia,
       onExitWizard: options.onExitWizard,
       onNavigateStep: options.onNavigateStep,
