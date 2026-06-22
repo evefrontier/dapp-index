@@ -26,6 +26,13 @@ import {
   type RegistrationDraftPackageVerificationState,
 } from './registrationDraftPackages';
 import {
+  type RegistrationDraftReview,
+  type RegistrationDraftSlugCheckState,
+} from './registrationDraftReview';
+import type { RegistrationDraftMetadataHashPreview } from './reviewStepPresentation';
+import { useRegistrationDraftReview } from './useRegistrationDraftReview';
+import { useRegistrationDraftSlugCheck } from './useRegistrationDraftSlugCheck';
+import {
   createDraftAutosave,
   createDraftStorage,
   type Draft,
@@ -82,9 +89,13 @@ type ListingStepResultOptions = ListingStepState & {
   mediaErrors: ReturnType<typeof validateRegistrationDraftMediaStep>['errors'];
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
+  metadataHashPreview: RegistrationDraftMetadataHashPreview;
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  review: RegistrationDraftReview;
+  slugCheck: RegistrationDraftSlugCheckState;
+  onCheckSlug: () => Promise<void>;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
@@ -120,6 +131,8 @@ export function useListingStepController({
   const { autosave, autosaveError, autosaveStatus, setAutosaveStatus } =
     useDraftAutosaveController(storage, draftId);
   const { fields, fieldErrors } = useRegistrationDraftFields(draft);
+  const { metadataHashPreview, review } = useRegistrationDraftReview(fields);
+  const { slugCheck, onCheckSlug } = useRegistrationDraftSlugCheck(fields.slug);
   const mediaErrors = useMemo(
     () => validateRegistrationDraftMediaStep(draft?.media ?? []).errors,
     [draft?.media],
@@ -180,9 +193,13 @@ export function useListingStepController({
     mediaErrors,
     mediaPending,
     mediaPreviewUrls,
+    metadataHashPreview,
     navigationError,
     navigationPending,
     packageVerification,
+    review,
+    slugCheck,
+    onCheckSlug,
     onDeleteMedia,
     onExitWizard,
     onNavigateStep,
@@ -598,9 +615,13 @@ function createListingStepControllerResult(
       mediaErrors: options.mediaErrors,
       mediaPending: options.mediaPending,
       mediaPreviewUrls: options.mediaPreviewUrls,
+      metadataHashPreview: options.metadataHashPreview,
       navigationError: options.navigationError,
       navigationPending: options.navigationPending,
       packageVerification: options.packageVerification,
+      review: options.review,
+      slugCheck: options.slugCheck,
+      onCheckSlug: options.onCheckSlug,
       onDeleteMedia: options.onDeleteMedia,
       onExitWizard: options.onExitWizard,
       onNavigateStep: options.onNavigateStep,

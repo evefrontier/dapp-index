@@ -8,13 +8,19 @@ import { BasicsStepScreen } from './BasicsStepScreen';
 import { DiscoveryStepScreen } from './DiscoveryStepScreen';
 import { MediaStepScreen } from './MediaStepScreen';
 import { PackagesStepScreen } from './PackagesStepScreen';
+import { ReviewStepScreen } from './ReviewStepScreen';
 import type { MediaSlotId } from './mediaSlotModel';
 import type {
   RegistrationDraftFieldErrors,
   RegistrationDraftFields,
 } from './registrationDraftFields';
-import type { RegistrationDraftPackageVerificationState } from './registrationDraftPackages';
 import type { RegistrationDraftMediaErrors } from './registrationDraftMedia';
+import type { RegistrationDraftPackageVerificationState } from './registrationDraftPackages';
+import type {
+  RegistrationDraftReview,
+  RegistrationDraftSlugCheckState,
+} from './registrationDraftReview';
+import type { RegistrationDraftMetadataHashPreview } from './reviewStepPresentation';
 
 export type RegistrationStepScreenProps = {
   activeStep: DraftStep;
@@ -25,7 +31,11 @@ export type RegistrationStepScreenProps = {
   mediaErrors: RegistrationDraftMediaErrors;
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
+  metadataHashPreview: RegistrationDraftMetadataHashPreview;
   packageVerification: RegistrationDraftPackageVerificationState;
+  review: RegistrationDraftReview;
+  slugCheck: RegistrationDraftSlugCheckState;
+  onCheckSlug: () => Promise<void>;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onUpdateMedia: (
     mediaId: string,
@@ -48,7 +58,11 @@ export function RegistrationStepScreen({
   mediaErrors,
   mediaPending,
   mediaPreviewUrls,
+  metadataHashPreview,
   packageVerification,
+  review,
+  slugCheck,
+  onCheckSlug,
   onDeleteMedia,
   onUpdateMedia,
   onUpdateFields,
@@ -100,6 +114,15 @@ export function RegistrationStepScreen({
           onDeleteMedia={onDeleteMedia}
           onUpdateMedia={onUpdateMedia}
           onUploadMediaForSlot={onUploadMediaForSlot}
+        />
+      );
+    case 'review':
+      return (
+        <ReviewStepScreen
+          metadataHashPreview={metadataHashPreview}
+          review={review}
+          slugCheck={slugCheck}
+          onCheckSlug={onCheckSlug}
         />
       );
     default:

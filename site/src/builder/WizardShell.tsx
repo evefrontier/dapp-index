@@ -27,6 +27,13 @@ import {
 } from './registrationDraftPackages';
 import type { RegistrationDraftMediaErrors } from './registrationDraftMedia';
 import type { MediaSlotId } from './mediaSlotModel';
+import {
+  getReviewNextBlockerMessage,
+  isReviewSlugCheckReady,
+  type RegistrationDraftReview,
+  type RegistrationDraftSlugCheckState,
+} from './registrationDraftReview';
+import type { RegistrationDraftMetadataHashPreview } from './reviewStepPresentation';
 
 export type WizardShellProps = {
   activeStep: DraftStep;
@@ -39,9 +46,13 @@ export type WizardShellProps = {
   mediaErrors: RegistrationDraftMediaErrors;
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
+  metadataHashPreview: RegistrationDraftMetadataHashPreview;
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  review: RegistrationDraftReview;
+  slugCheck: RegistrationDraftSlugCheckState;
+  onCheckSlug: () => Promise<void>;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
@@ -68,9 +79,13 @@ export function WizardShell({
   mediaErrors,
   mediaPending,
   mediaPreviewUrls,
+  metadataHashPreview,
   navigationError,
   navigationPending,
   packageVerification,
+  review,
+  slugCheck,
+  onCheckSlug,
   onDeleteMedia,
   onExitWizard,
   onNavigateStep,
@@ -90,7 +105,13 @@ export function WizardShell({
   const errorMessage = navigationError ?? autosaveError;
   const canNavigateNext =
     !nextStep ||
-    isRegistrationDraftStepValid(activeStep, fields, draft.media);
+    isWizardStepReadyForNext(
+      activeStep,
+      fields,
+      draft.media,
+      review,
+      slugCheck,
+    );
 
   return (
     <div className="space-y-6">
@@ -124,7 +145,11 @@ export function WizardShell({
           mediaErrors={mediaErrors}
           mediaPending={mediaPending}
           mediaPreviewUrls={mediaPreviewUrls}
+          metadataHashPreview={metadataHashPreview}
           packageVerification={packageVerification}
+          review={review}
+          slugCheck={slugCheck}
+          onCheckSlug={onCheckSlug}
           onVerifyPackages={onVerifyPackages}
         />
       </div>
@@ -240,11 +265,15 @@ function WizardStepPanel({
   mediaErrors,
   mediaPending,
   mediaPreviewUrls,
+  metadataHashPreview,
   nextStep,
   navigationPending,
   packageVerification,
   previousStep,
+  review,
+  slugCheck,
   title,
+  onCheckSlug,
   onDeleteMedia,
   onExitWizard,
   onNavigateStep,
@@ -262,11 +291,15 @@ function WizardStepPanel({
   mediaErrors: RegistrationDraftMediaErrors;
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
+  metadataHashPreview: RegistrationDraftMetadataHashPreview;
   nextStep: DraftStep | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
   previousStep: DraftStep | null;
+  review: RegistrationDraftReview;
+  slugCheck: RegistrationDraftSlugCheckState;
   title: string;
+  onCheckSlug: () => Promise<void>;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
@@ -282,6 +315,10 @@ function WizardStepPanel({
   onVerifyPackages: () => Promise<void>;
 }) {
   const isPlaceholderStep = isWizardPlaceholderStep(activeStep);
+  const reviewNextBlocker =
+    activeStep === 'review' && nextStep && !canNavigateNext
+      ? getReviewNextBlockerMessage(review, slugCheck)
+      : null;
   const headerAction =
     activeStep === 'packages' ? (
       <Button
@@ -316,7 +353,11 @@ function WizardStepPanel({
             mediaErrors={mediaErrors}
             mediaPending={mediaPending}
             mediaPreviewUrls={mediaPreviewUrls}
+            metadataHashPreview={metadataHashPreview}
             packageVerification={packageVerification}
+            review={review}
+            slugCheck={slugCheck}
+            onCheckSlug={onCheckSlug}
             onDeleteMedia={onDeleteMedia}
             onUpdateMedia={onUpdateMedia}
             onUpdateFields={onUpdateFields}
@@ -337,7 +378,10 @@ function WizardStepPanel({
         >
           Back to drafts
         </button>
-        <div className="flex flex-wrap gap-2">
+        <div className="builder-wizard-nav-actions">
+          {reviewNextBlocker ? (
+            <p className="builder-wizard-next-blocker">{reviewNextBlocker}</p>
+          ) : null}
           <Button
             variant="secondary"
             size="small"
@@ -406,3 +450,18 @@ function StepStateLabel({ item }: { item: WizardStepItem }) {
 
   return <span className="text-xs">{label}</span>;
 }
+
+function isWizardStepReadyForNext(
+  step: DraftStep,
+  fields: RegistrationDraftFields,
+  media: Draft['media'],
+  review: RegistrationDraftReview,
+  slugCheck: RegistrationDraftSlugCheckState,
+): boolean {
+  if (step === 'review') {
+    return review.ready && isReviewSlugCheckReady(slugCheck);
+  }
+
+  return isRegistrationDraftStepValid(step, fields, media);
+}
+
