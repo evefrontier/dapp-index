@@ -7,7 +7,9 @@ import {
 } from './publishStepPresentation';
 import type { RegistrationDraftPublishState } from './useRegistrationDraftPublishController';
 
-export type PublishStepScreenProps = PublishStepControllerState;
+export type PublishStepScreenProps = PublishStepControllerState & {
+  readOnly: boolean;
+};
 
 export function PublishStepScreen({
   publishReadiness,
@@ -16,6 +18,7 @@ export function PublishStepScreen({
   walletAddress,
   walletBalanceStatus,
   walletNetwork,
+  readOnly,
   onConnectWallet,
   onPublish,
 }: PublishStepScreenProps) {
@@ -46,41 +49,43 @@ export function PublishStepScreen({
         <PublishStatusRow {...statusRows.publishJob} />
       </div>
       <PublishResult publishState={publishState} />
-      <div className="builder-publish-actions">
-        <div className="flex flex-wrap items-center gap-3">
-          {!walletAddress ? (
-            <Button
-              disabled={isPublishing}
-              size="small"
-              type="button"
-              variant="primary"
-              onClick={onConnectWallet}
-            >
-              Connect wallet
-            </Button>
-          ) : (
-            <Button
-              disabled={isPublishing || !publishReadiness.ready}
-              size="small"
-              type="button"
-              variant="primary"
-              onClick={() => {
-                void onPublish();
-              }}
-            >
-              {isPublishing ? 'Publishing' : 'Publish listing'}
-            </Button>
-          )}
-          <p className="text-xs text-(--color-neutral-60)">
-            Uploads local media, metadata, then Sui.
-          </p>
+      {readOnly ? null : (
+        <div className="builder-publish-actions">
+          <div className="flex flex-wrap items-center gap-3">
+            {!walletAddress ? (
+              <Button
+                disabled={isPublishing}
+                size="small"
+                type="button"
+                variant="primary"
+                onClick={onConnectWallet}
+              >
+                Connect wallet
+              </Button>
+            ) : (
+              <Button
+                disabled={isPublishing || !publishReadiness.ready}
+                size="small"
+                type="button"
+                variant="primary"
+                onClick={() => {
+                  void onPublish();
+                }}
+              >
+                {isPublishing ? 'Publishing' : 'Publish listing'}
+              </Button>
+            )}
+            <p className="text-xs text-(--color-neutral-60)">
+              Uploads local media, metadata, then Sui.
+            </p>
+          </div>
+          {publishBlocker ? (
+            <p className="builder-publish-blocker" role="status">
+              {publishBlocker}
+            </p>
+          ) : null}
         </div>
-        {publishBlocker ? (
-          <p className="builder-publish-blocker" role="status">
-            {publishBlocker}
-          </p>
-        ) : null}
-      </div>
+      )}
     </div>
   );
 }
@@ -144,7 +149,8 @@ function PublishResult({
         </dd>
       </dl>
       <p className="text-xs text-(--color-neutral-60)">
-        Draft cleared from this browser.
+        This local draft is kept as a record. Delete it from the drafts list
+        when you no longer need it.
       </p>
     </div>
   );

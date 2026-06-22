@@ -477,8 +477,8 @@ describe('draft storage', () => {
     ).rejects.toThrow('Provided media MIME type does not match the local media content MIME type.');
   });
 
-  test('clears draft metadata and local media after publish succeeds', async () => {
-    const { localStorage, storage } = createTestDraftStorage();
+  test('finalizePublishedDraft marks draft published and keeps local media', async () => {
+    const { storage } = createTestDraftStorage();
 
     await storage.saveDraft(draft);
     await storage.saveMedia('draft-1', {
@@ -487,11 +487,25 @@ describe('draft storage', () => {
       name: 'screen.png',
     }, new Blob(['image-data'], { type: 'image/png' }));
 
-    await storage.clearPublishedDraft('draft-1');
+    const publishedDraft = await storage.finalizePublishedDraft('draft-1', {
+      suiTransactionDigest: 'digest-1',
+      metadataHash: 'hash-1',
+      metadataUri: 'walrus://blob/blob-1',
+      walrusBlobId: 'blob-1',
+      walrusUrl: 'https://aggregator.example/v1/blob-1',
+    });
 
-    expect(await storage.getDraft('draft-1')).toBeNull();
-    expect(await storage.getLocalMedia('draft-1', 'screen-1')).toBeNull();
-    expect(localStorage.getItem(DRAFT_STORAGE_KEY)).toBeNull();
+    expect(publishedDraft.status).toBe('published');
+    expect(publishedDraft.currentStep).toBe('publish');
+    expect(publishedDraft.completedSteps).toContain('publish');
+    expect(publishedDraft.publish).toMatchObject({
+      suiTransactionDigest: 'digest-1',
+      metadataUri: 'walrus://blob/blob-1',
+    });
+
+    const reloaded = await storage.getDraft('draft-1');
+    expect(reloaded?.status).toBe('published');
+    expect(await storage.getLocalMedia('draft-1', 'screen-1')).not.toBeNull();
   });
 
   test('removes local draft storage key when the last draft is deleted', async () => {

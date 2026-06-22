@@ -26,7 +26,7 @@ import {
   buildUpdateAppTransaction,
 } from '@/chain/registerTransactions';
 import { lookupRegistrySlug } from '@/chain/slugLookup';
-import { txResultDigest } from '@/chain/txDigest';
+import { requireSuccessfulTxDigest } from '@/chain/txDigest';
 import {
   createWalrusSuiClient,
   isWalrusChainNetwork,
@@ -218,8 +218,33 @@ export function useRegistrationDraftPublishController({
 
   useEffect(() => () => publishTracker.cancel(), [publishTracker]);
 
+  useEffect(() => {
+    if (!draft || draft.status !== 'published') return;
+    const publish = draft.publish;
+    if (
+      !publish?.suiTransactionDigest ||
+      !publish.metadataUri ||
+      !publish.metadataHash ||
+      !publish.walrusUrl
+    ) {
+      return;
+    }
+
+    setPublishState({
+      status: 'success',
+      action: publish.publishAction ?? 'register',
+      errorMessage: null,
+      metadataHash: publish.metadataHash,
+      metadataUri: publish.metadataUri,
+      metadataWalrusUrl: publish.walrusUrl,
+      stage: 'Published.',
+      suiTransactionDigest: publish.suiTransactionDigest,
+    });
+  }, [draft]);
+
   const onPublish = useCallback(async () => {
-    if (!draft || publishState.status === 'publishing') return;
+    if (!draft || draft.status === 'published') return;
+    if (publishState.status === 'publishing') return;
     const requestId = publishTracker.begin();
 
     if (!publishReadiness.ready) {
@@ -364,27 +389,21 @@ export function useRegistrationDraftPublishController({
       const txResult = await dAppKit.signAndExecuteTransaction({
         transaction: tx,
       });
-      const suiTransactionDigest = txResultDigest(txResult);
+      const suiTransactionDigest = requireSuccessfulTxDigest(txResult);
 
-      await storage.savePublishCheckpoint(savedDraft.id, {
-        suiTransactionDigest,
-      });
-      await storage.clearPublishedDraft(savedDraft.id);
+      const publishedDraft = await storage.finalizePublishedDraft(
+        savedDraft.id,
+        {
+          metadataHash,
+          metadataUri,
+          suiTransactionDigest,
+          walrusBlobId: metadataUpload.walrusBlobId,
+          walrusUrl: metadataUpload.walrusUrl,
+          publishAction: publishAction.action,
+        },
+      );
       setDraft((currentDraft) =>
-        currentDraft?.id === savedDraft.id
-          ? {
-              ...savedDraft,
-              status: 'published',
-              publish: {
-                ...savedDraft.publish,
-                metadataHash,
-                metadataUri,
-                suiTransactionDigest,
-                walrusBlobId: metadataUpload.walrusBlobId,
-                walrusUrl: metadataUpload.walrusUrl,
-              },
-            }
-          : currentDraft,
+        currentDraft?.id === savedDraft.id ? publishedDraft : currentDraft,
       );
       if (!publishTracker.isCurrent(requestId)) return;
       setPublishState({

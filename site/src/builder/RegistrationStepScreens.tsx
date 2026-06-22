@@ -31,6 +31,7 @@ export type RegistrationStepScreenProps = {
   mediaPreviewUrls: Record<string, string>;
   packageVerification: RegistrationDraftPackageVerificationState;
   publishStep: PublishStepControllerState;
+  readOnly: boolean;
   reviewStep: ReviewStepControllerState;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onUpdateMedia: (
@@ -56,6 +57,7 @@ export function RegistrationStepScreen({
   mediaPreviewUrls,
   packageVerification,
   publishStep,
+  readOnly,
   reviewStep,
   onDeleteMedia,
   onUpdateMedia,
@@ -113,7 +115,7 @@ export function RegistrationStepScreen({
     case 'review':
       return <ReviewStepScreen {...reviewStep} />;
     case 'publish':
-      return <PublishStepScreen {...publishStep} />;
+      return <PublishStepScreen {...publishStep} readOnly={readOnly} />;
     default:
       return (
         <p className="text-sm text-(--color-neutral-60)">
