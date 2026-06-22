@@ -188,6 +188,20 @@ describe('registration draft packages', () => {
     ).toBe(true);
   });
 
+  test('trims optional MVR identity fields in schema output', () => {
+    const result = RegistrationDraftPackageSchema.parse({
+      draftPackageId: 'package-1',
+      network: 'mainnet',
+      role: 'core',
+      mvrName: '  @frontier/map  ',
+      packageId,
+      packageInfoId: `  ${packageInfoId}  `,
+    });
+
+    expect(result.mvrName).toBe('@frontier/map');
+    expect(result.packageInfoId).toBe(packageInfoId);
+  });
+
   test('does not require MVR names before package verification', () => {
     const packageIdOnly = {
       draftPackageId: 'package-1',
