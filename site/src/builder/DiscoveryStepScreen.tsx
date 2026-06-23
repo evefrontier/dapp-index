@@ -1,4 +1,3 @@
-import { Button } from '@evefrontier/ui';
 import {
   DAPP_INDEX_CATEGORIES,
   DAPP_INDEX_SERVER_TENANTS,
@@ -8,6 +7,7 @@ import {
   type DappIndexServerTenant,
   type DappIndexSmartAssemblyType,
 } from '@/types/dapp-index';
+import { BuilderToggle } from './BuilderToggle';
 import { CheckboxOption } from './CheckboxOption';
 import { FieldError, getFieldErrorId } from './FormFields';
 import type {
@@ -134,6 +134,9 @@ function SmartAssemblyFieldset({
   );
 }
 
+const SERVER_TENANT_OFF = DAPP_INDEX_SERVER_TENANTS[0];
+const SERVER_TENANT_ON = DAPP_INDEX_SERVER_TENANTS[1];
+
 function ServerTenantFilter({
   error,
   value,
@@ -144,6 +147,7 @@ function ServerTenantFilter({
   onChange: (value: DappIndexServerTenant) => void;
 }) {
   const errorId = getFieldErrorId('builder-server-tenant', error);
+  const isUtopia = value === SERVER_TENANT_ON;
 
   return (
     <fieldset
@@ -152,22 +156,31 @@ function ServerTenantFilter({
       className="builder-fieldset grid gap-2"
     >
       <legend>Server tenant</legend>
-      <div className="flex flex-wrap items-center gap-2">
-        {DAPP_INDEX_SERVER_TENANTS.map((tenant) => {
-          const selected = value === tenant;
-
-          return (
-            <Button
-              key={tenant}
-              size="small"
-              type="button"
-              variant={selected ? 'primary' : 'secondary'}
-              onClick={() => onChange(tenant)}
-            >
-              {DAPP_INDEX_SERVER_TENANT_LABELS[tenant]}
-            </Button>
-          );
-        })}
+      <div className="flex flex-wrap items-center gap-3">
+        <span
+          className="builder-toggle-endpoint"
+          data-active={!isUtopia && value !== '' ? '' : undefined}
+        >
+          {DAPP_INDEX_SERVER_TENANT_LABELS[SERVER_TENANT_OFF]}
+        </span>
+        <BuilderToggle
+          checked={isUtopia}
+          error={Boolean(error)}
+          id="builder-server-tenant"
+          onChange={() => {
+            if (value === '') {
+              onChange(SERVER_TENANT_OFF);
+              return;
+            }
+            onChange(isUtopia ? SERVER_TENANT_OFF : SERVER_TENANT_ON);
+          }}
+        />
+        <span
+          className="builder-toggle-endpoint"
+          data-active={isUtopia ? '' : undefined}
+        >
+          {DAPP_INDEX_SERVER_TENANT_LABELS[SERVER_TENANT_ON]}
+        </span>
       </div>
       <FieldError id="builder-server-tenant" message={error} />
     </fieldset>
