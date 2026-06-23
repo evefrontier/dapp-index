@@ -212,6 +212,52 @@ The builder-facing listing data uses the same concepts across Sui and Walrus:
 The Sui registry stores the metadata URI and hash so the full metadata can be
 retrieved from Walrus and verified off-chain.
 
+## Sui Packages And MVR
+
+Each listing declares the Sui Move packages behind the dapp in `suiPackages`.
+These identities let players and integrators verify what code a dapp runs, and
+they connect the listing to the Move Registry (MVR), the on-chain naming and
+metadata service for Sui packages.
+
+### Which packages to list
+
+List packages that are meaningful for discovery, verification, or transaction
+submission:
+
+- the primary protocol/app package, marked `role: core`;
+- packages the frontend submits transactions (PTBs) against, typically
+  `role: dependency`;
+- important trust surfaces such as exchange/router, custody, marketplace,
+  escrow, settlement, or permission packages users should be able to verify.
+
+Do not list every internal package just because it exists. Skip
+implementation-only dependencies that are not useful for users reviewing the
+listing. For example, a dapp built on a protocol with eight packages under the
+hood usually lists the package(s) the dapp directly calls or that users should
+trust, not all eight.
+
+Constraints: a listing may declare 1 to 12 packages, and at least one must be
+`role: core` before public release. Roles `dependency` and `utility` are
+descriptive today; use `utility` for shared helpers surfaced for transparency.
+
+### Package identity and MVR match
+
+Each package entry carries a `network`, `role`, MVR name (`mvrName`), package ID
+(`packageId`), and MVR `PackageInfo` object ID (`packageInfoId`). The builder
+**Check MVR match** action resolves each MVR name on its network and checks that
+the resolved package ID (and `PackageInfo` ID when provided) matches the entered
+values. This confirms the listing points at the package the MVR name actually
+resolves to. It does not prove package ownership or register anything in MVR.
+
+MVR names and `PackageInfo` IDs come from registering the package in MVR. See
+the [Move Registry docs](https://docs.suins.io/move-registry), the
+[MVR portal](https://www.moveregistry.com/), and the
+[MVR CLI](https://docs.suins.io/move-registry/tooling/mvr-cli) (`mvr resolve`)
+for registration and resolution.
+
+Package maintainer/contact metadata, source links, and package icons belong in
+the referenced Move Registry package metadata, not in dapp-index metadata.
+
 ## Querying Many Dapp Projects
 
 The Dapp Index frontend needs to query many projects without loading the whole

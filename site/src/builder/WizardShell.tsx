@@ -7,6 +7,7 @@ import type {
   DraftStep,
 } from '@/storage/draftStorage';
 import { RegistrationStepScreen } from './RegistrationStepScreens';
+import { PackageStepGuide } from './PackageStepGuide';
 import {
   createWizardStepItems,
   getWizardAdjacentStep,
@@ -22,6 +23,7 @@ import {
 } from './registrationDraftFields';
 import {
   addRegistrationDraftPackage,
+  getPackagesStepNotices,
   type RegistrationDraftPackageVerificationState,
 } from './registrationDraftPackages';
 
@@ -231,19 +233,26 @@ function WizardStepPanel({
   onVerifyPackages: () => Promise<void>;
 }) {
   const isPlaceholderStep = isWizardPlaceholderStep(activeStep);
+  const packageNotices =
+    activeStep === 'packages'
+      ? getPackagesStepNotices(fields.suiPackages)
+      : [];
   const panelAction =
     activeStep === 'packages' ? (
-      <Button
-        variant="secondary"
-        size="small"
-        onClick={() =>
-          onUpdateFields({
-            suiPackages: addRegistrationDraftPackage(fields.suiPackages),
-          })
-        }
-      >
-        Add package
-      </Button>
+      <div className="flex flex-wrap items-center gap-3">
+        <PackageStepGuide />
+        <Button
+          variant="secondary"
+          size="small"
+          onClick={() =>
+            onUpdateFields({
+              suiPackages: addRegistrationDraftPackage(fields.suiPackages),
+            })
+          }
+        >
+          Add package
+        </Button>
+      </div>
     ) : null;
 
   return (
@@ -266,6 +275,12 @@ function WizardStepPanel({
           />
         </div>
       </section>
+
+      {packageNotices.length > 0 ? (
+        <p className="text-xs text-(--color-neutral-60)" role="note">
+          {packageNotices.join(' ')}
+        </p>
+      ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button

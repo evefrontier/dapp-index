@@ -142,6 +142,9 @@ manifest fields and the registry record should treat the listing as invalid.
 }
 ```
 
+For guidance on which `suiPackages` to list, their roles, and how MVR match
+checking works, see [Sui Packages And MVR](./BUILDER_PLAN.md#sui-packages-and-mvr).
+
 ## Public Media Rules
 
 - Public media source URIs must use `walrus://blob/<blobId>`.

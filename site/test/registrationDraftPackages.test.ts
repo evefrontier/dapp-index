@@ -165,7 +165,7 @@ describe('registration draft packages', () => {
       ]),
     ).toEqual({
       fieldErrors: {
-        suiPackages: 'Fix optional MVR fields before verification.',
+        suiPackages: 'Fix MVR fields before checking MVR match.',
       },
       packageErrors: [
         {
@@ -176,7 +176,7 @@ describe('registration draft packages', () => {
     });
   });
 
-  test('requires MVR names only for package verification', () => {
+  test('requires MVR names only for MVR match checking', () => {
     const packageIdOnly = {
       draftPackageId: 'package-1',
       network: 'mainnet' as const,
@@ -187,11 +187,11 @@ describe('registration draft packages', () => {
     };
 
     expect(getRegistrationDraftPackageVerificationBlocker([])).toBe(
-      'Add a package before verification.',
+      'Add a package first.',
     );
     expect(
       getRegistrationDraftPackageVerificationBlocker([packageIdOnly]),
-    ).toBe('Add MVR names to verify packages.');
+    ).toBe('Add MVR names above to check.');
     expect(
       getRegistrationDraftPackageVerificationBlocker([
         { ...packageIdOnly, mvrName: '@frontier/map' },

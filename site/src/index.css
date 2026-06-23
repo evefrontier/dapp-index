@@ -36,6 +36,38 @@ h4 {
     @apply mb-2;
   }
 
+  .builder-package-mvr-check h4 {
+    @apply text-xs font-bold uppercase text-(--color-neutral-60);
+  }
+
+  .builder-package-mvr-details {
+    @apply border-t border-(--color-neutral-20) pt-4;
+  }
+
+  .builder-package-mvr-summary {
+    @apply cursor-pointer list-none text-xs font-bold uppercase text-(--color-neutral-60) transition-colors hover:text-(--color-martian-red);
+  }
+
+  .builder-package-mvr-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .builder-package-mvr-summary::before {
+    content: '+ ';
+  }
+
+  .builder-package-mvr-details[open] .builder-package-mvr-summary::before {
+    content: '− ';
+  }
+
+  .builder-package-mvr-details[open] .builder-package-mvr-summary {
+    @apply mb-4 text-(--color-neutral);
+  }
+
+  .builder-package-mvr-fields {
+    @apply pt-0;
+  }
+
   .builder-field :is(input, textarea, select) {
     @apply w-full border border-(--color-neutral-30) bg-(--color-crude-60) px-3 py-2 text-sm text-(--color-neutral) outline-none transition-colors focus:border-(--color-martian-red);
   }
@@ -44,12 +76,12 @@ h4 {
     @apply border-(--color-alert) focus:border-(--color-alert);
   }
 
-  .builder-status-badge {
-    @apply border border-(--color-neutral-20) px-2 py-1 text-xs font-bold uppercase text-(--color-neutral-60);
-  }
-
   .builder-text-button-danger {
     @apply text-xs font-bold uppercase text-(--color-alert);
+  }
+
+  .builder-text-button {
+    @apply text-xs font-bold uppercase text-(--color-neutral-60) transition-colors hover:text-(--color-martian-red);
   }
 
   .builder-wizard-step {
@@ -90,5 +122,25 @@ h4 {
 
   .builder-checkbox-option strong {
     @apply font-bold uppercase;
+  }
+
+  .builder-info-dialog:not([open]) {
+    display: none;
+  }
+
+  .builder-info-dialog[open] {
+    @apply fixed inset-0 z-50 m-0 flex h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-transparent p-4;
+  }
+
+  .builder-info-dialog[open]::backdrop {
+    background: rgb(0 0 0 / 60%);
+  }
+
+  .builder-info-dialog-panel {
+    @apply mx-auto max-w-lg border border-(--color-neutral-20) bg-(--color-crude) p-4;
+  }
+
+  .builder-info-dialog-close {
+    @apply border border-(--color-neutral-20) px-3 py-2 text-xs font-bold uppercase text-(--color-neutral-60) transition-colors hover:border-(--color-neutral-50) hover:text-(--color-neutral);
   }
 }
