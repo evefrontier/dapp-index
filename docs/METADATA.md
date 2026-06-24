@@ -89,12 +89,11 @@ manifest fields and the registry record should treat the listing as invalid.
   ],
   "media": {
     "thumbnail": "dashboard",
-    "hero": "dashboard",
     "items": [
       {
         "id": "dashboard",
         "kind": "image",
-        "role": "hero",
+        "role": "thumbnail",
         "uri": "walrus://blob/dashboardBlobId",
         "mimeType": "image/webp",
         "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -161,5 +160,5 @@ package object ID.
   gallery images, and one optional video) and at most `1` video.
 - Total public media across screenshots, posters, and video sources is limited
   to `150 MB`.
-- Gallery `thumbnail` must reference an id in `media.items`.
+- Gallery `thumbnail` values must reference IDs from `media.items`.
 - Media IDs must be unique within the listing.

@@ -100,7 +100,6 @@ export type DappIndexMediaItem =
 
 export interface DappIndexMediaGallery {
   thumbnail?: string;
-  hero?: string;
   items: DappIndexMediaItem[];
 }
 

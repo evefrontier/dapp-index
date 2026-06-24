@@ -145,7 +145,6 @@
       "required": ["items"],
       "properties": {
         "thumbnail": { "$ref": "#/$defs/mediaId" },
-        "hero": { "$ref": "#/$defs/mediaId" },
         "items": {
           "type": "array",
           "minItems": 1,
@@ -170,7 +169,7 @@
     },
     "mediaRole": {
       "type": "string",
-      "enum": ["thumbnail", "hero", "gallery", "demo", "logo"]
+      "enum": ["thumbnail", "gallery", "demo", "logo"]
     },
     "imageAssetBase": {
       "type": "object",
