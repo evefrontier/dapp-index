@@ -13,6 +13,7 @@ import {
   createWizardStepItems,
   getWizardAdjacentStep,
   getWizardStatusLabel,
+  getWizardStatusTone,
   getWizardStepLabel,
   isWizardPlaceholderStep,
   type WizardStepItem,
@@ -100,9 +101,7 @@ export function WizardShell({
     draft.completedSteps,
   );
   const title = getWizardStepLabel(activeStep);
-  const previousStep = getWizardAdjacentStep(activeStep, 'previous');
   const nextStep = getWizardAdjacentStep(activeStep, 'next');
-  const statusLabel = getWizardStatusLabel(autosaveStatus);
   const errorMessage = navigationError ?? autosaveError;
   const canNavigateNext =
     readOnly ||
@@ -117,41 +116,46 @@ export function WizardShell({
 
   return (
     <div className="space-y-6">
-      <WizardHeader statusLabel={statusLabel} title={title} />
       {readOnly ? <WizardPublishedBanner /> : null}
       <WizardErrorMessage message={errorMessage} />
 
       <div className="grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
-        <WizardStepNav
-          activeStep={activeStep}
-          items={stepItems}
-          navigationPending={navigationPending}
-          onNavigateStep={onNavigateStep}
-        />
+        <div className="space-y-4">
+          <WizardStepNav
+            activeStep={activeStep}
+            items={stepItems}
+            navigationPending={navigationPending}
+            onNavigateStep={onNavigateStep}
+          />
+          <hr className="builder-wizard-sidebar-divider" aria-hidden="true" />
+          <WizardSidebarActions
+            autosaveStatus={autosaveStatus}
+            navigationPending={navigationPending}
+            onExitWizard={onExitWizard}
+          />
+        </div>
         <WizardStepPanel
+          activeStep={activeStep}
+          canNavigateNext={canNavigateNext}
           draft={draft}
           fieldErrors={fieldErrors}
           fields={fields}
-          nextStep={nextStep}
-          previousStep={previousStep}
-          title={title}
-          activeStep={activeStep}
-          canNavigateNext={canNavigateNext}
+          mediaError={mediaError}
+          mediaErrors={mediaErrors}
+          mediaPending={mediaPending}
+          mediaPreviewUrls={mediaPreviewUrls}
           navigationPending={navigationPending}
+          nextStep={nextStep}
+          packageVerification={packageVerification}
+          publishStep={publishStep}
           readOnly={readOnly}
-          onExitWizard={onExitWizard}
+          reviewStep={reviewStep}
+          title={title}
           onDeleteMedia={onDeleteMedia}
           onNavigateStep={onNavigateStep}
           onUpdateMedia={onUpdateMedia}
           onUpdateFields={onUpdateFields}
           onUploadMediaForSlot={onUploadMediaForSlot}
-          mediaError={mediaError}
-          mediaErrors={mediaErrors}
-          mediaPending={mediaPending}
-          mediaPreviewUrls={mediaPreviewUrls}
-          packageVerification={packageVerification}
-          publishStep={publishStep}
-          reviewStep={reviewStep}
           onVerifyPackages={onVerifyPackages}
         />
       </div>
@@ -196,27 +200,45 @@ export function WizardMessage({
   );
 }
 
-function WizardHeader({
-  statusLabel,
-  title,
+function WizardSidebarActions({
+  autosaveStatus,
+  navigationPending,
+  onExitWizard,
 }: {
-  statusLabel: string;
-  title: string;
+  autosaveStatus: DraftAutosaveStatus;
+  navigationPending: boolean;
+  onExitWizard: () => Promise<void>;
 }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
-      <div className="max-w-3xl space-y-2">
-        <p className="text-xs font-bold uppercase text-(--color-neutral-60)">
-          Listing wizard
-        </p>
-        <h1 className="text-2xl font-bold uppercase tracking-wider text-(--color-neutral)">
-          {title}
-        </h1>
-      </div>
-      <div className="border border-(--color-neutral-20) px-3 py-2 text-xs font-bold uppercase text-(--color-neutral-60)">
-        {statusLabel}
-      </div>
+    <div className="flex flex-col items-start gap-2">
+      <WizardAutosaveTag autosaveStatus={autosaveStatus} />
+      <Button
+        variant="tertiary"
+        size="small"
+        disabled={navigationPending}
+        onClick={() => {
+          void onExitWizard();
+        }}
+      >
+        Back to drafts
+      </Button>
     </div>
+  );
+}
+
+function WizardAutosaveTag({
+  autosaveStatus,
+}: {
+  autosaveStatus: DraftAutosaveStatus;
+}) {
+  return (
+    <span
+      className="builder-tag-pill"
+      data-tone={getWizardStatusTone(autosaveStatus)}
+      aria-live="polite"
+    >
+      {getWizardStatusLabel(autosaveStatus)}
+    </span>
   );
 }
 
@@ -256,15 +278,14 @@ function WizardStepNav({
           void onNavigateStep(item.step);
         }}
       >
-        <span>{item.label}</span>
-        <StepStateLabel item={item} />
+        {item.label}
       </button>
     </li>
   ));
 
   return (
     <nav aria-label="Listing steps">
-      <ol className="grid gap-2">{stepButtons}</ol>
+      <ol className="grid gap-1.5">{stepButtons}</ol>
     </nav>
   );
 }
@@ -282,13 +303,11 @@ function WizardStepPanel({
   nextStep,
   navigationPending,
   packageVerification,
-  previousStep,
   publishStep,
   readOnly,
   reviewStep,
   title,
   onDeleteMedia,
-  onExitWizard,
   onNavigateStep,
   onUpdateMedia,
   onUpdateFields,
@@ -307,13 +326,11 @@ function WizardStepPanel({
   nextStep: DraftStep | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
-  previousStep: DraftStep | null;
   publishStep: PublishStepControllerState;
   readOnly: boolean;
   reviewStep: ReviewStepControllerState;
   title: string;
   onDeleteMedia: (mediaId: string) => Promise<void>;
-  onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
   onUpdateMedia: (
     mediaId: string,
@@ -355,7 +372,7 @@ function WizardStepPanel({
 
   return (
     <main className="min-w-0 space-y-5">
-      <section className="border border-(--color-neutral-20) p-4">
+      <section>
         <fieldset className="contents" disabled={readOnly}>
           <div className="space-y-4">
             <WizardStepPanelHeader
@@ -393,31 +410,11 @@ function WizardStepPanel({
         </p>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <button
-          type="button"
-          className="text-sm font-bold uppercase text-(--color-martian-red)"
-          disabled={navigationPending}
-          onClick={() => {
-            void onExitWizard();
-          }}
-        >
-          Back to drafts
-        </button>
-        <div className="builder-wizard-nav-actions">
-          {reviewNextBlocker ? (
-            <p className="builder-wizard-next-blocker">{reviewNextBlocker}</p>
-          ) : null}
-          <Button
-            variant="secondary"
-            size="small"
-            disabled={navigationPending || !previousStep}
-            onClick={() => {
-              if (previousStep) void onNavigateStep(previousStep);
-            }}
-          >
-            Back
-          </Button>
+      <div className="space-y-3">
+        {reviewNextBlocker ? (
+          <p className="builder-wizard-next-blocker">{reviewNextBlocker}</p>
+        ) : null}
+        <div className="flex flex-wrap justify-end gap-3">
           <Button
             variant="primary"
             size="small"
@@ -459,22 +456,10 @@ function WizardStepPanelHeader({
             Draft
           </dt>
           <dd className="break-all text-(--color-neutral)">{draftId}</dd>
-          <dt className="font-bold uppercase text-(--color-neutral-60)">
-            Step
-          </dt>
-          <dd className="text-(--color-neutral)">{title}</dd>
         </dl>
       ) : null}
     </div>
   );
-}
-
-function StepStateLabel({ item }: { item: WizardStepItem }) {
-  if (item.state === 'available') return null;
-
-  const label = item.state === 'active' ? 'Now' : 'Done';
-
-  return <span className="text-xs">{label}</span>;
 }
 
 function isWizardStepReadyForNext(
