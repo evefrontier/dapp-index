@@ -141,6 +141,9 @@ manifest fields and the registry record should treat the listing as invalid.
 }
 ```
 
+For guidance on which `suiPackages` to list, their roles, and how MVR match
+checking works, see [Sui Packages And MVR](./BUILDER_PLAN.md#sui-packages-and-mvr).
+
 `suiPackages` is optional. Use it when the dapp publishes or depends on Sui
 Move packages that should be surfaced with the listing. Each package entry
 requires `network`, `role`, and `packageId`; `mvrName` and `packageInfoId` are

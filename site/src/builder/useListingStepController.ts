@@ -610,7 +610,7 @@ function useVerifyRegistrationDraftPackages({
         result: null,
         errorMessage: getErrorMessage(
           caughtError,
-          'Could not verify packages.',
+          'Could not check MVR match.',
         ),
       });
     }

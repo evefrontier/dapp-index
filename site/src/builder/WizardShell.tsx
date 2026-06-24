@@ -8,6 +8,7 @@ import type {
   DraftStep,
 } from '@/storage/draftStorage';
 import { RegistrationStepScreen } from './RegistrationStepScreens';
+import { PackageStepGuide } from './PackageStepGuide';
 import {
   createWizardStepItems,
   getWizardAdjacentStep,
@@ -23,6 +24,7 @@ import {
 } from './registrationDraftFields';
 import {
   addRegistrationDraftPackage,
+  getPackagesStepNotices,
   type RegistrationDraftPackageVerificationState,
 } from './registrationDraftPackages';
 import type { RegistrationDraftMediaErrors } from './registrationDraftMedia';
@@ -329,19 +331,26 @@ function WizardStepPanel({
     activeStep === 'review' && nextStep && !canNavigateNext
       ? getReviewNextBlockerMessage(reviewStep.review, reviewStep.slugCheck)
       : null;
-  const headerAction =
+  const packageNotices =
+    activeStep === 'packages'
+      ? getPackagesStepNotices(fields.suiPackages)
+      : [];
+  const panelAction =
     activeStep === 'packages' ? (
-      <Button
-        variant="secondary"
-        size="small"
-        onClick={() =>
-          onUpdateFields({
-            suiPackages: addRegistrationDraftPackage(fields.suiPackages),
-          })
-        }
-      >
-        Add package
-      </Button>
+      <div className="flex flex-wrap items-center gap-3">
+        <PackageStepGuide />
+        <Button
+          variant="secondary"
+          size="small"
+          onClick={() =>
+            onUpdateFields({
+              suiPackages: addRegistrationDraftPackage(fields.suiPackages),
+            })
+          }
+        >
+          Add package
+        </Button>
+      </div>
     ) : null;
 
   return (
@@ -350,7 +359,7 @@ function WizardStepPanel({
         <fieldset className="contents" disabled={readOnly}>
           <div className="space-y-4">
             <WizardStepPanelHeader
-              action={headerAction}
+              action={panelAction}
               draftId={draft.id}
               showDraftMeta={isPlaceholderStep}
               title={title}
@@ -377,6 +386,12 @@ function WizardStepPanel({
           </div>
         </fieldset>
       </section>
+
+      {packageNotices.length > 0 ? (
+        <p className="text-xs text-(--color-neutral-60)" role="note">
+          {packageNotices.join(' ')}
+        </p>
+      ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button

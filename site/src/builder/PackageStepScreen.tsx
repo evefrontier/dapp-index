@@ -12,8 +12,7 @@ import {
   TextField,
 } from './FormFields';
 import {
-  PackageVerificationBadge,
-  PackageVerificationDetails,
+  PackageVerificationResultLine,
   PackageVerificationSummary,
 } from './PackageVerification';
 import {
@@ -40,9 +39,8 @@ export function PackageStepScreen({
   const packageValidation = validateRegistrationDraftPackages(packages);
   const verificationBlocker =
     getRegistrationDraftPackageVerificationBlocker(packages);
-  const canVerify =
-    !verificationBlocker &&
-    packageVerification.status !== 'verifying';
+  const isVerifying = packageVerification.status === 'verifying';
+  const canVerify = !verificationBlocker && !isVerifying;
 
   return (
     <div className="grid gap-4">
@@ -54,59 +52,90 @@ export function PackageStepScreen({
       {packages.length === 0 ? (
         <EmptyPackageList />
       ) : (
-        <div className="grid border-t border-(--color-neutral-20)">
-          {packages.map((draftPackage, index) => (
-            <PackageCard
-              key={draftPackage.draftPackageId}
-              draftPackage={draftPackage}
-              index={index}
-              packageError={packageValidation.packageErrors[index] ?? {}}
-              verificationResult={packageVerification.result?.results[index]}
-              onRemove={() =>
-                onChange(
-                  packages.filter(
-                    (item) =>
-                      item.draftPackageId !== draftPackage.draftPackageId,
-                  ),
-                )
-              }
-              onUpdate={(nextPackage) =>
-                onChange(updatePackage(packages, nextPackage))
-              }
-            />
-          ))}
-        </div>
-      )}
+        <>
+          <div className="grid divide-y divide-(--color-neutral-20)">
+            {packages.map((draftPackage, index) => (
+              <PackageCard
+                key={draftPackage.draftPackageId}
+                draftPackage={draftPackage}
+                index={index}
+                packageError={packageValidation.packageErrors[index] ?? {}}
+                verificationResult={packageVerification.result?.results[index]}
+                onRemove={() =>
+                  onChange(
+                    packages.filter(
+                      (item) =>
+                        item.draftPackageId !== draftPackage.draftPackageId,
+                    ),
+                  )
+                }
+                onUpdate={(nextPackage) =>
+                  onChange(updatePackage(packages, nextPackage))
+                }
+              />
+            ))}
+          </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-(--color-neutral-20) pt-4">
-        <PackageVerificationSummary
-          packageCount={packages.length}
-          verificationBlocker={verificationBlocker}
-          verification={packageVerification}
-        />
-        <Button
-          variant="primary"
-          size="small"
-          disabled={!canVerify}
-          onClick={() => {
-            void onVerifyPackages();
-          }}
-        >
-          Verify packages
-        </Button>
-      </div>
+          <PackageMvrMatchSection
+            canVerify={canVerify}
+            isVerifying={isVerifying}
+            packageCount={packages.length}
+            verification={packageVerification}
+            verificationBlocker={verificationBlocker}
+            onVerifyPackages={onVerifyPackages}
+          />
+        </>
+      )}
     </div>
   );
 }
 
 function EmptyPackageList() {
   return (
-    <div className="space-y-1 border-y border-(--color-neutral-20) py-4 text-sm text-(--color-neutral-60)">
-      <p>No packages added.</p>
-      <p className="text-xs text-(--color-neutral-60)">
-        Add one only if this dapp publishes Move code.
-      </p>
-    </div>
+    <p className="text-sm text-(--color-neutral-60)">
+      No packages added yet. Use Add package if this dapp publishes Move code.
+    </p>
+  );
+}
+
+function PackageMvrMatchSection({
+  canVerify,
+  isVerifying,
+  packageCount,
+  verification,
+  verificationBlocker,
+  onVerifyPackages,
+}: {
+  canVerify: boolean;
+  isVerifying: boolean;
+  packageCount: number;
+  verification: RegistrationDraftPackageVerificationState;
+  verificationBlocker: string | null;
+  onVerifyPackages: () => Promise<void>;
+}) {
+  return (
+    <section className="builder-package-mvr-check border-t border-(--color-neutral-20) pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-1">
+          <h4>MVR match check</h4>
+          <PackageVerificationSummary
+            packageCount={packageCount}
+            verificationBlocker={verificationBlocker}
+            verification={verification}
+          />
+        </div>
+        <Button
+          variant="secondary"
+          size="small"
+          disabled={!canVerify}
+          onClick={() => {
+            void onVerifyPackages();
+          }}
+        >
+          {isVerifying ? 'Checking…' : 'Check MVR match'}
+        </Button>
+      </div>
+    </section>
   );
 }
 
@@ -128,12 +157,9 @@ function PackageCard({
   const packageNumber = index + 1;
 
   return (
-    <section className="grid gap-4 border-b border-(--color-neutral-20) py-4">
+    <section className="grid gap-4 py-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <h4 className="text-sm">Package {packageNumber}</h4>
-          <PackageVerificationBadge result={verificationResult} />
-        </div>
+        <h4 className="text-sm">Package {packageNumber}</h4>
         <button
           type="button"
           className="builder-text-button-danger"
@@ -187,24 +213,31 @@ function PackageCard({
         value={draftPackage.packageId}
         onChange={(packageId) => onUpdate({ ...draftPackage, packageId })}
       />
-      <TextField
-        error={packageError.mvrName}
-        id={`builder-package-${draftPackage.draftPackageId}-mvr-name`}
-        label="MVR name (optional)"
-        value={draftPackage.mvrName}
-        onChange={(mvrName) => onUpdate({ ...draftPackage, mvrName })}
-      />
-      <TextField
-        error={packageError.packageInfoId}
-        id={`builder-package-${draftPackage.draftPackageId}-package-info-id`}
-        label="PackageInfo ID (optional)"
-        value={draftPackage.packageInfoId}
-        onChange={(packageInfoId) =>
-          onUpdate({ ...draftPackage, packageInfoId })
-        }
-      />
 
-      <PackageVerificationDetails result={verificationResult} />
+      <details className="builder-package-mvr-details">
+        <summary className="builder-package-mvr-summary">
+          {getPackageMvrSummaryLabel(draftPackage, packageError)}
+        </summary>
+        <div className="builder-package-mvr-fields grid gap-4">
+          <TextField
+            error={packageError.mvrName}
+            id={`builder-package-${draftPackage.draftPackageId}-mvr-name`}
+            label="MVR name"
+            value={draftPackage.mvrName}
+            onChange={(mvrName) => onUpdate({ ...draftPackage, mvrName })}
+          />
+          <TextField
+            error={packageError.packageInfoId}
+            id={`builder-package-${draftPackage.draftPackageId}-package-info-id`}
+            label="PackageInfo ID"
+            value={draftPackage.packageInfoId}
+            onChange={(packageInfoId) =>
+              onUpdate({ ...draftPackage, packageInfoId })
+            }
+          />
+          <PackageVerificationResultLine result={verificationResult} />
+        </div>
+      </details>
     </section>
   );
 }
@@ -218,4 +251,21 @@ function updatePackage(
       ? nextPackage
       : draftPackage,
   );
+}
+
+const PACKAGE_MVR_SUMMARY_BASE = 'Move Registry (MVR)';
+
+export function getPackageMvrSummaryLabel(
+  draftPackage: RegistrationDraftPackage,
+  packageError: RegistrationDraftPackageErrors,
+): string {
+  if (packageError.mvrName || packageError.packageInfoId) {
+    return `${PACKAGE_MVR_SUMMARY_BASE} · needs attention`;
+  }
+
+  if (draftPackage.mvrName.trim() || draftPackage.packageInfoId.trim()) {
+    return `${PACKAGE_MVR_SUMMARY_BASE} · has values`;
+  }
+
+  return PACKAGE_MVR_SUMMARY_BASE;
 }

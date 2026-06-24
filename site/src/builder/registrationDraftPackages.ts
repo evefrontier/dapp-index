@@ -2,6 +2,7 @@ import {
   type DappIndexSuiNetwork,
   type DappIndexSuiPackageRole,
 } from '@/types/dapp-index';
+import { DAPP_INDEX_CORE_SUI_PACKAGE_ROLE } from '@/constants';
 import {
   RegistrationDraftPackageSchema,
   RegistrationDraftPackageStorageSchema,
@@ -130,20 +131,44 @@ export function validateRegistrationDraftPackages(
   if (packageErrors.some(hasRequiredPackageErrors)) {
     fieldErrors.suiPackages = 'Add a valid package ID for each package.';
   } else if (packageErrors.some(hasPackageErrors)) {
-    fieldErrors.suiPackages = 'Fix optional MVR fields before verification.';
+    fieldErrors.suiPackages = 'Fix MVR fields before checking MVR match.';
   }
 
   return { fieldErrors, packageErrors };
 }
 
+/**
+ * Soft, non-blocking notices for the packages step. MVR match status lives in
+ * the step footer; only publish-readiness gaps appear here.
+ */
+export function getPackagesStepNotices(
+  packages: readonly RegistrationDraftPackage[],
+): string[] {
+  if (packages.length === 0) return [];
+
+  if (
+    !packages.some(
+      (draftPackage) => draftPackage.role === DAPP_INDEX_CORE_SUI_PACKAGE_ROLE,
+    )
+  ) {
+    return ['Mark your primary app package as core before publish.'];
+  }
+
+  return [];
+}
+
 export function getRegistrationDraftPackageVerificationBlocker(
   packages: readonly RegistrationDraftPackage[],
 ): string | null {
-  if (packages.length === 0) return 'Add a package before verification.';
+  if (packages.length === 0) return 'Add a package first.';
 
   const packageValidation = validateRegistrationDraftPackages(packages);
   if (packageValidation.fieldErrors.suiPackages) {
     return packageValidation.fieldErrors.suiPackages;
+  }
+
+  if (packages.some((draftPackage) => !draftPackage.mvrName.trim())) {
+    return 'Add MVR names above to check.';
   }
 
   return null;
