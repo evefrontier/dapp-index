@@ -17,7 +17,6 @@ function getMediaRoleLabels(): Partial<Record<DappIndexMediaRole, string>> {
   if (mediaRoleLabelsCache) return mediaRoleLabelsCache;
 
   const labels: Partial<Record<DappIndexMediaRole, string>> = {
-    hero: 'Hero',
     gallery: 'Gallery',
   };
 

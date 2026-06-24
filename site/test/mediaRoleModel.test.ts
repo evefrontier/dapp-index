@@ -11,7 +11,7 @@ describe('media role model', () => {
     expect(getMediaRoleLabel('demo')).toBe('Video');
     expect(getMediaRoleLabel('logo')).toBe('Logo');
     expect(getMediaRoleLabel('gallery')).toBe('Gallery');
-    expect(getMediaRoleLabel('hero')).toBe('Hero');
+    expect(getMediaRoleLabel('unknown' as 'gallery')).toBe('unknown');
   });
 
   test('exposes slot-based media limits in guidance copy', () => {

@@ -263,13 +263,11 @@ function createVideoMediaItem(
 
 function createMediaGalleryPointers(
   imageItems: DappIndexImageMediaItem[],
-): Pick<DappIndexMediaGallery, 'hero' | 'thumbnail'> {
+): Pick<DappIndexMediaGallery, 'thumbnail'> {
   const thumbnail = imageItems.find((item) => item.role === 'thumbnail');
-  const hero = imageItems.find((item) => item.role === 'hero');
 
   return {
     ...(thumbnail ? { thumbnail: thumbnail.id } : {}),
-    ...(hero ? { hero: hero.id } : {}),
   };
 }
 
@@ -277,7 +275,6 @@ function selectVideoPoster(
   imageItems: DappIndexImageMediaItem[],
 ): DappIndexImageMediaItem | null {
   return (
-    imageItems.find((item) => item.role === 'hero') ??
     imageItems.find((item) => item.role === 'thumbnail') ??
     imageItems[0] ??
     null
