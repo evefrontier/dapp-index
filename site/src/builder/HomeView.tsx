@@ -106,7 +106,7 @@ function Tutorial({
             Before you publish
           </h2>
           <ol className="list-decimal space-y-2 pl-5 text-sm text-(--color-neutral-60)">
-            <li>Drafts stay in this browser until publish succeeds.</li>
+            <li>Drafts stay in this browser until you delete them.</li>
             <li>Media stays local until publish.</li>
             <li>Wallet connection is only required for publish.</li>
           </ol>
@@ -219,7 +219,7 @@ function DraftListCard({
           {draft.title}
         </h3>
         <p className="text-sm text-(--color-neutral-60)">
-          Step: {draft.currentStepLabel} · Updated: {draft.updatedAtLabel}
+          {draft.statusLabel} · Updated: {draft.updatedAtLabel}
         </p>
         <p className="break-all text-xs text-(--color-neutral-60)">
           {draft.id}
@@ -231,7 +231,7 @@ function DraftListCard({
           params={resumeParams}
           className="text-sm font-bold uppercase text-(--color-martian-red)"
         >
-          Resume
+          {draft.isPublished ? 'View' : 'Resume'}
         </Link>
         <button
           type="button"

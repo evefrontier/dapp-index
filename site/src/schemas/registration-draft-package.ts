@@ -27,9 +27,9 @@ export const RegistrationDraftPackageSchema = z
     draftPackageId: z.string(),
     network: z.enum(DAPP_INDEX_SUI_NETWORKS),
     role: z.enum(DAPP_INDEX_SUI_PACKAGE_ROLES),
-    mvrName: z.string(),
+    mvrName: z.string().optional().default(''),
     packageId: z.string().trim().min(1, 'Package ID is required.'),
-    packageInfoId: z.string(),
+    packageInfoId: z.string().optional().default(''),
   })
   .superRefine((draftPackage, context) => {
     if (!SuiObjectIdSchema.safeParse(draftPackage.packageId).success) {
