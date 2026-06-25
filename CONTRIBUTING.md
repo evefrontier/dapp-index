@@ -39,15 +39,13 @@ the repository and submitting a pull request.
 
 ### Branch and commit standards
 
-- Branch from `main` with a structured name: `<type>/<short-kebab-description>`.
-- Use Conventional Commits for every commit message. See
-  [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/)
-  and `AGENTS.md` → Git and GitHub conventions.
-- Common branch types: `feat/`, `fix/`, `docs/`, `chore/`, `refactor/`, `test/`,
-  `ci/`, `build/`, `perf/`.
-- Do **not** use tool-specific branch prefixes such as `codex/` or `cursor/`.
+- Branch from `main`. Name branches per
+  [Conventional Branch 1.1.0](https://conventionalbranch.org/).
+- Write commit messages per
+  [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/).
+- Repo-specific rules: `AGENTS.md` → Git and GitHub conventions.
 
-Example branch and commits:
+Example:
 
 ```text
 feat/builder-publish-readiness

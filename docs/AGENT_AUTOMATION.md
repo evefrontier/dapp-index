@@ -211,10 +211,10 @@ commands run, manual Sui/Walrus/MVR steps, governance risks, and go/no-go notes.
 ## Safety Defaults
 
 - Agent-generated implementation branches should start from `main`.
-- Name branches with Conventional Commit types (`feat/`, `fix/`, `docs/`, etc.).
-  Do not use tool-specific prefixes such as `codex/` or `cursor/`.
-- Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for
-  commit messages. See `AGENTS.md` → Git and GitHub conventions.
+- Name branches per [Conventional Branch 1.1.0](https://conventionalbranch.org/).
+- Write commit messages per
+  [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/).
+  See `AGENTS.md` → Git and GitHub conventions for repo-specific rules.
 - PR descriptions must use a template from `.github/PULL_REQUEST_TEMPLATE/`
   (code or docs) and must not include tool attribution ("Made with Cursor", etc.).
 - Use worktrees for unattended or recurring automation.

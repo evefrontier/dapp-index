@@ -53,57 +53,32 @@ Optimize for reviewability over delivery speed. A PR should answer one clear que
 
 ## Git and GitHub conventions
 
-Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) for commit messages and mirror the commit **type** in branch names.
+We link to the published specs instead of copying them — both are versioned and
+stable. Add only repo-specific rules here.
 
 ### Branches
 
+Follow [Conventional Branch 1.1.0](https://conventionalbranch.org/):
+`<type>/<description>` in lowercase kebab-case.
+
 - Branch from `main`. One concern per branch.
-- Name branches `<type>/<short-kebab-description>`.
-- **Do not** use tool-specific prefixes such as `codex/`, `cursor/`, or author initials.
-- Use the same type vocabulary as commits:
-
-| Type | Branch example | Use for |
-| --- | --- | --- |
-| `feat/` | `feat/builder-publish-readiness` | New behavior or user-facing capability |
-| `fix/` | `fix/slug-check-normalization` | Bug fixes |
-| `docs/` | `docs/agent-typescript-conventions` | Documentation-only changes |
-| `chore/` | `chore/update-deps` | Maintenance, tooling, repo hygiene |
-| `refactor/` | `refactor/publish-domain-helpers` | Behavior-preserving code structure changes |
-| `test/` | `test/registration-draft-publish` | Tests only |
-| `ci/` | `ci/add-move-cache` | CI/CD workflow changes |
-| `build/` | `build/vite-config` | Build system or dependency wiring |
-| `perf/` | `perf/registry-listing-query` | Performance improvements |
-
-Other Conventional Commit types (`style:`, etc.) are allowed when they fit.
+- Prefer purpose prefixes (`feat/`, `fix/`, `chore/`, …). AI agent prefixes
+  (`codex/`, `cursor/`, `copilot/`, `ai/`, …) are valid per the spec when an
+  agent creates the branch.
 
 ### Commits
 
-Format:
+Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/):
+`<type>[optional scope]: <description>`.
+
+Commit types may be finer-grained than branch types (e.g. `docs(agents):` on a
+`chore/` branch). Prefer one logical change per commit.
+
+Example:
 
 ```text
-<type>[optional scope]: <description>
-
-[optional body]
-```
-
-Rules:
-
-- **Description** — imperative mood, lowercase start, no trailing period, ~72 characters or less when possible.
-- **Scope** — optional noun for the area touched, e.g. `feat(builder):`, `fix(chain):`, `docs(agents):`.
-- **Body** — explain *why* when the title is not enough; wrap at ~72 characters.
-- **Breaking changes** — append `!` after type/scope or add a `BREAKING CHANGE:` footer.
-- Prefer **one logical change per commit**. Split unrelated work instead of mixing surfaces in one commit.
-
-Examples:
-
-```text
-feat(builder): add publish readiness blockers
-
-fix(chain): restore isWalrusChainNetwork export
-
-docs(agents): document TypeScript helper conventions
-
-refactor(builder): simplify registration publish domain logic
+chore/agent-conventions
+  docs(agents): document TypeScript helper conventions
 ```
 
 ### Pull requests
