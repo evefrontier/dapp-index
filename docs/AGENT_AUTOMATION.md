@@ -138,8 +138,11 @@ Expected checks:
 Prompt:
 
 ```text
-Write a PR description for this branch. Include summary, affected surfaces,
-test plan, trust/governance notes, and manual release steps.
+Write a PR description for this branch using .github/PULL_REQUEST_TEMPLATE.md.
+Include summary, related work (if any), affected surfaces, verification commands
+run, optional manual testing only when CI cannot cover the behavior, and
+trust/governance notes when applicable. Do not add tool attribution.
+Follow branch and commit conventions in AGENTS.md → Git and GitHub conventions.
 ```
 
 ### Generate Docs From Merged Changes
@@ -208,6 +211,12 @@ commands run, manual Sui/Walrus/MVR steps, governance risks, and go/no-go notes.
 ## Safety Defaults
 
 - Agent-generated implementation branches should start from `main`.
+- Name branches with Conventional Commit types (`feat/`, `fix/`, `docs/`, etc.).
+  Do not use tool-specific prefixes such as `codex/` or `cursor/`.
+- Use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) for
+  commit messages. See `AGENTS.md` → Git and GitHub conventions.
+- PR descriptions must follow `.github/PULL_REQUEST_TEMPLATE.md` and must not
+  include tool attribution ("Made with Cursor", etc.).
 - Use worktrees for unattended or recurring automation.
 - Keep internet access limited unless current external docs are required.
 - Keep secrets out of the agent phase where possible.
