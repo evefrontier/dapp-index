@@ -7,6 +7,7 @@ import {
   validateRegistryMetadataJson,
   type RegistryMetadataValidation,
 } from '@/utils/registryMetadata';
+import { createSchemaValidationIssues } from '@/utils/schemaValidationIssues';
 import {
   validateRegistrationDraftFields,
   type RegistrationDraftFieldErrors,
@@ -242,16 +243,10 @@ function createOptionalFieldWarnings(
 function createSchemaIssues(
   schemaValidation: RegistryMetadataValidation,
 ): RegistrationDraftReviewIssue[] {
-  if (schemaValidation.ok) return [];
-
-  return (schemaValidation.errors ?? []).map((error, index) => ({
-    id: `schema.${error.instancePath || 'root'}.${error.keyword}.${index}`,
-    label: formatSchemaIssueLabel(error.instancePath),
-    message: error.message
-      ? `Schema ${error.message}.`
-      : 'Schema validation failed.',
-    severity: 'error',
-  }));
+  return createSchemaValidationIssues(
+    schemaValidation,
+    formatSchemaIssueLabel,
+  );
 }
 
 function formatSchemaIssueLabel(instancePath: string): string {
