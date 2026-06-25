@@ -24,7 +24,7 @@ function validMetadata() {
     summary: 'Plan and share Frontier hauling routes.',
     description:
       'A route planning dapp for coordinating storage-unit and gate logistics.',
-    categories: ['logistics', 'infrastructure'],
+    categories: ['commerce', 'infrastructure'],
     smartAssemblyTypes: ['storage-unit', 'gate'],
     serverTenant: 'stillness',
     liveUrl: 'https://route-planner.example',
