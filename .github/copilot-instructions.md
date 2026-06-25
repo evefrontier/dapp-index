@@ -10,3 +10,4 @@ Highest-priority reminders:
 - Run the smallest relevant verification commands before claiming completion.
 - Do not automate Sui publishing, wallet-funded transactions, mainnet release steps, or governance decisions without explicit approval.
 - Read scoped `AGENTS.md` files when working under `site/`, `registry/move/`, or `registry/schema/`.
+- In site TypeScript, avoid trivial one-liner helpers and test-only exports from `src/`; see `site/AGENTS.md` → TypeScript conventions.

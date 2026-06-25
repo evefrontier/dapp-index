@@ -66,3 +66,4 @@ Optimize for reviewability over delivery speed. A PR should answer one clear que
 - Check that public schema/type changes include tests and docs.
 - Check that generated PR descriptions list affected surfaces and commands run.
 - Flag duplicate helpers, speculative exports, and multi-surface PRs without a split plan.
+- For site TypeScript, flag **trivial helpers** (one-liner wrappers, passthrough re-exports, test-only `src/` utilities) and **missing exhaustiveness** on discriminated status unions. See `site/AGENTS.md` → TypeScript conventions.
