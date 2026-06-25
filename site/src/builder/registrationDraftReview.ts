@@ -19,18 +19,6 @@ import {
   type RegistrationDraftSlugCheckState,
 } from './registrationDraftSlugCheck';
 
-export type {
-  RegistrationDraftSlugCheckState,
-  ReviewTone,
-  SlugCheckPresentation,
-  SlugCheckStatus,
-} from './registrationDraftSlugCheck';
-export {
-  getSlugCheckPresentation,
-  INITIAL_REGISTRATION_DRAFT_SLUG_CHECK,
-  isReviewSlugCheckReady,
-} from './registrationDraftSlugCheck';
-
 export type RegistrationDraftMetadataJson = Record<string, unknown>;
 
 export type RegistrationDraftReviewIssue = {
@@ -89,11 +77,11 @@ export function buildRegistrationDraftMetadata(
   const metadata: RegistrationDraftMetadataJson = {
     schema: DAPP_INDEX_METADATA_SCHEMA,
     schemaVersion: DAPP_INDEX_METADATA_SCHEMA_VERSION,
-    id: trimText(fields.slug),
-    name: trimText(fields.name),
-    summary: trimText(fields.summary),
+    id: fields.slug.trim(),
+    name: fields.name.trim(),
+    summary: fields.summary.trim(),
     categories: [...fields.categories],
-    liveUrl: trimText(fields.liveUrl),
+    liveUrl: fields.liveUrl.trim(),
     serverTenant: fields.serverTenant,
   };
 
@@ -102,7 +90,7 @@ export function buildRegistrationDraftMetadata(
       const packageMetadata: RegistrationDraftMetadataJson = {
         network: draftPackage.network,
         role: draftPackage.role,
-        packageId: trimText(draftPackage.packageId),
+        packageId: draftPackage.packageId.trim(),
       };
       addOptionalText(packageMetadata, 'mvrName', draftPackage.mvrName);
       addOptionalText(
@@ -181,111 +169,75 @@ function createFieldIssues(
   }));
 }
 
-function createOptionalFieldWarnings(
-  fields: RegistrationDraftFields,
-): RegistrationDraftReviewIssue[] {
-  const issues: RegistrationDraftReviewIssue[] = [];
-
-  if (fields.suiPackages.length === 0) {
-    issues.push({
-      id: 'optional.suiPackages',
-      label: 'Packages',
-      message: 'Add a Sui package only if this dapp publishes or depends on Move code.',
-      severity: 'warning',
-    });
-  } else {
-    if (
-      !fields.suiPackages.some((draftPackage) => draftPackage.role === 'core')
-    ) {
-      issues.push({
-        id: 'suiPackages.core',
-        label: 'Core package',
-        message: 'Mark the main dapp package as core if one package is primary.',
-        severity: 'warning',
-      });
-    }
-
-    if (
-      fields.suiPackages.some((draftPackage) => !draftPackage.mvrName.trim())
-    ) {
-      issues.push({
-        id: 'suiPackages.mvrName',
-        label: 'MVR name',
-        message: 'Add an MVR name when the package has a Move Registry entry.',
-        severity: 'warning',
-      });
-    }
-
-    if (
-      fields.suiPackages.some(
-        (draftPackage) => !draftPackage.packageInfoId.trim(),
-      )
-    ) {
-      issues.push({
-        id: 'suiPackages.packageInfoId',
-        label: 'PackageInfo ID',
-        message: 'Add a PackageInfo ID when the package has one.',
-        severity: 'warning',
-      });
-    }
-  }
-
-  issues.push(
-    ...OPTIONAL_FIELD_WARNINGS.flatMap((warning) =>
-      warning.isMissing(fields) ? [warning.toIssue()] : [],
-    ),
-  );
-
-  return issues;
-}
-
 type OptionalFieldWarning = {
   id: string;
   isMissing: (fields: RegistrationDraftFields) => boolean;
   label: string;
   message: string;
-  toIssue: () => RegistrationDraftReviewIssue;
 };
 
 const OPTIONAL_FIELD_WARNINGS: OptionalFieldWarning[] = [
   {
+    id: 'optional.suiPackages',
+    label: 'Packages',
+    message:
+      'Add a Sui package only if this dapp publishes or depends on Move code.',
+    isMissing: (fields) => fields.suiPackages.length === 0,
+  },
+  {
+    id: 'suiPackages.core',
+    label: 'Core package',
+    message: 'Mark the main dapp package as core if one package is primary.',
+    isMissing: (fields) =>
+      fields.suiPackages.length > 0 &&
+      !fields.suiPackages.some((draftPackage) => draftPackage.role === 'core'),
+  },
+  {
+    id: 'suiPackages.mvrName',
+    label: 'MVR name',
+    message: 'Add an MVR name when the package has a Move Registry entry.',
+    isMissing: (fields) =>
+      fields.suiPackages.some((draftPackage) => !draftPackage.mvrName.trim()),
+  },
+  {
+    id: 'suiPackages.packageInfoId',
+    label: 'PackageInfo ID',
+    message: 'Add a PackageInfo ID when the package has one.',
+    isMissing: (fields) =>
+      fields.suiPackages.some(
+        (draftPackage) => !draftPackage.packageInfoId.trim(),
+      ),
+  },
+  {
     id: 'optional.description',
-    isMissing: (fields: RegistrationDraftFields) => !fields.description.trim(),
     label: 'Description',
     message: 'Add a description if this listing needs more context.',
-    toIssue: () => ({
-      id: 'optional.description',
-      label: 'Description',
-      message: 'Add a description if this listing needs more context.',
-      severity: 'warning',
-    }),
+    isMissing: (fields) => !fields.description.trim(),
   },
   {
     id: 'optional.repositoryUrl',
-    isMissing: (fields: RegistrationDraftFields) => !fields.repositoryUrl.trim(),
     label: 'Repo URL',
     message: 'Add a repo URL if the dapp code is public.',
-    toIssue: () => ({
-      id: 'optional.repositoryUrl',
-      label: 'Repo URL',
-      message: 'Add a repo URL if the dapp code is public.',
-      severity: 'warning',
-    }),
+    isMissing: (fields) => !fields.repositoryUrl.trim(),
   },
   {
     id: 'optional.documentationUrl',
-    isMissing: (fields: RegistrationDraftFields) =>
-      !fields.documentationUrl.trim(),
     label: 'Docs URL',
     message: 'Add docs if setup or usage needs explanation.',
-    toIssue: () => ({
-      id: 'optional.documentationUrl',
-      label: 'Docs URL',
-      message: 'Add docs if setup or usage needs explanation.',
-      severity: 'warning',
-    }),
+    isMissing: (fields) => !fields.documentationUrl.trim(),
   },
 ];
+
+function createOptionalFieldWarnings(
+  fields: RegistrationDraftFields,
+): RegistrationDraftReviewIssue[] {
+  return OPTIONAL_FIELD_WARNINGS.filter((warning) =>
+    warning.isMissing(fields),
+  ).map(({ isMissing: _omit, ...issue }) => ({
+    ...issue,
+    severity: 'warning' as const,
+  }));
+}
 
 function createSchemaIssues(
   schemaValidation: RegistryMetadataValidation,
@@ -323,10 +275,6 @@ function dedupeIssues(
   });
 }
 
-function trimText(value: string): string {
-  return value.trim();
-}
-
 function isBlockingReviewIssue(issue: RegistrationDraftReviewIssue): boolean {
   return issue.severity === 'error';
 }
@@ -336,6 +284,6 @@ function addOptionalText(
   key: string,
   value: string,
 ) {
-  const trimmedValue = trimText(value);
+  const trimmedValue = value.trim();
   if (trimmedValue) metadata[key] = trimmedValue;
 }

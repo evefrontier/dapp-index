@@ -136,11 +136,6 @@ export function getMediaSlotDefinition(slotId: MediaSlotId): MediaSlotDefinition
   return slot;
 }
 
-/** Stable draft/publish media id for a slot (currently identical to slot id). */
-export function getStableMediaIdForSlot(slotId: MediaSlotId): string {
-  return slotId;
-}
-
 export function getAcceptAttributeForSlot(slotId: MediaSlotId): string {
   return getMediaSlotDefinition(slotId).acceptMime.join(',');
 }
@@ -150,8 +145,7 @@ export function getMediaForSlot(
   media: readonly DraftMedia[],
   slotId: MediaSlotId,
 ): DraftMedia | null {
-  const stableId = getStableMediaIdForSlot(slotId);
-  return media.find((item) => item.id === stableId) ?? null;
+  return media.find((item) => item.id === slotId) ?? null;
 }
 
 export function getMediaSlotStatus(
