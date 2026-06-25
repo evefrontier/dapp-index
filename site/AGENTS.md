@@ -102,7 +102,7 @@ Extract a helper when it:
 
 ### Discriminated unions and readiness checks
 
-- Use **`switch` + `assertNever`** on typed status unions in domain logic — not only in UI copy. This keeps exhaustiveness checking when new statuses are added.
+- Use **`switch` + an exhaustiveness check** (`assertNever(x)` or `const _exhaustive: never = x`) on typed status unions in domain logic — not only in UI copy. This keeps exhaustiveness checking when new statuses are added.
 - For ordered blocker or readiness lists, prefer a **declarative array** of `condition && message` entries filtered to strings over sequential `if (!x) blockers.push(...)` chains. Preserve order when the first blocker is shown to users.
 
 ### Exports and tests

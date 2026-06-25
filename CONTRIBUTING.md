@@ -60,8 +60,8 @@ When you open a PR, GitHub offers two templates under
 
 | Template | Use when |
 | --- | --- |
-| **code** | Default — site, Move, schema, Walrus, or any behavior change |
-| **docs** | Docs-only or agent-config changes (minimal fields) |
+| **code.md** | Default — site, Move, schema, Walrus, or any behavior change |
+| **docs.md** | Docs-only or agent-config changes (minimal fields) |
 
 **Required for every PR:** Summary and Verification.
 
