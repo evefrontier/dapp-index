@@ -36,7 +36,7 @@ The Move package stores one `DappListing` per slug:
   "slug": "route-planner",
   "metadata_uri": "walrus://blob/METADATA_BLOB_ID",
   "metadata_hash": [180, 23, 246, 5, 202, 88, 131, 17, 64, 201, 37, 155, 98, 44, 7, 219, 113, 250, 60, 141, 88, 179, 24, 7, 34, 118, 93, 41, 206, 77, 162, 5],
-  "categories": ["logistics", "infrastructure"],
+  "categories": ["commerce", "infrastructure"],
   "created_at_epoch": 123,
   "updated_at_epoch": 123
 }
@@ -51,7 +51,7 @@ Registration and update transactions provide:
   "slug": "route-planner",
   "metadataUri": "walrus://blob/METADATA_BLOB_ID",
   "metadataHash": "64-char-hex-sha256-of-canonical-metadata-json",
-  "categories": ["logistics", "infrastructure"]
+  "categories": ["commerce", "infrastructure"]
 }
 ```
 
@@ -70,7 +70,7 @@ manifest fields and the registry record should treat the listing as invalid.
   "name": "Route Planner",
   "summary": "Plan and share Frontier hauling routes.",
   "description": "A route planning dapp for coordinating storage-unit and gate logistics.",
-  "categories": ["logistics", "infrastructure"],
+  "categories": ["commerce", "infrastructure"],
   "smartAssemblyTypes": ["storage-unit", "gate"],
   "serverTenant": "stillness",
   "liveUrl": "https://route-planner.example",
