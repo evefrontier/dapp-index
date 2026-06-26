@@ -15,3 +15,6 @@ registry-move/build
 # Tool caches
 .cache
 .vite
+
+# Local git worktrees (linked checkouts for parallel development)
+worktrees/
