@@ -8,7 +8,7 @@ import type {
   DraftStep,
 } from '@/storage/draftStorage';
 import { RegistrationStepScreen } from './RegistrationStepScreens';
-import { PackageStepGuide } from './PackageStepGuide';
+import { PublishStepGuide } from './PublishStepGuide';
 import {
   createWizardStepItems,
   getWizardAdjacentStep,
@@ -37,6 +37,7 @@ import {
   type RegistrationDraftSlugCheckState,
 } from './registrationDraftReview';
 import type { PublishStepControllerState } from './publishStepPresentation';
+import { PublishStepFooter } from './PublishStepFooter';
 import type { ReviewStepControllerState } from './reviewStepPresentation';
 
 export type WizardShellProps = {
@@ -354,20 +355,19 @@ function WizardStepPanel({
       : [];
   const panelAction =
     activeStep === 'packages' ? (
-      <div className="flex flex-wrap items-center gap-3">
-        <PackageStepGuide />
-        <Button
-          variant="secondary"
-          size="small"
-          onClick={() =>
-            onUpdateFields({
-              suiPackages: addRegistrationDraftPackage(fields.suiPackages),
-            })
-          }
-        >
-          Add package
-        </Button>
-      </div>
+      <Button
+        variant="secondary"
+        size="small"
+        onClick={() =>
+          onUpdateFields({
+            suiPackages: addRegistrationDraftPackage(fields.suiPackages),
+          })
+        }
+      >
+        Add package
+      </Button>
+    ) : activeStep === 'publish' && !readOnly ? (
+      <PublishStepGuide mediaItemCount={publishStep.mediaItemCount} />
     ) : null;
 
   return (
@@ -404,28 +404,48 @@ function WizardStepPanel({
         </fieldset>
       </section>
 
-      {packageNotices.length > 0 ? (
-        <p className="text-xs text-(--color-neutral-60)" role="note">
-          {packageNotices.join(' ')}
-        </p>
-      ) : null}
-
-      <div className="space-y-3">
-        {reviewNextBlocker ? (
-          <p className="builder-wizard-next-blocker">{reviewNextBlocker}</p>
-        ) : null}
-        <div className="flex flex-wrap justify-end gap-3">
-          <Button
-            variant="primary"
-            size="small"
-            disabled={navigationPending || !nextStep || !canNavigateNext}
-            onClick={() => {
-              if (nextStep) void onNavigateStep(nextStep);
-            }}
-          >
-            Next
-          </Button>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <button
+          type="button"
+          className="text-sm font-bold uppercase text-(--color-martian-red)"
+          disabled={navigationPending}
+          onClick={() => {
+            void onExitWizard();
+          }}
+        >
+          Back to drafts
+        </button>
+        {activeStep === 'publish' && !readOnly ? (
+          <PublishStepFooter publishStep={publishStep} />
+        ) : (
+          <div className="builder-wizard-nav-actions">
+            {reviewNextBlocker ? (
+              <p className="builder-wizard-next-blocker">{reviewNextBlocker}</p>
+            ) : null}
+            <Button
+              variant="secondary"
+              size="small"
+              disabled={navigationPending || !previousStep}
+              onClick={() => {
+                if (previousStep) void onNavigateStep(previousStep);
+              }}
+            >
+              Back
+            </Button>
+            {nextStep ? (
+              <Button
+                variant="primary"
+                size="small"
+                disabled={navigationPending || !canNavigateNext}
+                onClick={() => {
+                  void onNavigateStep(nextStep);
+                }}
+              >
+                Next
+              </Button>
+            ) : null}
+          </div>
+        )}
       </div>
     </main>
   );
