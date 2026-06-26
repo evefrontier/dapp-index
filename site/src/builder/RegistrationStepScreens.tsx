@@ -8,6 +8,7 @@ import { BasicsStepScreen } from './BasicsStepScreen';
 import { DiscoveryStepScreen } from './DiscoveryStepScreen';
 import { MediaStepScreen } from './MediaStepScreen';
 import { PackagesStepScreen } from './PackagesStepScreen';
+import { PublishStepScreen } from './PublishStepScreen';
 import { ReviewStepScreen } from './ReviewStepScreen';
 import type { MediaSlotId } from './mediaSlotModel';
 import type {
@@ -16,6 +17,7 @@ import type {
 } from './registrationDraftFields';
 import type { RegistrationDraftMediaErrors } from './registrationDraftMedia';
 import type { RegistrationDraftPackageVerificationState } from './registrationDraftPackages';
+import type { PublishStepControllerState } from './publishStepPresentation';
 import type { ReviewStepControllerState } from './reviewStepPresentation';
 
 export type RegistrationStepScreenProps = {
@@ -28,6 +30,8 @@ export type RegistrationStepScreenProps = {
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
   packageVerification: RegistrationDraftPackageVerificationState;
+  publishStep: PublishStepControllerState;
+  readOnly: boolean;
   reviewStep: ReviewStepControllerState;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onUpdateMedia: (
@@ -52,6 +56,8 @@ export function RegistrationStepScreen({
   mediaPending,
   mediaPreviewUrls,
   packageVerification,
+  publishStep,
+  readOnly,
   reviewStep,
   onDeleteMedia,
   onUpdateMedia,
@@ -108,6 +114,8 @@ export function RegistrationStepScreen({
       );
     case 'review':
       return <ReviewStepScreen {...reviewStep} />;
+    case 'publish':
+      return <PublishStepScreen {...publishStep} readOnly={readOnly} />;
     default:
       return (
         <p className="text-sm text-(--color-neutral-60)">

@@ -27,9 +27,14 @@ import {
   toMoveRegistryResolvablePackages,
   type RegistrationDraftPackageVerificationState,
 } from './registrationDraftPackages';
+import { createPublishStepState } from './publishStepPresentation';
 import type { ReviewStepControllerState } from './reviewStepPresentation';
+import { isPublishedDraft } from './publishedDraft';
 import { useRegistrationDraftReview } from './useRegistrationDraftReview';
 import { useRegistrationDraftSlugCheck } from './useRegistrationDraftSlugCheck';
+import {
+  useRegistrationDraftPublishController,
+} from './useRegistrationDraftPublishController';
 import {
   createDraftAutosave,
   createDraftStorage,
@@ -90,6 +95,8 @@ type ListingStepResultOptions = ListingStepState & {
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  publishStep: ReturnType<typeof createPublishStepState>;
+  readOnly: boolean;
   reviewStep: ReviewStepControllerState;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
@@ -184,6 +191,56 @@ export function useListingStepController({
     setNavigationPending,
     storage,
   });
+  const {
+    publishReadiness,
+    publishState,
+    suiNetwork,
+    walletAddress,
+    walletBalanceStatus,
+    walletNetwork,
+    onConnectWallet,
+    onPublish,
+  } = useRegistrationDraftPublishController({
+    autosave,
+    draft,
+    fields,
+    review,
+    setDraft,
+    storage,
+  });
+  const publishStep = useMemo(
+    () =>
+      createPublishStepState({
+        publishReadiness,
+        publishState,
+        suiNetwork,
+        walletAddress,
+        walletBalanceStatus,
+        walletNetwork,
+        onConnectWallet,
+        onPublish,
+      }),
+    [
+      onConnectWallet,
+      onPublish,
+      publishReadiness,
+      publishState,
+      suiNetwork,
+      walletAddress,
+      walletBalanceStatus,
+      walletNetwork,
+    ],
+  );
+
+  const readOnly = draft ? isPublishedDraft(draft) : false;
+  const guarded = useReadOnlyGuardedHandlers({
+    readOnly,
+    onDeleteMedia,
+    onUpdateFields,
+    onUpdateMedia,
+    onUploadMediaForSlot,
+    onVerifyPackages,
+  });
 
   return createListingStepControllerResult({
     autosaveError,
@@ -200,16 +257,78 @@ export function useListingStepController({
     navigationError,
     navigationPending,
     packageVerification,
+    publishStep,
+    readOnly,
     reviewStep,
-    onDeleteMedia,
+    onDeleteMedia: guarded.onDeleteMedia,
     onExitWizard,
     onNavigateStep,
-    onUpdateMedia,
-    onUpdateFields,
-    onUploadMediaForSlot,
-    onVerifyPackages,
+    onUpdateMedia: guarded.onUpdateMedia,
+    onUpdateFields: guarded.onUpdateFields,
+    onUploadMediaForSlot: guarded.onUploadMediaForSlot,
+    onVerifyPackages: guarded.onVerifyPackages,
     routeStep,
   });
+}
+
+function useReadOnlyGuardedHandlers({
+  readOnly,
+  onDeleteMedia,
+  onUpdateFields,
+  onUpdateMedia,
+  onUploadMediaForSlot,
+  onVerifyPackages,
+}: {
+  readOnly: boolean;
+  onDeleteMedia: (mediaId: string) => Promise<void>;
+  onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
+  onUpdateMedia: (
+    mediaId: string,
+    update: DraftMediaUpdate,
+  ) => Promise<void>;
+  onUploadMediaForSlot: (slotId: MediaSlotId, file: File) => Promise<void>;
+  onVerifyPackages: () => Promise<void>;
+}) {
+  const guardedOnUpdateFields = useCallback(
+    (nextFields: Partial<RegistrationDraftFields>) => {
+      if (readOnly) return;
+      onUpdateFields(nextFields);
+    },
+    [onUpdateFields, readOnly],
+  );
+  const guardedOnUploadMediaForSlot = useCallback(
+    async (slotId: MediaSlotId, file: File) => {
+      if (readOnly) return;
+      await onUploadMediaForSlot(slotId, file);
+    },
+    [onUploadMediaForSlot, readOnly],
+  );
+  const guardedOnUpdateMedia = useCallback(
+    async (mediaId: string, update: DraftMediaUpdate) => {
+      if (readOnly) return;
+      await onUpdateMedia(mediaId, update);
+    },
+    [onUpdateMedia, readOnly],
+  );
+  const guardedOnDeleteMedia = useCallback(
+    async (mediaId: string) => {
+      if (readOnly) return;
+      await onDeleteMedia(mediaId);
+    },
+    [onDeleteMedia, readOnly],
+  );
+  const guardedOnVerifyPackages = useCallback(async () => {
+    if (readOnly) return;
+    await onVerifyPackages();
+  }, [onVerifyPackages, readOnly]);
+
+  return {
+    onDeleteMedia: guardedOnDeleteMedia,
+    onUpdateFields: guardedOnUpdateFields,
+    onUpdateMedia: guardedOnUpdateMedia,
+    onUploadMediaForSlot: guardedOnUploadMediaForSlot,
+    onVerifyPackages: guardedOnVerifyPackages,
+  };
 }
 
 function useDraftLoader({
@@ -800,6 +919,8 @@ function createListingStepControllerResult(
       navigationError: options.navigationError,
       navigationPending: options.navigationPending,
       packageVerification: options.packageVerification,
+      publishStep: options.publishStep,
+      readOnly: options.readOnly,
       reviewStep: options.reviewStep,
       onDeleteMedia: options.onDeleteMedia,
       onExitWizard: options.onExitWizard,

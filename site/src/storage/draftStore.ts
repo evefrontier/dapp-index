@@ -136,6 +136,23 @@ export function createDraftStorage(
     }));
   }
 
+  async function finalizePublishedDraft(
+    draftId: string,
+    checkpoint: DraftPublishCheckpoint,
+  ): Promise<Draft> {
+    return updateDraft(draftId, (draft) => ({
+      ...draft,
+      status: 'published',
+      currentStep: 'publish',
+      completedSteps: addCompletedStep(draft.completedSteps, 'publish'),
+      publish: {
+        ...draft.publish,
+        ...checkpoint,
+      },
+      updatedAt: now().toISOString(),
+    }));
+  }
+
   async function saveMedia(
     draftId: string,
     input: DraftMediaInput,
@@ -246,6 +263,7 @@ export function createDraftStorage(
     setDraftStep,
     completeDraftStep,
     savePublishCheckpoint,
+    finalizePublishedDraft,
     saveMedia,
     updateMedia,
     deleteMedia,

@@ -33,6 +33,7 @@ import {
   type RegistrationDraftReview,
   type RegistrationDraftSlugCheckState,
 } from './registrationDraftReview';
+import type { PublishStepControllerState } from './publishStepPresentation';
 import type { ReviewStepControllerState } from './reviewStepPresentation';
 
 export type WizardShellProps = {
@@ -49,6 +50,8 @@ export type WizardShellProps = {
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  publishStep: PublishStepControllerState;
+  readOnly: boolean;
   reviewStep: ReviewStepControllerState;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
@@ -79,6 +82,8 @@ export function WizardShell({
   navigationError,
   navigationPending,
   packageVerification,
+  publishStep,
+  readOnly,
   reviewStep,
   onDeleteMedia,
   onExitWizard,
@@ -98,6 +103,7 @@ export function WizardShell({
   const statusLabel = getWizardStatusLabel(autosaveStatus);
   const errorMessage = navigationError ?? autosaveError;
   const canNavigateNext =
+    readOnly ||
     !nextStep ||
     isWizardStepReadyForNext(
       activeStep,
@@ -110,6 +116,7 @@ export function WizardShell({
   return (
     <div className="space-y-6">
       <WizardHeader statusLabel={statusLabel} title={title} />
+      {readOnly ? <WizardPublishedBanner /> : null}
       <WizardErrorMessage message={errorMessage} />
 
       <div className="grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
@@ -129,6 +136,7 @@ export function WizardShell({
           activeStep={activeStep}
           canNavigateNext={canNavigateNext}
           navigationPending={navigationPending}
+          readOnly={readOnly}
           onExitWizard={onExitWizard}
           onDeleteMedia={onDeleteMedia}
           onNavigateStep={onNavigateStep}
@@ -140,10 +148,23 @@ export function WizardShell({
           mediaPending={mediaPending}
           mediaPreviewUrls={mediaPreviewUrls}
           packageVerification={packageVerification}
+          publishStep={publishStep}
           reviewStep={reviewStep}
           onVerifyPackages={onVerifyPackages}
         />
       </div>
+    </div>
+  );
+}
+
+function WizardPublishedBanner() {
+  return (
+    <div
+      className="border border-(--color-neutral-20) bg-(--color-crude-20) p-3 text-sm text-(--color-neutral-60)"
+      role="status"
+    >
+      Published on Sui. This local draft is kept as a read-only record. Delete it
+      from the drafts list when you no longer need it.
     </div>
   );
 }
@@ -260,6 +281,8 @@ function WizardStepPanel({
   navigationPending,
   packageVerification,
   previousStep,
+  publishStep,
+  readOnly,
   reviewStep,
   title,
   onDeleteMedia,
@@ -283,6 +306,8 @@ function WizardStepPanel({
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
   previousStep: DraftStep | null;
+  publishStep: PublishStepControllerState;
+  readOnly: boolean;
   reviewStep: ReviewStepControllerState;
   title: string;
   onDeleteMedia: (mediaId: string) => Promise<void>;
@@ -322,31 +347,35 @@ function WizardStepPanel({
   return (
     <main className="min-w-0 space-y-5">
       <section className="border border-(--color-neutral-20) p-4">
-        <div className="space-y-4">
-          <WizardStepPanelHeader
-            action={headerAction}
-            draftId={draft.id}
-            showDraftMeta={isPlaceholderStep}
-            title={title}
-          />
-          <RegistrationStepScreen
-            activeStep={activeStep}
-            errors={fieldErrors}
-            fields={fields}
-            media={draft.media}
-            mediaError={mediaError}
-            mediaErrors={mediaErrors}
-            mediaPending={mediaPending}
-            mediaPreviewUrls={mediaPreviewUrls}
-            packageVerification={packageVerification}
-            reviewStep={reviewStep}
-            onDeleteMedia={onDeleteMedia}
-            onUpdateMedia={onUpdateMedia}
-            onUpdateFields={onUpdateFields}
-            onUploadMediaForSlot={onUploadMediaForSlot}
-            onVerifyPackages={onVerifyPackages}
-          />
-        </div>
+        <fieldset className="contents" disabled={readOnly}>
+          <div className="space-y-4">
+            <WizardStepPanelHeader
+              action={headerAction}
+              draftId={draft.id}
+              showDraftMeta={isPlaceholderStep}
+              title={title}
+            />
+            <RegistrationStepScreen
+              activeStep={activeStep}
+              errors={fieldErrors}
+              fields={fields}
+              media={draft.media}
+              mediaError={mediaError}
+              mediaErrors={mediaErrors}
+              mediaPending={mediaPending}
+              mediaPreviewUrls={mediaPreviewUrls}
+              packageVerification={packageVerification}
+              publishStep={publishStep}
+              readOnly={readOnly}
+              reviewStep={reviewStep}
+              onDeleteMedia={onDeleteMedia}
+              onUpdateMedia={onUpdateMedia}
+              onUpdateFields={onUpdateFields}
+              onUploadMediaForSlot={onUploadMediaForSlot}
+              onVerifyPackages={onVerifyPackages}
+            />
+          </div>
+        </fieldset>
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -446,4 +475,3 @@ function isWizardStepReadyForNext(
 
   return isRegistrationDraftStepValid(step, fields, media);
 }
-
