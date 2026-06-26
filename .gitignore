@@ -15,3 +15,5 @@ registry-move/build
 # Tool caches
 .cache
 .vite
+
+worktrees/
