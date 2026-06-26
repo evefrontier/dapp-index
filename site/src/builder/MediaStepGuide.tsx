@@ -1,5 +1,6 @@
 import { useRef } from 'react';
-import { getMediaStepGuideCopy } from './mediaRoleModel';
+import { getMediaStepGuideSections } from './mediaRoleModel';
+import { MediaGuideBulletList } from './MediaGuideBulletList';
 
 export type MediaStepGuideProps = {
   mediaItemCount: number;
@@ -7,7 +8,7 @@ export type MediaStepGuideProps = {
 
 export function MediaStepGuide({ mediaItemCount }: MediaStepGuideProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const guidance = getMediaStepGuideCopy(mediaItemCount);
+  const { footer, intro, sections } = getMediaStepGuideSections(mediaItemCount);
 
   return (
     <>
@@ -41,14 +42,16 @@ export function MediaStepGuide({ mediaItemCount }: MediaStepGuideProps) {
             >
               Local media
             </h3>
-            {guidance.map((paragraph, index) => (
-              <p
-                key={index}
-                className={index === 0 ? 'text-(--color-neutral)' : 'text-xs'}
-              >
-                {paragraph}
-              </p>
+            <p className="text-(--color-neutral)">{intro}</p>
+            {sections.map((section) => (
+              <section className="grid gap-2" key={section.title}>
+                <h4 className="text-xs font-bold uppercase text-(--color-neutral)">
+                  {section.title}
+                </h4>
+                <MediaGuideBulletList items={section.bullets} />
+              </section>
             ))}
+            <p className="text-xs">{footer}</p>
           </div>
           <form className="mt-4 flex justify-end" method="dialog">
             <button type="submit" className="builder-info-dialog-close">

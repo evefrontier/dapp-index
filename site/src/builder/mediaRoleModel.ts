@@ -8,6 +8,7 @@ import {
 import { formatDecimalMegabytes } from '@/storage/draftMediaValidation';
 import type { DappIndexMediaRole } from '@/types/dapp-index';
 import { MEDIA_SLOT_DEFINITIONS } from './mediaSlotModel';
+import type { MediaSlotDefinition } from './mediaSlotModel';
 
 let mediaRoleLabelsCache: Partial<Record<DappIndexMediaRole, string>> | null =
   null;
@@ -70,15 +71,102 @@ export function getPublishStepGuidanceCopy(
 }
 
 /** Guidance for the media step guide dialog. */
-export function getMediaStepGuideCopy(
-  mediaItemCount: number,
+export type MediaGuideSection = {
+  title: string;
+  bullets: readonly string[];
+};
+
+export function getMediaSlotFormatBullets(
+  slot: MediaSlotDefinition,
 ): readonly string[] {
+  const imageFormats = `PNG, JPEG, or WebP up to ${MEDIA_STEP_GUIDANCE.imageLimit}`;
+
+  switch (slot.id) {
+    case 'logo':
+      return [
+        'Square image, about 256px or larger',
+        'PNG or WebP with a transparent background works well',
+        imageFormats,
+      ];
+    case 'thumbnail':
+      return [
+        'Wide landscape screenshot for catalog cards',
+        'About 1280px wide',
+        imageFormats,
+      ];
+    case 'video':
+      return [
+        'Optional WebM walkthrough for the detail carousel',
+        'Landscape orientation, up to about one minute',
+        `WebM up to ${MEDIA_STEP_GUIDANCE.videoLimit}`,
+      ];
+    default:
+      return [
+        slot.guide,
+        imageFormats,
+        ...(slot.required ? ['Alt text is required before publish'] : []),
+      ];
+  }
+}
+
+export function getMediaStepGuideSections(
+  mediaItemCount: number,
+): {
+  intro: string;
+  sections: readonly MediaGuideSection[];
+  footer: string;
+} {
   const { galleryLimit, imageLimit, itemLimit, totalLimit, videoLimit } =
     MEDIA_STEP_GUIDANCE;
 
+  const slotSections = MEDIA_SLOT_DEFINITIONS.filter(
+    (slot) => slot.id === 'logo' || slot.id === 'thumbnail' || slot.id === 'video',
+  ).map((slot) => ({
+    title: slot.label,
+    bullets: getMediaSlotFormatBullets(slot),
+  }));
+
+  return {
+    intro:
+      'Logo, thumbnail, and at least one gallery image are required before publish. Gallery images and an optional demo video appear on the detail page.',
+    sections: [
+      ...slotSections,
+      {
+        title: 'Gallery images',
+        bullets: [
+          'Wide landscape screenshots for the detail carousel',
+          'About 1280px wide',
+          `PNG, JPEG, or WebP up to ${imageLimit} each`,
+          `Up to ${galleryLimit} gallery images; alt text required on the first`,
+        ],
+      },
+      {
+        title: 'Overall limits',
+        bullets: [
+          `${itemLimit} media items total across all slots`,
+          `${totalLimit} combined size across images, posters, and video`,
+          `Video: WebM up to ${videoLimit}`,
+          getMediaPublishApprovalEstimateCopy(mediaItemCount),
+        ],
+      },
+    ],
+    footer:
+      'Media stays on this device until publish. Each file is uploaded to Walrus during publish.',
+  };
+}
+
+/** @deprecated Use getMediaStepGuideSections for structured guide content. */
+export function getMediaStepGuideCopy(
+  mediaItemCount: number,
+): readonly string[] {
+  const { intro, sections, footer } = getMediaStepGuideSections(mediaItemCount);
+
   return [
-    'Logo and thumbnail appear on directory cards. Gallery images and an optional demo video appear on the detail page. Logo, thumbnail, and at least one gallery image are required before publish.',
-    `Images: PNG, JPEG, or WebP up to ${imageLimit} each. Video: WebM up to ${videoLimit}. Up to ${galleryLimit} gallery images, ${itemLimit} items total, ${totalLimit} combined.`,
-    getMediaPublishApprovalEstimateCopy(mediaItemCount),
+    intro,
+    sections
+      .flatMap((section) => section.bullets)
+      .slice(0, 2)
+      .join(' '),
+    footer,
   ];
 }

@@ -2,10 +2,13 @@ import { describe, expect, test } from 'bun:test';
 import {
   getMediaPublishApprovalEstimateCopy,
   getMediaRoleLabel,
+  getMediaSlotFormatBullets,
   getMediaStepGuideCopy,
+  getMediaStepGuideSections,
   getPublishStepGuidanceCopy,
   MEDIA_STEP_GUIDANCE,
 } from '../src/builder/mediaRoleModel';
+import { getMediaSlotDefinition } from '../src/builder/mediaSlotModel';
 
 describe('media role model', () => {
   test('derives metadata role labels from slot definitions', () => {
@@ -41,7 +44,31 @@ describe('media role model', () => {
     const guidance = getMediaStepGuideCopy(2);
 
     expect(guidance).toHaveLength(3);
-    expect(guidance[0]).toContain('Logo and thumbnail');
-    expect(guidance[2]).toContain('7 wallet approvals');
+    expect(guidance[0]).toContain('Logo, thumbnail');
+    expect(guidance[2]).toContain('Walrus');
+  });
+
+  test('builds media step guide sections with slot bullets', () => {
+    const { intro, sections } = getMediaStepGuideSections(2);
+
+    expect(intro).toContain('required before publish');
+    expect(sections.map((section) => section.title)).toEqual([
+      'Logo',
+      'Thumbnail',
+      'Video',
+      'Gallery images',
+      'Overall limits',
+    ]);
+    expect(sections[0]?.bullets).toContain('Square image, about 256px or larger');
+    expect(sections[4]?.bullets.at(-1)).toContain('7 wallet approvals');
+  });
+
+  test('builds per-slot format bullets', () => {
+    expect(getMediaSlotFormatBullets(getMediaSlotDefinition('logo'))).toContain(
+      'PNG, JPEG, or WebP up to 5 MB',
+    );
+    expect(
+      getMediaSlotFormatBullets(getMediaSlotDefinition('gallery-1')),
+    ).toContain('Alt text is required before publish');
   });
 });

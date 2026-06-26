@@ -8,7 +8,8 @@ import { REGISTRATION_DRAFT_MEDIA_TEXT_MAX_LENGTH } from '@/schemas/registration
 import { BuilderBracketFrame, type BuilderBracketTone } from './BuilderBracketFrame';
 import { FieldError, TextField } from './FormFields';
 import { MediaPreviewModal } from './MediaPreviewModal';
-import { MEDIA_STEP_GUIDANCE } from './mediaRoleModel';
+import { MediaGuideBulletList } from './MediaGuideBulletList';
+import { getMediaSlotFormatBullets } from './mediaRoleModel';
 import {
   getAcceptAttributeForSlot,
   getMediaForSlot,
@@ -17,6 +18,7 @@ import {
   MEDIA_SLOT_IDS,
   type MediaSlotDefinition,
   type MediaSlotId,
+  type MediaSlotStatus,
 } from './mediaSlotModel';
 import type {
   RegistrationDraftMediaErrors,
@@ -68,24 +70,32 @@ export function MediaStepScreen({
       <div className="builder-media-slots-layout">
         <nav aria-label="Media slots">
           <ol className="builder-media-slot-nav">
-            {MEDIA_SLOT_IDS.map((slotId) => (
-              <li key={slotId}>
-                <button
-                  type="button"
-                  aria-current={slotId === selectedSlotId ? 'step' : undefined}
-                  className="builder-media-slot-step"
-                  data-selected={slotId === selectedSlotId ? 'true' : undefined}
-                  data-status={getMediaSlotStatus(media, slotId)}
-                  disabled={pending}
-                  onClick={() => setSelectedSlotId(slotId)}
-                >
-                  <span className="builder-media-slot-step-label">
-                    {getMediaSlotDefinition(slotId).navLabel}
-                  </span>
-                  <MediaSlotStatusLabel slotId={slotId} media={media} />
-                </button>
-              </li>
-            ))}
+            {MEDIA_SLOT_IDS.map((slotId) => {
+              const status = getMediaSlotStatus(media, slotId);
+              const selected = slotId === selectedSlotId;
+
+              return (
+                <li key={slotId}>
+                  <button
+                    type="button"
+                    aria-current={selected ? 'step' : undefined}
+                    className="builder-media-slot-step group block w-full"
+                    data-selected={selected ? 'true' : undefined}
+                    data-status={status}
+                    disabled={pending}
+                    onClick={() => setSelectedSlotId(slotId)}
+                  >
+                    <BuilderBracketFrame
+                      tone={getSlotNavBracketTone(status, selected, pending)}
+                    >
+                      <span className="builder-media-slot-step-content">
+                        {getMediaSlotDefinition(slotId).navLabel}
+                      </span>
+                    </BuilderBracketFrame>
+                  </button>
+                </li>
+              );
+            })}
           </ol>
         </nav>
 
@@ -111,21 +121,15 @@ export function MediaStepScreen({
   );
 }
 
-function MediaSlotStatusLabel({
-  media,
-  slotId,
-}: {
-  media: DraftMedia[];
-  slotId: MediaSlotId;
-}) {
-  const status = getMediaSlotStatus(media, slotId);
-  if (status === 'filled') {
-    return <span className="builder-media-slot-step-status">Added</span>;
-  }
-  if (status === 'required-missing') {
-    return <span className="builder-media-slot-step-status">Required</span>;
-  }
-  return null;
+function getSlotNavBracketTone(
+  status: MediaSlotStatus,
+  selected: boolean,
+  pending: boolean,
+): BuilderBracketTone {
+  if (pending) return 'disabled';
+  if (status === 'required-missing') return 'error';
+  if (selected) return 'active';
+  return 'default';
 }
 
 function MediaSlotPanel({
@@ -158,27 +162,37 @@ function MediaSlotPanel({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const accept = getAcceptAttributeForSlot(slot.id);
   const showCaption = slot.role === 'gallery' || slot.kind === 'video';
-  const formatLimit =
-    slot.kind === 'video'
-      ? `WebM up to ${MEDIA_STEP_GUIDANCE.videoLimit}.`
-      : `PNG, JPEG, or WebP up to ${MEDIA_STEP_GUIDANCE.imageLimit}.`;
+  const formatBullets = getMediaSlotFormatBullets(slot);
 
   return (
     <section className="builder-media-slot-panel">
-      <div className="space-y-1">
+      <div className="space-y-2">
         <h3>{slot.label}</h3>
         <p className="text-sm text-(--color-neutral-60)">{slot.purpose}</p>
-        <p className="text-xs text-(--color-neutral-60)">{formatLimit}</p>
+        <MediaGuideBulletList items={formatBullets} />
       </div>
 
-      {media ? (
-        <div className="grid gap-4 md:grid-cols-[13rem_minmax(0,1fr)]">
-          <MediaPreviewButton
+      <div className="builder-media-slot-body">
+        <div className="builder-media-slot-preview-column">
+          <MediaSlotPreview
             errors={errors}
             media={media}
             previewUrl={previewUrl}
+            slotLabel={slot.label}
             onOpenPreview={onOpenPreview}
           />
+          <Button
+            disabled={pending}
+            size="small"
+            type="button"
+            variant="secondary"
+            onClick={() => inputRef.current?.click()}
+          >
+            {media ? 'Replace' : 'Upload'}
+          </Button>
+        </div>
+
+        {media ? (
           <div className="min-w-0 grid gap-3">
             <TextField
               error={errors?.alt}
@@ -202,47 +216,21 @@ function MediaSlotPanel({
                 }}
               />
             ) : null}
-            <div className="flex flex-wrap gap-3">
-              <Button
-                disabled={pending}
-                size="small"
+            {!slot.required ? (
+              <button
                 type="button"
-                variant="secondary"
-                onClick={() => inputRef.current?.click()}
+                className="builder-text-button-danger justify-self-start"
+                disabled={pending}
+                onClick={() => {
+                  void onDeleteMedia(media.id);
+                }}
               >
-                Replace
-              </Button>
-              {!slot.required ? (
-                <button
-                  type="button"
-                  className="builder-text-button-danger"
-                  disabled={pending}
-                  onClick={() => {
-                    void onDeleteMedia(media.id);
-                  }}
-                >
-                  Remove
-                </button>
-              ) : null}
-            </div>
+                Remove
+              </button>
+            ) : null}
           </div>
-        </div>
-      ) : (
-        <div className="builder-media-slot-empty">
-          <p className="text-sm text-(--color-neutral-60)">
-            No {slot.label.toLowerCase()} added yet.
-          </p>
-          <Button
-            disabled={pending}
-            size="small"
-            type="button"
-            variant="secondary"
-            onClick={() => inputRef.current?.click()}
-          >
-            Upload
-          </Button>
-        </div>
-      )}
+        ) : null}
+      </div>
 
       <input
         ref={inputRef}
@@ -260,49 +248,58 @@ function MediaSlotPanel({
   );
 }
 
-function MediaPreviewButton({
+function MediaSlotPreview({
   errors,
   media,
   onOpenPreview,
   previewUrl,
+  slotLabel,
 }: {
   errors: RegistrationDraftMediaFieldErrors;
-  media: DraftMedia;
+  media: DraftMedia | null;
   onOpenPreview: (mediaId: string) => void;
   previewUrl: string | null;
+  slotLabel: string;
 }) {
-  const tone = getPreviewTone(errors);
+  const tone = media ? getPreviewTone(errors) : 'default';
 
   return (
     <BuilderBracketFrame tone={tone}>
-      <button
-        type="button"
-        aria-label={`Open preview for ${media.name}`}
-        className="builder-media-preview"
-        disabled={!previewUrl}
-        onClick={() => onOpenPreview(media.id)}
-      >
-        {previewUrl ? (
-          media.kind === 'video' ? (
-            <video
-              className="h-full w-full object-contain"
-              muted
-              playsInline
-              preload="metadata"
-              src={previewUrl}
-            />
-          ) : (
-            <img
-              alt={media.alt || media.name}
-              className="h-full w-full object-contain"
-              src={previewUrl}
-            />
-          )
+      <div className="builder-media-preview-shell">
+        {media && previewUrl ? (
+          <button
+            type="button"
+            aria-label={`Open preview for ${media.name}`}
+            className="builder-media-preview"
+            onClick={() => onOpenPreview(media.id)}
+          >
+            {media.kind === 'video' ? (
+              <video
+                className="builder-media-preview-media"
+                muted
+                playsInline
+                preload="metadata"
+                src={previewUrl}
+              />
+            ) : (
+              <img
+                alt={media.alt || media.name}
+                className="builder-media-preview-media"
+                src={previewUrl}
+              />
+            )}
+            <MediaIdentity media={media} />
+          </button>
         ) : (
-          <p className="text-xs text-(--color-neutral-60)">Preview unavailable</p>
+          <div className="builder-media-preview-placeholder">
+            <p>
+              {media
+                ? 'Preview unavailable'
+                : `No ${slotLabel.toLowerCase()} yet`}
+            </p>
+          </div>
         )}
-        <MediaIdentity media={media} />
-      </button>
+      </div>
     </BuilderBracketFrame>
   );
 }
