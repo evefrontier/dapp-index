@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   getMediaPublishApprovalEstimateCopy,
   getMediaRoleLabel,
+  getMediaStepGuideCopy,
   getPublishStepGuidanceCopy,
   MEDIA_STEP_GUIDANCE,
 } from '../src/builder/mediaRoleModel';
@@ -34,5 +35,13 @@ describe('media role model', () => {
     expect(guidance[1]).toContain('7 wallet approvals');
     expect(guidance[1]).toContain('2 files');
     expect(guidance[2]).toContain('discoverable');
+  });
+
+  test('builds media step guide copy from media count', () => {
+    const guidance = getMediaStepGuideCopy(2);
+
+    expect(guidance).toHaveLength(3);
+    expect(guidance[0]).toContain('Logo and thumbnail');
+    expect(guidance[2]).toContain('7 wallet approvals');
   });
 });

@@ -68,3 +68,17 @@ export function getPublishStepGuidanceCopy(
     'After a successful publish, your listing becomes discoverable in the directory. This local draft stays as a read-only record.',
   ];
 }
+
+/** Guidance for the media step guide dialog. */
+export function getMediaStepGuideCopy(
+  mediaItemCount: number,
+): readonly string[] {
+  const { galleryLimit, imageLimit, itemLimit, totalLimit, videoLimit } =
+    MEDIA_STEP_GUIDANCE;
+
+  return [
+    'Logo and thumbnail appear on directory cards. Gallery images and an optional demo video appear on the detail page. Logo, thumbnail, and at least one gallery image are required before publish.',
+    `Images: PNG, JPEG, or WebP up to ${imageLimit} each. Video: WebM up to ${videoLimit}. Up to ${galleryLimit} gallery images, ${itemLimit} items total, ${totalLimit} combined.`,
+    getMediaPublishApprovalEstimateCopy(mediaItemCount),
+  ];
+}

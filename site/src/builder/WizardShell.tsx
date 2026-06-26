@@ -9,6 +9,7 @@ import type {
 } from '@/storage/draftStorage';
 import { RegistrationStepScreen } from './RegistrationStepScreens';
 import { PackageStepGuide } from './PackageStepGuide';
+import { MediaStepGuide } from './MediaStepGuide';
 import { PublishStepGuide } from './PublishStepGuide';
 import {
   createWizardStepItems,
@@ -372,6 +373,8 @@ function WizardStepPanel({
       </div>
     ) : activeStep === 'publish' && !readOnly ? (
       <PublishStepGuide mediaItemCount={publishStep.mediaItemCount} />
+    ) : activeStep === 'media' ? (
+      <MediaStepGuide mediaItemCount={draft.media.length} />
     ) : null;
 
   return (

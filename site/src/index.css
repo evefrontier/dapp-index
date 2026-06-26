@@ -285,55 +285,55 @@ h3 {
   }
 
   .builder-media-slots {
-    @apply grid gap-4;
+    @apply grid gap-5;
   }
 
   .builder-media-slots-layout {
-    @apply grid gap-4 md:grid-cols-[16rem_minmax(0,1fr)];
+    @apply grid gap-6 md:grid-cols-[16rem_minmax(0,1fr)];
   }
 
   .builder-media-slot-nav {
-    @apply grid min-w-0 gap-2;
+    @apply grid min-w-0 gap-1.5;
   }
 
-  .builder-media-slot-button {
-    @apply flex w-full min-w-0 items-center justify-between gap-3 border border-(--color-neutral-20) px-3 py-2 text-left text-xs font-bold uppercase text-(--color-neutral-60) transition-colors hover:border-(--color-neutral-50) disabled:cursor-default;
+  .builder-media-slot-step {
+    @apply flex w-full min-w-0 items-center justify-between gap-3 px-0 py-1.5 text-left text-base leading-[1.1] font-bold uppercase text-(--color-neutral-60) transition-colors hover:text-(--color-neutral) disabled:cursor-default;
   }
 
-  .builder-media-slot-button-label {
+  .builder-media-slot-step-label {
     @apply min-w-0 truncate;
   }
 
-  .builder-media-slot-button-status {
-    @apply shrink-0 text-xs;
+  .builder-media-slot-step-status {
+    @apply shrink-0 text-xs normal-case;
   }
 
-  .builder-media-slot-button[data-selected='true'] {
-    @apply border-(--color-martian-red) text-(--color-neutral);
-  }
-
-  .builder-media-slot-button[data-status='filled'] {
+  .builder-media-slot-step[data-selected='true'] {
     @apply text-(--color-martian-red);
   }
 
-  .builder-media-slot-button[data-status='required-missing'] {
-    @apply border-(--color-alert);
+  .builder-media-slot-step[data-status='filled']:not([data-selected='true']) {
+    @apply text-(--color-neutral);
+  }
+
+  .builder-media-slot-step[data-status='required-missing'] {
+    @apply text-(--color-alert);
   }
 
   .builder-media-slot-panel {
-    @apply grid gap-4 border border-(--color-neutral-20) p-4;
-  }
-
-  .builder-media-slot-guide {
-    @apply space-y-1 text-xs text-(--color-neutral-60);
+    @apply grid gap-5;
   }
 
   .builder-media-slot-empty {
-    @apply grid gap-3 border border-dashed border-(--color-neutral-20) p-4;
+    @apply grid gap-3;
   }
 
   .builder-media-preview {
-    @apply relative flex aspect-video h-32 w-full items-center justify-center overflow-hidden border border-(--color-neutral-20) bg-(--color-crude-60) text-left transition-colors hover:border-(--color-martian-red) disabled:cursor-default disabled:hover:border-(--color-neutral-20) md:h-32;
+    @apply relative flex aspect-video h-32 w-full items-center justify-center overflow-hidden bg-(--color-crude-60) text-left transition-opacity hover:opacity-90 disabled:cursor-default disabled:opacity-60 md:h-32;
+  }
+
+  .builder-media-slot-panel .builder-bracket-frame {
+    @apply w-full md:w-[13rem];
   }
 
   .builder-review-label {
