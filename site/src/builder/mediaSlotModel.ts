@@ -33,6 +33,14 @@ export type MediaSlotDefinition = {
 
 export type MediaSlotStatus = 'empty' | 'filled' | 'required-missing';
 
+export type MediaNavGroupId = 'logo' | 'thumbnail' | 'gallery' | 'video';
+
+export type MediaNavGroup = {
+  id: MediaNavGroupId;
+  label: string;
+  slotIds: readonly MediaSlotId[];
+};
+
 export type MediaSlotValidationResult =
   | { ok: true }
   | {
@@ -62,7 +70,7 @@ function createGallerySlotDefinition(index: number): MediaSlotDefinition {
   return {
     id,
     label: 'Gallery image',
-    navLabel: `Gallery · ${position}`,
+    navLabel: `Image ${position}`,
     purpose: required
       ? 'At least one screenshot for the detail page carousel.'
       : 'Optional additional carousel screenshot.',
@@ -123,6 +131,67 @@ export const MEDIA_SLOT_DEFINITIONS: readonly MediaSlotDefinition[] =
 export const MEDIA_SLOT_IDS: readonly MediaSlotId[] = MEDIA_SLOT_DEFINITIONS.map(
   (slot) => slot.id,
 );
+
+const GALLERY_SLOT_IDS = MEDIA_SLOT_DEFINITIONS.filter(
+  (slot) => slot.role === 'gallery',
+).map((slot) => slot.id);
+
+export const MEDIA_CATEGORY_NAV_IDS = [
+  'logo',
+  'thumbnail',
+  'gallery',
+  'video',
+] as const satisfies readonly MediaNavGroupId[];
+
+export type MediaCategoryNavId = (typeof MEDIA_CATEGORY_NAV_IDS)[number];
+
+/** @deprecated Use MEDIA_CATEGORY_NAV_IDS for the top filter row. */
+export const MEDIA_PRIMARY_NAV_SLOT_IDS = [
+  'logo',
+  'thumbnail',
+  'video',
+] as const satisfies readonly MediaSlotId[];
+
+export type MediaPrimaryNavSlotId = (typeof MEDIA_PRIMARY_NAV_SLOT_IDS)[number];
+
+export const MEDIA_GALLERY_NAV_SLOT_IDS = GALLERY_SLOT_IDS;
+
+export const MEDIA_NAV_GROUPS: readonly MediaNavGroup[] = [
+  { id: 'logo', label: 'Logo', slotIds: ['logo'] },
+  { id: 'thumbnail', label: 'Thumbnail', slotIds: ['thumbnail'] },
+  { id: 'gallery', label: 'Gallery', slotIds: GALLERY_SLOT_IDS },
+  { id: 'video', label: 'Video', slotIds: ['video'] },
+];
+
+export function getMediaSlotNavLabel(slotId: MediaSlotId): string {
+  return getMediaSlotDefinition(slotId).navLabel;
+}
+
+export function getCategoryNavLabel(categoryId: MediaCategoryNavId): string {
+  if (categoryId === 'gallery') return 'Gallery';
+  return getMediaSlotNavLabel(categoryId);
+}
+
+export function getCategoryNavStatus(
+  media: readonly DraftMedia[],
+  categoryId: MediaCategoryNavId,
+): MediaSlotStatus {
+  if (categoryId === 'gallery') {
+    return getMediaNavGroupStatus(media, 'gallery');
+  }
+  return getMediaSlotStatus(media, categoryId);
+}
+
+export function resolveSlotFromCategory(
+  categoryId: MediaCategoryNavId,
+  galleryIndex: number,
+): MediaSlotId {
+  return getActiveSlotId(categoryId, galleryIndex);
+}
+
+export function isGalleryNavSlot(slotId: MediaSlotId): boolean {
+  return slotId.startsWith('gallery-');
+}
 
 const MEDIA_SLOT_BY_ID = new Map<MediaSlotId, MediaSlotDefinition>(
   MEDIA_SLOT_DEFINITIONS.map((slot) => [slot.id, slot]),
@@ -194,4 +263,73 @@ export function canAddMediaToSlot(
 ): boolean {
   if (getMediaForSlot(media, slotId)) return true;
   return media.length < PUBLIC_MEDIA_ITEM_LIMIT;
+}
+
+export function getActiveSlotId(
+  groupId: MediaNavGroupId,
+  galleryIndex: number,
+): MediaSlotId {
+  if (groupId === 'gallery') {
+    return gallerySlotId(galleryIndex);
+  }
+  return groupId;
+}
+
+export function getDefaultGalleryIndex(media: readonly DraftMedia[]): number {
+  for (let index = 0; index < GALLERY_SLOT_IDS.length; index += 1) {
+    const slotId = gallerySlotId(index);
+    if (!getMediaForSlot(media, slotId)) return index;
+  }
+  return 0;
+}
+
+export function getMediaNavGroup(
+  groupId: MediaNavGroupId,
+): MediaNavGroup {
+  const group = MEDIA_NAV_GROUPS.find((entry) => entry.id === groupId);
+  if (!group) {
+    throw new Error(`Unknown media nav group: ${groupId}`);
+  }
+  return group;
+}
+
+export function getMediaNavGroupStatus(
+  media: readonly DraftMedia[],
+  groupId: MediaNavGroupId,
+): MediaSlotStatus {
+  const group = getMediaNavGroup(groupId);
+  let hasRequiredMissing = false;
+  let hasFilled = false;
+
+  for (const slotId of group.slotIds) {
+    const status = getMediaSlotStatus(media, slotId);
+    if (status === 'required-missing') {
+      hasRequiredMissing = true;
+    }
+    if (status === 'filled') {
+      hasFilled = true;
+    }
+  }
+
+  if (hasRequiredMissing) return 'required-missing';
+  if (hasFilled) return 'filled';
+  return 'empty';
+}
+
+export function parseMediaSlotNav(
+  slotId: MediaSlotId,
+): { groupId: MediaNavGroupId; galleryIndex: number } {
+  if (slotId.startsWith('gallery-')) {
+    const position = Number(slotId.slice('gallery-'.length));
+    return {
+      groupId: 'gallery',
+      galleryIndex: Number.isFinite(position) ? position - 1 : 0,
+    };
+  }
+
+  if (slotId === 'logo' || slotId === 'thumbnail' || slotId === 'video') {
+    return { groupId: slotId, galleryIndex: 0 };
+  }
+
+  throw new Error(`Unknown media slot for nav: ${slotId}`);
 }

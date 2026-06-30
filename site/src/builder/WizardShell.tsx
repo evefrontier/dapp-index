@@ -118,11 +118,23 @@ export function WizardShell({
     );
 
   return (
-    <div className="space-y-6">
+    <div
+      className={
+        activeStep === 'media'
+          ? 'builder-wizard-shell builder-wizard-shell--media space-y-6'
+          : 'builder-wizard-shell space-y-6'
+      }
+    >
       {readOnly ? <WizardPublishedBanner /> : null}
       <WizardErrorMessage message={errorMessage} />
 
-      <div className="grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
+      <div
+        className={
+          activeStep === 'media'
+            ? 'builder-wizard-layout builder-wizard-layout--media'
+            : 'builder-wizard-layout'
+        }
+      >
         <div className="space-y-4">
           <WizardStepNav
             activeStep={activeStep}
@@ -378,7 +390,7 @@ function WizardStepPanel({
     ) : null;
 
   return (
-    <main className="min-w-0 space-y-5">
+    <main className="builder-wizard-panel min-w-0 space-y-5">
       <section>
         <fieldset className="contents" disabled={readOnly}>
           <div className="space-y-4">
