@@ -145,15 +145,6 @@ export const MEDIA_CATEGORY_NAV_IDS = [
 
 export type MediaCategoryNavId = (typeof MEDIA_CATEGORY_NAV_IDS)[number];
 
-/** @deprecated Use MEDIA_CATEGORY_NAV_IDS for the top filter row. */
-export const MEDIA_PRIMARY_NAV_SLOT_IDS = [
-  'logo',
-  'thumbnail',
-  'video',
-] as const satisfies readonly MediaSlotId[];
-
-export type MediaPrimaryNavSlotId = (typeof MEDIA_PRIMARY_NAV_SLOT_IDS)[number];
-
 export const MEDIA_GALLERY_NAV_SLOT_IDS = GALLERY_SLOT_IDS;
 
 export const MEDIA_NAV_GROUPS: readonly MediaNavGroup[] = [
