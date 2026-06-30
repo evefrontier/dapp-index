@@ -7,6 +7,21 @@ import {
   PUBLISH_MIN_SUI_MIST,
   PUBLISH_MIN_WAL_MIST,
 } from '../src/chain/publishWalletBalances';
+import { estimatePublishCost } from '../src/builder/publishCostEstimate';
+import { draft as baseDraft } from './draftTestUtils';
+import type { DraftMedia } from '../src/storage/draftTypes';
+
+function createMedia(id: string, size: number): DraftMedia {
+  return {
+    id,
+    kind: 'screenshot',
+    role: 'gallery',
+    name: `${id}.png`,
+    mimeType: 'image/png',
+    size,
+    createdAt: '2026-05-18T12:00:00.000Z',
+  };
+}
 
 describe('publish wallet balances', () => {
   test('detects WAL coin types by suffix', () => {
@@ -24,10 +39,12 @@ describe('publish wallet balances', () => {
     expect(formatUnits(0n, 9, 'WAL')).toBe('0 WAL');
   });
 
-  test('flags low SUI and WAL balances', () => {
+  test('flags low SUI and WAL balances against flat floors', () => {
     const evaluation = evaluatePublishWalletBalances({
-      suiTotalMist: PUBLISH_MIN_SUI_MIST - 1n,
-      walTotalMist: PUBLISH_MIN_WAL_MIST - 1n,
+      snapshot: {
+        suiTotalMist: PUBLISH_MIN_SUI_MIST - 1n,
+        walTotalMist: PUBLISH_MIN_WAL_MIST - 1n,
+      },
     });
 
     expect(evaluation.suiSufficient).toBe(false);
@@ -37,8 +54,64 @@ describe('publish wallet balances', () => {
 
   test('accepts balances above minimum thresholds', () => {
     const evaluation = evaluatePublishWalletBalances({
-      suiTotalMist: PUBLISH_MIN_SUI_MIST,
-      walTotalMist: PUBLISH_MIN_WAL_MIST,
+      snapshot: {
+        suiTotalMist: PUBLISH_MIN_SUI_MIST,
+        walTotalMist: PUBLISH_MIN_WAL_MIST,
+      },
+    });
+
+    expect(evaluation.blockers).toEqual([]);
+    expect(evaluation.suiSufficient).toBe(true);
+    expect(evaluation.walSufficient).toBe(true);
+  });
+
+  test('blocks when wallet is below draft-aware WAL and SUI estimates', () => {
+    const cost = estimatePublishCost({
+      ...baseDraft,
+      media: [
+        createMedia('img-1', 280_000),
+        createMedia('img-2', 410_000),
+        createMedia('img-3', 560_000),
+        createMedia('img-4', 720_000),
+      ],
+    });
+
+    const evaluation = evaluatePublishWalletBalances({
+      snapshot: {
+        suiTotalMist: cost.sui.estimatedMist - 1n,
+        walTotalMist: cost.wal.estimatedMist - 1n,
+      },
+      walRequirement: cost.wal,
+      suiRequirement: cost.sui,
+      walRemainingBlobCount: cost.remainingBlobCount,
+      suiEstimatedTxCount: cost.estimatedWalrusTxCount,
+    });
+
+    expect(evaluation.suiSufficient).toBe(false);
+    expect(evaluation.walSufficient).toBe(false);
+    expect(evaluation.blockers).toHaveLength(2);
+    expect(evaluation.walEstimatedLabel).toBe(cost.wal.estimatedLabel);
+    expect(evaluation.suiEstimatedTxCount).toBe(cost.estimatedWalrusTxCount);
+  });
+
+  test('passes when wallet meets draft-aware estimates', () => {
+    const cost = estimatePublishCost({
+      ...baseDraft,
+      media: [
+        createMedia('img-1', 280_000),
+        createMedia('img-2', 410_000),
+      ],
+    });
+
+    const evaluation = evaluatePublishWalletBalances({
+      snapshot: {
+        suiTotalMist: cost.sui.estimatedMist,
+        walTotalMist: cost.wal.estimatedMist,
+      },
+      walRequirement: cost.wal,
+      suiRequirement: cost.sui,
+      walRemainingBlobCount: cost.remainingBlobCount,
+      suiEstimatedTxCount: cost.estimatedWalrusTxCount,
     });
 
     expect(evaluation.blockers).toEqual([]);
@@ -70,8 +143,10 @@ describe('publish wallet balances', () => {
           walTotalMist: PUBLISH_MIN_WAL_MIST,
         },
         ...evaluatePublishWalletBalances({
-          suiTotalMist: PUBLISH_MIN_SUI_MIST - 1n,
-          walTotalMist: PUBLISH_MIN_WAL_MIST,
+          snapshot: {
+            suiTotalMist: PUBLISH_MIN_SUI_MIST - 1n,
+            walTotalMist: PUBLISH_MIN_WAL_MIST,
+          },
         }),
       }),
     ).toHaveLength(1);
