@@ -155,13 +155,25 @@ Move publish docs, and agent automation docs where they drift from code.
 
 This repo includes:
 
-- `.github/workflows/ci.yml` for site and Move checks;
+- `.github/workflows/ci.yml` for site and Move checks, plus a `site-visual`
+  job that runs Playwright visual regression and posts PR comment thumbnails
+  (see `site/AGENTS.md` for the full flow, baseline update commands, and the
+  Linux-only baseline policy);
+- `.github/scripts/` — small bash helpers used only by the `site-visual` job
+  (flattening screenshot output, rendering the PR comment body);
 - `.github/codex/prompts/` for reusable Codex review prompts.
 
 Hosted Codex PR review is intentionally not enabled yet. Re-enable it later by
 adding a workflow that uses `.github/codex/prompts/review.md` and a GitHub
 Actions secret for the OpenAI API key. Until then, use manual agent reviews so
 forks do not need OpenAI Platform billing configured.
+
+**Deferred to a human maintainer:** GitHub Pages is not yet enabled for this
+repository. The `site-visual` job publishes visual-regression thumbnails to
+the `gh-pages` branch, but someone with repo admin access must turn on Pages
+(Settings → Pages → Deploy from a branch → `gh-pages` / `/(root)`) before PR
+comments can embed images instead of falling back to "see workflow
+artifacts". Agents should not attempt to enable this via the API.
 
 ## Suggested Recurring Automations
 

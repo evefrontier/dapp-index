@@ -53,3 +53,142 @@ jobs:
 
       - name: Test Move package
         run: bun run move:test
+
+  site-visual:
+    name: Site visual regression
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Detect site changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            site:
+              - 'site/**'
+
+      # Skip the expensive steps for PRs that don't touch site/**, but always
+      # run on push (keeps gh-pages baselines fresh) and workflow_dispatch.
+      - name: Determine whether to run
+        id: gate
+        run: |
+          if [[ "${{ steps.filter.outputs.site }}" == "true" || "${{ github.event_name }}" != "pull_request" ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: oven-sh/setup-bun@v2
+        if: steps.gate.outputs.run == 'true'
+        with:
+          bun-version: 1.3.1
+
+      - name: Install site dependencies
+        if: steps.gate.outputs.run == 'true'
+        run: bun install --cwd site --frozen-lockfile
+
+      - name: Build site
+        if: steps.gate.outputs.run == 'true'
+        run: bun run site:build
+
+      # microsoft/playwright-github-action@v1 is deprecated/archived; installing
+      # the browser via the local devDependency binary keeps the version pinned
+      # to package.json instead of a third-party action.
+      - name: Install Playwright Chromium
+        if: steps.gate.outputs.run == 'true'
+        working-directory: site
+        run: bunx playwright install --with-deps chromium
+
+      - name: Run Playwright visual regression
+        id: playwright
+        if: steps.gate.outputs.run == 'true'
+        continue-on-error: true
+        run: bun run site:e2e
+
+      - name: Collect visual-regression assets
+        if: steps.gate.outputs.run == 'true' && !cancelled()
+        run: bash .github/scripts/collect-visual-assets.sh
+
+      - name: Determine gh-pages destination
+        id: pages-dest
+        if: steps.gate.outputs.run == 'true' && !cancelled()
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            dest="visual-regression/pr-${{ github.event.pull_request.number }}"
+          else
+            ref_slug="$(echo '${{ github.ref_name }}' | tr '/' '-')"
+            dest="visual-regression/branch-${ref_slug}"
+          fi
+          repo_name="$(basename '${{ github.repository }}')"
+          echo "dest=${dest}" >> "$GITHUB_OUTPUT"
+          echo "url=https://${{ github.repository_owner }}.github.io/${repo_name}/${dest}" >> "$GITHUB_OUTPUT"
+
+      # Expected to fail gracefully until GitHub Pages is enabled for this repo
+      # (one-time manual maintainer step — see site/AGENTS.md). The artifact
+      # upload below is the guaranteed fallback either way.
+      - name: Deploy visual-regression assets to gh-pages
+        id: gh-pages
+        if: steps.gate.outputs.run == 'true' && !cancelled()
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: site/visual-regression
+          destination_dir: ${{ steps.pages-dest.outputs.dest }}
+          keep_files: true
+
+      - name: Upload Playwright report artifact
+        if: steps.gate.outputs.run == 'true' && !cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            site/playwright-report/
+            site/test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: Build PR comment
+        if: steps.gate.outputs.run == 'true' && !cancelled() && github.event_name == 'pull_request'
+        env:
+          ASSET_DIR: site/visual-regression
+          OUTPUT_FILE: site/visual-regression/comment-body.md
+          STATUS_LABEL: ${{ steps.playwright.outcome == 'failure' && '❌ Failed — see diff thumbnails below' || '✅ Passed' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GH_PAGES_OK: ${{ steps.gh-pages.outcome == 'success' && 'true' || 'false' }}
+          GH_PAGES_URL: ${{ steps.pages-dest.outputs.url }}
+        run: bash .github/scripts/build-visual-comment.sh
+
+      - name: Find existing visual-regression comment
+        id: find-comment
+        if: steps.gate.outputs.run == 'true' && !cancelled() && github.event_name == 'pull_request'
+        uses: peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: '<!-- playwright-visual-regression -->'
+
+      - name: Post or update PR comment
+        if: steps.gate.outputs.run == 'true' && !cancelled() && github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: site/visual-regression/comment-body.md
+          edit-mode: replace
+
+      # The Playwright step above uses continue-on-error so later steps (report
+      # upload, gh-pages deploy, PR comment) still run on a regression. This
+      # step makes the check genuinely red when that happened.
+      - name: Fail on visual regression
+        if: always() && steps.gate.outputs.run == 'true'
+        run: |
+          if [ "${{ steps.playwright.outcome }}" = "failure" ]; then
+            echo "Playwright visual regression detected diffs — see the PR comment and playwright-report artifact." >&2
+            exit 1
+          fi
+          echo "No visual regressions detected."
