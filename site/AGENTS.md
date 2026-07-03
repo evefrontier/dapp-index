@@ -11,10 +11,31 @@
   - `bun run site:test`
   - `bun run site:typecheck`
   - `bun run site:build`
+  - `bun run site:e2e` (Playwright visual regression; run `site:build` first)
 - From `site/`:
   - `bun test`
   - `bun run typecheck`
   - `bun run build`
+  - `bun run e2e` / `bun run e2e:update`
+
+## Visual regression (`e2e/`)
+
+- Playwright specs live in `site/e2e/specs/**/*.e2e.ts` and are separate from the Bun unit tests in `site/test/`. They render the production build via `vite preview`, so **build before running**: `bun run site:build && bun run site:e2e`.
+- Specs use the `.e2e.ts` suffix (not `.spec.ts`/`.test.ts`) on purpose: `bun test` matches `*.spec.ts`/`*.test.ts` by default and would otherwise try to execute Playwright files too. `playwright.config.ts` sets `testMatch: '**/*.e2e.ts'` to match. Keep new e2e specs on this suffix.
+- `smoke.e2e.ts` asserts structure (headings, nav, seeded wizard). `showcase.e2e.ts` captures `toHaveScreenshot` baselines for the index, builder home, and wizard steps.
+- Seed builder state with `e2e/fixtures/draftSeed.ts` (writes the real `DRAFT_STORAGE_KEY`); stabilize rendering and mask RPC-dependent regions with `e2e/fixtures/stablePage.ts`.
+- **Only Linux baselines are committed** (`…-chromium-linux.png`), matching the Ubuntu CI runner. macOS/Windows baselines are gitignored — treat local non-Linux runs as a smoke check on spec correctness, not a substitute for the CI gate.
+- After an intentional UI change, regenerate Linux baselines and commit them. Do this via CI (download the updated PNGs from a run) or locally with the official Docker image so results match CI's rendering:
+
+  ```bash
+  docker run --rm -v "$PWD/..":/work -w /work/site -e HOME=/root \
+    mcr.microsoft.com/playwright:v1.61.1-noble bash -lc '
+      apt-get update -qq && apt-get install -y -qq unzip
+      curl -fsSL https://bun.sh/install | bash -s -- "bun-v1.3.1"
+      export PATH="$HOME/.bun/bin:$PATH"
+      bun install --frozen-lockfile
+      npx playwright test --config e2e/playwright.config.ts --update-snapshots'
+  ```
 
 ## Expectations
 
