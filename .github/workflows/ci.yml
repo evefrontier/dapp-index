@@ -60,6 +60,12 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    # Run in the same Playwright image used to generate the committed Linux
+    # baselines (see site/AGENTS.md). Installing Chromium onto a bare
+    # ubuntu-latest runner (e.g. via `playwright install --with-deps`) ships a
+    # different font/rendering stack and produces false-positive diffs.
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.1-noble
     steps:
       - uses: actions/checkout@v5
 
@@ -94,14 +100,6 @@ jobs:
       - name: Build site
         if: steps.gate.outputs.run == 'true'
         run: bun run site:build
-
-      # microsoft/playwright-github-action@v1 is deprecated/archived; installing
-      # the browser via the local devDependency binary keeps the version pinned
-      # to package.json instead of a third-party action.
-      - name: Install Playwright Chromium
-        if: steps.gate.outputs.run == 'true'
-        working-directory: site
-        run: bunx playwright install --with-deps chromium
 
       - name: Run Playwright visual regression
         id: playwright
