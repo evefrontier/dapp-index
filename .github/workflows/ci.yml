@@ -66,6 +66,11 @@ jobs:
     # different font/rendering stack and produces false-positive diffs.
     container:
       image: mcr.microsoft.com/playwright:v1.61.1-noble
+    # The container's default shell resolves to POSIX `sh`, not bash — pin it
+    # explicitly so `run:` steps can rely on bash syntax (the image ships bash).
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v5
 
