@@ -62,9 +62,10 @@ Follow [Conventional Branch 1.1.0](https://conventionalbranch.org/):
 `<type>/<description>` in lowercase kebab-case.
 
 - Branch from `main`. One concern per branch.
-- Prefer purpose prefixes (`feat/`, `fix/`, `chore/`, …). AI agent prefixes
-  (`codex/`, `cursor/`, `copilot/`, `ai/`, …) are valid per the spec when an
-  agent creates the branch.
+- Use purpose prefixes (`feat/`, `fix/`, `chore/`, `docs/`, …) describing what
+  changed. Do not prefix branches by which AI tool or agent created them
+  (`codex/`, `cursor/`, `copilot/`, `ai/`, …) — a human reading the branch
+  list should learn what the branch does, not which tool wrote it.
 
 ### Commits
 
