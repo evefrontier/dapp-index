@@ -174,23 +174,15 @@ jobs:
           GH_PAGES_URL: ${{ steps.pages-dest.outputs.url }}
         run: bash .github/scripts/build-visual-comment.sh
 
-      - name: Find existing visual-regression comment
-        id: find-comment
-        if: steps.gate.outputs.run == 'true' && !cancelled() && github.event_name == 'pull_request'
-        uses: peter-evans/find-comment@v3
-        with:
-          issue-number: ${{ github.event.pull_request.number }}
-          comment-author: 'github-actions[bot]'
-          body-includes: '<!-- playwright-visual-regression -->'
-
       - name: Post or update PR comment
         if: steps.gate.outputs.run == 'true' && !cancelled() && github.event_name == 'pull_request'
-        uses: peter-evans/create-or-update-comment@v4
+        uses: actions/github-script@v7
+        env:
+          COMMENT_BODY_PATH: site/visual-regression/comment-body.md
         with:
-          comment-id: ${{ steps.find-comment.outputs.comment-id }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body-path: site/visual-regression/comment-body.md
-          edit-mode: replace
+          script: |
+            const script = require('./.github/scripts/post-visual-comment.cjs')
+            await script({ github, context, core })
 
       # The Playwright step above uses continue-on-error so later steps (report
       # upload, gh-pages deploy, PR comment) still run on a regression. This
