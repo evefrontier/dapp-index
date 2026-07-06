@@ -93,6 +93,14 @@ jobs:
             echo "run=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # The Playwright container image doesn't ship unzip, which the Bun
+      # installer (invoked by setup-bun) requires.
+      - name: Install container prerequisites
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq unzip
+
       - uses: oven-sh/setup-bun@v2
         if: steps.gate.outputs.run == 'true'
         with:
