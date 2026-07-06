@@ -35,15 +35,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-
-      - name: Detect Move package changes
-        uses: dorny/paths-filter@v4
-        id: filter
         with:
-          filters: |
-            move:
-              - 'registry/move/**'
-              - '.github/workflows/ci.yml'
+          # Full history needed to diff against the PR base commit below.
+          fetch-depth: 0
 
       # Skip the expensive toolchain install/build for PRs that don't touch
       # registry/move/**, but always run on push (keeps main green-checked)
@@ -51,7 +45,10 @@ jobs:
       - name: Determine whether to run
         id: gate
         run: |
-          if [[ "${{ steps.filter.outputs.move }}" == "true" || "${{ github.event_name }}" != "pull_request" ]]; then
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}" \
+              | grep -qE '^(registry/move/|\.github/workflows/ci\.yml)'; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
