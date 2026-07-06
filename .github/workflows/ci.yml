@@ -36,20 +36,46 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Detect Move package changes
+        uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            move:
+              - 'registry/move/**'
+              - '.github/workflows/ci.yml'
+
+      # Skip the expensive toolchain install/build for PRs that don't touch
+      # registry/move/**, but always run on push (keeps main green-checked)
+      # and workflow_dispatch.
+      - name: Determine whether to run
+        id: gate
+        run: |
+          if [[ "${{ steps.filter.outputs.move }}" == "true" || "${{ github.event_name }}" != "pull_request" ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: oven-sh/setup-bun@v2
+        if: steps.gate.outputs.run == 'true'
         with:
           bun-version: 1.3.1
 
       - name: Install suiup
+        if: steps.gate.outputs.run == 'true'
         run: |
           cargo install --git https://github.com/MystenLabs/suiup.git --rev a65c6923fe84562660e933a2dd12849de77a07b1 --locked suiup
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
       - name: Install Sui CLI
+        if: steps.gate.outputs.run == 'true'
         run: suiup install -y sui@testnet-1.66.2
 
       - name: Build Move package
+        if: steps.gate.outputs.run == 'true'
         run: bun run move:build
 
       - name: Test Move package
+        if: steps.gate.outputs.run == 'true'
         run: bun run move:test
