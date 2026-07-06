@@ -22,8 +22,18 @@
 - Protect user work. Never revert unrelated changes or run destructive git commands unless explicitly asked.
 - Read the relevant docs before changing architecture: `README.md`, `docs/BUILDER_PLAN.md`, and any scoped `AGENTS.md`.
 - Use existing repo patterns before adding abstractions or dependencies.
-- Ask before adding production dependencies, new services, or automatic deploy/publish behavior.
+- Ask before adding production dependencies, new services, or automatic deploy/publish behavior — see the dependency policy below for the bar a new dependency needs to clear.
 - Sui package publishing, mainnet-facing release steps, and wallet-funded transactions stay manual unless the user explicitly asks otherwise.
+
+## Dependency & supply-chain policy
+
+Every dependency — an npm/bun package or a GitHub Action in `.github/workflows/*.yml` — is a supply-chain liability, not just a convenience. Default to fewer of them.
+
+- **Default to zero new dependencies.** Before adding one, check whether an already-used dependency, the standard library, or a short first-party script (`git diff`, plain `bash`, a small `.cjs`/`.ts` helper invoked via `actions/github-script`) already covers the need.
+- **Prefer first-party over third-party.** In CI that means official `actions/*` steps, the platform vendor's own action (e.g. `oven-sh/setup-bun`), or plain shell — before a community action that just wraps the same shell command or API call.
+- **When a third-party dependency is genuinely justified**, only accept ones that are actively maintained (recent releases/commits, responsive to issues) and widely adopted (large install base, used by many other serious projects) — not a single-maintainer or stale package doing something trivial.
+- Prefer swapping an existing third-party action for an official action or a short inline script when it doesn't add real complexity (e.g. `dorny/paths-filter` → a plain `git diff --name-only` gate; `peter-evans/find-comment` + `peter-evans/create-or-update-comment` → one `actions/github-script` step backed by a small `.cjs` helper).
+- Don't run an uninvited dependency-removal sweep. Apply this policy when touching a workflow or dependency for another reason, or when explicitly asked to reduce the dependency surface.
 
 ## PR discipline
 
@@ -66,3 +76,4 @@ Optimize for reviewability over delivery speed. A PR should answer one clear que
 - Check that public schema/type changes include tests and docs.
 - Check that generated PR descriptions list affected surfaces and commands run.
 - Flag duplicate helpers, speculative exports, and multi-surface PRs without a split plan.
+- Flag new third-party dependencies (packages or GitHub Actions) that skip the dependency & supply-chain policy above — no justification, an unmaintained/narrow package, or a case where a first-party alternative would do.

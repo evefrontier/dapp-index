@@ -31,6 +31,7 @@ adapter file or workflow prompt for that tool.
 - PR review: look for serious issues before human review.
 - Docs drift: compare docs, schema, Move package, and site behavior.
 - Draft implementation: create small branches with tests and PR descriptions.
+- Dependency footprint: flag new or replaceable third-party dependencies (npm/bun packages or GitHub Actions) against the supply-chain policy in `AGENTS.md`.
 
 Agents should not automatically publish Sui packages, pay for transactions,
 merge PRs, or change governance/release policy without explicit approval.
@@ -190,8 +191,11 @@ Prompt:
 
 ```text
 Run the repository verification matrix where possible. Report failing commands,
-warnings, dependency/tooling risks, and suggested follow-up issues. Do not update
-dependencies automatically.
+warnings, dependency/tooling risks, and suggested follow-up issues. Separately,
+list every third-party GitHub Action in .github/workflows/*.yml and every
+npm/bun production dependency, and flag any that are unmaintained, narrowly
+used, or replaceable by a first-party action/plain script per the dependency
+policy in AGENTS.md. Do not update or remove dependencies automatically.
 ```
 
 ### Release Readiness Before Mainnet-Facing Changes
