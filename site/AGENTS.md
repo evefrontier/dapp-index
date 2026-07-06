@@ -37,6 +37,13 @@
       npx playwright test --config e2e/playwright.config.ts --update-snapshots'
   ```
 
+## CI: `site-visual` job and PR screenshots
+
+- `.github/workflows/ci.yml` runs a `site-visual` job (parallel to `site`/`move`) on every PR that touches `site/**` and on every push to `main`. It builds the site, runs `bun run site:e2e`, and posts a PR comment with expected/actual/diff thumbnails via a stable `<!-- playwright-visual-regression -->` marker comment (re-runs edit the same comment).
+- Thumbnails are hosted from the `gh-pages` branch (`peaceiris/actions-gh-pages`, scoped to `visual-regression/pr-<number>/` via `destination_dir` + `keep_files: true` so PRs don't clobber each other). The `playwright-report/` HTML report and raw `test-results/` PNGs are always uploaded as a 7-day GitHub Actions artifact as a fallback, since the gh-pages deploy step is allowed to fail gracefully (`continue-on-error: true`) without failing the job.
+- **Manual one-time repo setup (not yet done, human maintainer action required):** enable GitHub Pages for this repository from the `gh-pages` branch, root folder (repo Settings → Pages → Build and deployment → Deploy from a branch → `gh-pages` / `/(root)`). The `gh-pages` branch is created automatically by the first successful `peaceiris/actions-gh-pages` deploy; Pages still needs to be switched on afterward. Until that happens, the PR comment falls back to "see workflow artifacts" wording instead of embedding thumbnails, and the job still passes based on the artifact fallback.
+- The job still fails (red check) on an actual visual regression even though the Playwright step itself uses `continue-on-error: true` — a trailing step re-checks the Playwright step's outcome and exits non-zero.
+
 ## Expectations
 
 - Keep chain, Walrus, metadata, and UI concerns separated.

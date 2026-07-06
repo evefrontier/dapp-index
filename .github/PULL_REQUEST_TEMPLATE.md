@@ -29,4 +29,4 @@
 
 ## Screenshots or media
 
-Add screenshots or short recordings for user-visible UI changes.
+For `site/` UI changes, the **Site visual regression** check posts screenshots automatically as a PR comment. Update baselines locally with `bun run --cwd site e2e:update` (regenerate via the `mcr.microsoft.com/playwright` Docker image so results match CI's Linux rendering) when changes are intentional, and commit the updated PNGs.
