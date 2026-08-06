@@ -189,6 +189,16 @@ The important constraint is that approval should not require replacing the
 registry model. It should extend the Sui registry around the same slug, owner,
 metadata URI, and metadata hash.
 
+### Temporary site overlay: `hiddenListings`
+
+Until on-chain curator visibility ships, the Dapp Index frontend applies a
+temporary GitHub-backed denylist in
+`site/src/content/hiddenListings.json`. Lead builders hide a listing from the
+public directory (and direct slug routes) by adding its slug there, opening a
+PR, and merging. This does not remove the on-chain registry record; other
+clients may still see it. Replace this overlay with registry visibility state
+when ADR-003 moderation lands.
+
 ## Registry Metadata Model
 
 The builder-facing listing data uses the same concepts across Sui and Walrus:

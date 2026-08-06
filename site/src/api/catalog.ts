@@ -1,5 +1,6 @@
 import { fetchOnChainCatalogEntries } from '@/chain/registryCatalog';
 import { registryConfigured } from '@/chain/env';
+import { applyHiddenListings } from '@/content/hiddenListings';
 import type { DappIndexEntry } from '@/types/dapp-index';
 
 function catalogCacheKey(): string {
@@ -15,14 +16,18 @@ export function resetDappCatalogCache(): void {
   catalogPromises.clear();
 }
 
+function finalizeCatalogEntries(entries: DappIndexEntry[]): DappIndexEntry[] {
+  return applyHiddenListings(entries);
+}
+
 async function loadCatalog(): Promise<DappIndexEntry[]> {
-  if (!registryConfigured()) return [];
+  if (!registryConfigured()) return finalizeCatalogEntries([]);
 
   try {
-    return await fetchOnChainCatalogEntries();
+    return finalizeCatalogEntries(await fetchOnChainCatalogEntries());
   } catch (error) {
     console.warn('[dapp-catalog] On-chain registry read failed:', error);
-    return [];
+    return finalizeCatalogEntries([]);
   }
 }
 
