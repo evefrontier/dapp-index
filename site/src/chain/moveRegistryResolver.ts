@@ -1,7 +1,4 @@
-import {
-  getJsonRpcFullnodeUrl,
-  SuiJsonRpcClient,
-} from '@mysten/sui/jsonRpc';
+import { createSuiGrpcClient } from '@/chain/suiGrpcClient';
 import type { DappIndexSuiNetwork } from '@/types/dapp-index';
 import type {
   MoveRegistryPackageResolver,
@@ -55,11 +52,12 @@ function getNetworkClient(
   return client;
 }
 
+/**
+ * MVR name resolution itself goes over HTTP to the MVR service, but the client
+ * still needs a working chain transport for anything else it is asked to do.
+ */
 function createMoveRegistryClient(
   network: DappIndexSuiNetwork,
 ): MoveRegistryClient {
-  return new SuiJsonRpcClient({
-    network,
-    url: getJsonRpcFullnodeUrl(network),
-  });
+  return createSuiGrpcClient(network);
 }
