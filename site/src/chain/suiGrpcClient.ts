@@ -16,9 +16,13 @@ const GRPC_FULLNODE_URLS = {
   localnet: 'http://127.0.0.1:9000',
 } as const satisfies Record<SuiNetworkName, string>;
 
+export function suiGrpcFullnodeUrl(network: SuiNetworkName): string {
+  return GRPC_FULLNODE_URLS[network];
+}
+
 export function createSuiGrpcClient(network: SuiNetworkName): SuiGrpcClient {
   return new SuiGrpcClient({
     network,
-    baseUrl: GRPC_FULLNODE_URLS[network],
+    baseUrl: suiGrpcFullnodeUrl(network),
   });
 }
