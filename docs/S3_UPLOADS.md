@@ -64,7 +64,9 @@ The bucket is **private and write-only from the client's perspective**:
   does not write objects itself.
 - **Reads only via the CDN.** A CloudFront distribution sits in front of the
   bucket with origin access to it; the bucket itself is not reachable directly.
-  The `publicUrl` the Lambda returns is the CDN URL.
+  The `publicUrl` the Lambda returns must be the **custom public CDN URL**
+  (`https://dapp-media.evefrontier.com/...`), not the distribution’s
+  `*.cloudfront.net` hostname.
 - **CORS must allow browser PUT.** The bucket's CORS config has to permit `PUT`
   from the site's origins and allow the headers the presign response asks the
   client to send (at minimum `Content-Type`). This is the single most common
@@ -106,9 +108,20 @@ append-only in practice.
 - Bucket versioning and lifecycle rules (we keep it simple: versioning for
   recovery, no expiry, since listings are meant to persist).
 - Maximum object size — enforce it in the Lambda, not only in the client.
-- Whether the CDN domain is a custom domain. **Prefer one.** The returned
-  `publicUrl` ends up in on-chain metadata, so that hostname becomes a permanent
-  public API; a raw `*.cloudfront.net` name is much harder to migrate off later.
+- CDN domain: use the terraform **`public_url`**, not the CloudFront
+  distribution hostname. For this project that is:
+
+  ```hcl
+  public_url = "https://dapp-media.evefrontier.com"
+  ```
+
+  The Lambda must return `publicUrl` values under that origin. A raw
+  `*.cloudfront.net` host is infra-only (distribution / Lambda setup) and must
+  never be written into on-chain metadata — the SPA rejects it at presign time
+  and rewrites legacy CloudFront media URLs to `dapp-media.evefrontier.com` on
+  read. The frontend default is `DAPP_MEDIA_CDN_ORIGIN` /
+  `VITE_MEDIA_CDN_BASE`.
+
 
 ## Part 2 — The Lambda, And Why It Exists
 
