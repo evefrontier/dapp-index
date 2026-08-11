@@ -46,8 +46,10 @@ export type DraftMedia = {
 
 export type DraftPublishedMediaCheckpoint = {
   mediaId: string;
-  walrusBlobId: string;
-  walrusUrl: string;
+  storageUri?: string;
+  /** Legacy Walrus checkpoint fields retained for persisted draft compatibility. */
+  walrusBlobId?: string;
+  walrusUrl?: string;
   sha256: string;
   sizeBytes: number;
   width: number;
@@ -57,7 +59,9 @@ export type DraftPublishedMediaCheckpoint = {
 
 export type DraftPublishCheckpoint = {
   media?: DraftPublishedMediaCheckpoint[];
-  metadataUri?: `walrus://blob/${string}`;
+  metadataUri?: string;
+  storageUri?: string;
+  /** Legacy Walrus checkpoint fields retained for persisted draft compatibility. */
   walrusBlobId?: string;
   walrusUrl?: string;
   metadataHash?: string;

@@ -1,6 +1,5 @@
 import { formatAddress } from '@mysten/sui/utils';
 import type { PublishWalletBalanceUiState } from '@/chain/publishWalletBalances';
-import { isWalrusChainNetwork } from '@/chain/walrusClient';
 import { assertNever } from '@/utils/assertNever';
 import type { RegistrationPublishReadiness } from './registrationDraftPublish';
 import type {
@@ -33,7 +32,6 @@ export type PublishStatusRowsModel = {
   publishSetup: PublishStatusRowModel;
   suiBalance: PublishStatusRowModel;
   targetNetwork: PublishStatusRowModel;
-  walBalance: PublishStatusRowModel;
   wallet: PublishStatusRowModel;
   walletNetwork: PublishStatusRowModel;
 };
@@ -49,6 +47,7 @@ export function getPublishStatusRows({
   const walletNetworkReady =
     Boolean(walletAddress) && walletNetwork === suiNetwork;
   const setupBlockerCount = publishReadiness.blockers.length;
+  const networkReady = suiNetwork === 'testnet' || suiNetwork === 'mainnet';
 
   return {
     wallet: {
@@ -70,15 +69,14 @@ export function getPublishStatusRows({
       tone: walletNetworkReady ? 'ready' : 'warning',
     },
     targetNetwork: {
-      detail: isWalrusChainNetwork(suiNetwork)
-        ? 'Walrus publish enabled.'
+      detail: networkReady
+        ? 'S3 media upload + Sui registry.'
         : 'Use testnet or mainnet.',
       label: 'Target network',
       status: suiNetwork,
-      tone: isWalrusChainNetwork(suiNetwork) ? 'ready' : 'warning',
+      tone: networkReady ? 'ready' : 'warning',
     },
-    suiBalance: getCoinBalanceRow(walletBalanceStatus, 'sui'),
-    walBalance: getCoinBalanceRow(walletBalanceStatus, 'wal'),
+    suiBalance: getSuiBalanceRow(walletBalanceStatus),
     publishSetup: {
       detail: publishReadiness.ready
         ? 'All prerequisites met.'
@@ -96,50 +94,39 @@ export function getPublishStatusRows({
   };
 }
 
-function getCoinBalanceRow(
+function getSuiBalanceRow(
   status: PublishWalletBalanceUiState,
-  coin: 'sui' | 'wal',
 ): PublishStatusRowModel {
   switch (status.kind) {
     case 'skipped':
       return {
         status: '—',
         detail: status.reason,
-        label: coin === 'sui' ? 'SUI balance' : 'WAL balance',
+        label: 'SUI balance',
         tone: 'muted',
       };
     case 'loading':
       return {
         status: 'Checking',
         detail: 'Reading wallet balance…',
-        label: coin === 'sui' ? 'SUI balance' : 'WAL balance',
+        label: 'SUI balance',
         tone: 'muted',
       };
     case 'error':
       return {
         status: 'Error',
         detail: status.message,
-        label: coin === 'sui' ? 'SUI balance' : 'WAL balance',
+        label: 'SUI balance',
         tone: 'error',
       };
     case 'ready':
-      if (coin === 'sui') {
-        return {
-          label: 'SUI balance',
-          status: status.suiSufficient ? 'Ready' : 'Low',
-          detail: status.suiSufficient
-            ? `${status.suiFormatted} (min ${status.suiMinimumLabel})`
-            : `${status.suiFormatted} — need at least ${status.suiMinimumLabel}`,
-          tone: status.suiSufficient ? 'ready' : 'warning',
-        };
-      }
       return {
-        label: 'WAL balance',
-        status: status.walSufficient ? 'Ready' : 'Low',
-        detail: status.walSufficient
-          ? `${status.walFormatted} (min ${status.walMinimumLabel})`
-          : `${status.walFormatted} — need at least ${status.walMinimumLabel}`,
-        tone: status.walSufficient ? 'ready' : 'warning',
+        label: 'SUI balance',
+        status: status.suiSufficient ? 'Ready' : 'Low',
+        detail: status.suiSufficient
+          ? `${status.suiFormatted} (min ${status.suiMinimumLabel})`
+          : `${status.suiFormatted} — need at least ${status.suiMinimumLabel}`,
+        tone: status.suiSufficient ? 'ready' : 'warning',
       };
     default:
       return assertNever(status);
