@@ -9,6 +9,7 @@ import { UploadError } from '../src/storage/uploadErrors';
 import { presignUpload } from '../src/storage/uploadApi';
 
 const API_BASE = 'https://uploads.example.com';
+const MEDIA_CDN_BASE = 'https://cdn.example';
 
 describe('presignUpload', () => {
   test('throws when API base is missing', async () => {
@@ -100,6 +101,7 @@ describe('presignUpload', () => {
       contentLength: 12,
       sha256: 'a'.repeat(64),
       apiBase: API_BASE,
+      mediaCdnBase: MEDIA_CDN_BASE,
     };
 
     await expect(
@@ -129,6 +131,53 @@ describe('presignUpload', () => {
     ).rejects.toMatchObject({ code: 'presign_invalid_response' });
   });
 
+  test('rejects CloudFront distribution publicUrl', async () => {
+    await expect(
+      presignUpload({
+        address: '0x1234',
+        slug: 'demo',
+        purpose: 'media',
+        filename: 'thumbnail.png',
+        contentType: 'image/png',
+        contentLength: 12,
+        sha256: 'a'.repeat(64),
+        apiBase: API_BASE,
+        mediaCdnBase: MEDIA_CDN_BASE,
+        fetchImpl: async () =>
+          Response.json({
+            uploadUrl: 'https://s3.example/put',
+            headers: { 'Content-Type': 'image/png' },
+            objectKey: 'testnet/0x1234/demo/thumbnail.png',
+            publicUrl:
+              'https://d111111abcdef8.cloudfront.net/testnet/0x1234/demo/thumbnail.png',
+          }),
+      }),
+    ).rejects.toMatchObject({ code: 'presign_invalid_response' });
+  });
+
+  test('rejects publicUrl outside the media CDN', async () => {
+    await expect(
+      presignUpload({
+        address: '0x1234',
+        slug: 'demo',
+        purpose: 'media',
+        filename: 'thumbnail.png',
+        contentType: 'image/png',
+        contentLength: 12,
+        sha256: 'a'.repeat(64),
+        apiBase: API_BASE,
+        mediaCdnBase: MEDIA_CDN_BASE,
+        fetchImpl: async () =>
+          Response.json({
+            uploadUrl: 'https://s3.example/put',
+            headers: { 'Content-Type': 'image/png' },
+            objectKey: 'testnet/0x1234/demo/thumbnail.png',
+            publicUrl: 'https://other-cdn.example/testnet/0x1234/demo/thumbnail.png',
+          }),
+      }),
+    ).rejects.toMatchObject({ code: 'presign_invalid_response' });
+  });
+
   test('returns a valid presign payload', async () => {
     const result = await presignUpload({
       address: '0x1234',
@@ -139,6 +188,7 @@ describe('presignUpload', () => {
       contentLength: 12,
       sha256: 'a'.repeat(64),
       apiBase: API_BASE,
+      mediaCdnBase: MEDIA_CDN_BASE,
       fetchImpl: async () =>
         new Response(
           JSON.stringify({
@@ -203,6 +253,7 @@ describe('s3MetadataStorage', () => {
       bytes,
       sha256: 'b'.repeat(64),
       apiBase: API_BASE,
+      mediaCdnBase: MEDIA_CDN_BASE,
       fetchImpl: async (input, init) => {
         const url = String(input);
         calls.push(`${init?.method ?? 'GET'} ${url}`);
@@ -238,6 +289,7 @@ describe('s3MetadataStorage', () => {
       bytes: new TextEncoder().encode('{"id":"route-planner"}'),
       sha256: 'c'.repeat(64),
       apiBase: API_BASE,
+      mediaCdnBase: MEDIA_CDN_BASE,
       fetchImpl: async (input, init) => {
         const url = String(input);
         if (url.endsWith('/uploads/presign')) {

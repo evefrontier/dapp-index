@@ -1,4 +1,4 @@
-import { viteUploadApiBase } from '@/chain/env';
+import { viteMediaCdnBase, viteUploadApiBase } from '@/chain/env';
 import { HttpsUrlSchema } from '@/schemas/shared';
 import { UploadError } from './uploadErrors';
 
@@ -14,6 +14,11 @@ export type PresignUploadInput = {
   sha256: string;
   /** Injectable for tests. Defaults to `viteUploadApiBase()`. */
   apiBase?: string;
+  /**
+   * Expected public CDN origin for `publicUrl` (no trailing slash).
+   * Defaults to `viteMediaCdnBase()`.
+   */
+  mediaCdnBase?: string;
   fetchImpl?: typeof fetch;
 };
 
@@ -84,9 +89,12 @@ export async function presignUpload(
     );
   }
 
+  const mediaCdnBase = (
+    input.mediaCdnBase ?? viteMediaCdnBase()
+  ).replace(/\/+$/, '');
   const uploadUrl = requireHttpsUrl(parsed.uploadUrl, 'uploadUrl');
   const objectKey = requireNonEmptyString(parsed.objectKey, 'objectKey');
-  const publicUrl = requireHttpsUrl(parsed.publicUrl, 'publicUrl');
+  const publicUrl = requirePublicMediaUrl(parsed.publicUrl, mediaCdnBase);
   const headers = normalizeHeaders(parsed.headers);
 
   return {
@@ -134,6 +142,40 @@ function requireHttpsUrl(value: unknown, field: string): string {
     );
   }
   return result.data;
+}
+
+/**
+ * `publicUrl` is written on-chain. Require the terraform public CDN host;
+ * never accept a raw CloudFront distribution domain.
+ */
+function requirePublicMediaUrl(value: unknown, mediaCdnBase: string): string {
+  const url = requireHttpsUrl(value, 'publicUrl');
+
+  let hostname: string;
+  try {
+    hostname = new URL(url).hostname.toLowerCase();
+  } catch {
+    throw new UploadError(
+      'presign_invalid_response',
+      'Upload service returned an invalid response (publicUrl must be an HTTPS URL).',
+    );
+  }
+
+  if (hostname.endsWith('.cloudfront.net')) {
+    throw new UploadError(
+      'presign_invalid_response',
+      `Upload service returned a CloudFront distribution URL as publicUrl. Expected the public CDN host (${mediaCdnBase}).`,
+    );
+  }
+
+  if (url !== mediaCdnBase && !url.startsWith(`${mediaCdnBase}/`)) {
+    throw new UploadError(
+      'presign_invalid_response',
+      `Upload service returned a publicUrl outside the media CDN (${mediaCdnBase}).`,
+    );
+  }
+
+  return url;
 }
 
 function normalizeHeaders(value: unknown): Record<string, string> {

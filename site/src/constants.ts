@@ -98,6 +98,13 @@ export const PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES = 150_000_000;
 /** Maximum number of video items allowed in public listing media. */
 export const PUBLIC_MEDIA_VIDEO_LIMIT = 1;
 
+/**
+ * Public CDN origin for published listing media/metadata URLs.
+ * Matches terraform `public_url` — never use a raw `*.cloudfront.net` host
+ * in on-chain metadata.
+ */
+export const DAPP_MEDIA_CDN_ORIGIN = 'https://dapp-media.evefrontier.com';
+
 /** Official Walrus aggregator hosts (metadata JSON at `/v1/blobs/{blobId}`). */
 export const WALRUS_AGGREGATOR_TESTNET_HOST =
   'aggregator.walrus-testnet.walrus.space';

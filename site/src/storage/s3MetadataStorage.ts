@@ -16,6 +16,7 @@ export type UploadMediaToS3Input = {
   bytes: Uint8Array;
   sha256: string;
   apiBase?: string;
+  mediaCdnBase?: string;
   fetchImpl?: typeof fetch;
 };
 
@@ -25,6 +26,7 @@ export type UploadManifestToS3Input = {
   bytes: Uint8Array;
   sha256: string;
   apiBase?: string;
+  mediaCdnBase?: string;
   fetchImpl?: typeof fetch;
 };
 
@@ -40,6 +42,7 @@ export async function uploadMediaToS3(
     bytes: input.bytes,
     sha256: input.sha256,
     apiBase: input.apiBase,
+    mediaCdnBase: input.mediaCdnBase,
     fetchImpl: input.fetchImpl,
   });
 }
@@ -56,6 +59,7 @@ export async function uploadManifestToS3(
     bytes: input.bytes,
     sha256: input.sha256,
     apiBase: input.apiBase,
+    mediaCdnBase: input.mediaCdnBase,
     fetchImpl: input.fetchImpl,
   });
 }
@@ -69,6 +73,7 @@ async function uploadBytes(input: {
   bytes: Uint8Array;
   sha256: string;
   apiBase?: string;
+  mediaCdnBase?: string;
   fetchImpl?: typeof fetch;
 }): Promise<S3UploadResult> {
   const sizeBytes = input.bytes.byteLength;
@@ -81,6 +86,7 @@ async function uploadBytes(input: {
     contentLength: sizeBytes,
     sha256: input.sha256,
     apiBase: input.apiBase,
+    mediaCdnBase: input.mediaCdnBase,
     fetchImpl: input.fetchImpl,
   });
 
