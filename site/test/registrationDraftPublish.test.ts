@@ -5,6 +5,8 @@ import {
   createRegistrationPublishReadiness,
   getDraftVideoPosterBlockers,
   getPublishNextBlockerMessage,
+  getReusableS3StorageUri,
+  resolvePublishedMetadataPublicUrl,
   resolveRegistrationPublishAction,
 } from '../src/builder/registrationDraftPublish';
 import type { DraftMedia } from '../src/storage/draftStorage';
@@ -44,14 +46,13 @@ const videoMedia: DraftMedia = {
 };
 
 describe('registration draft publish', () => {
-  test('builds final metadata with Walrus media references', () => {
+  test('builds final metadata with HTTPS media references', () => {
     const result = buildRegistrationPublishMetadata({
       baseMetadata,
       mediaAssets: [
         {
           media: imageMedia,
-          walrusBlobId: 'dashboardBlobId',
-          walrusUrl: 'https://aggregator.test/v1/blobs/dashboardBlobId',
+          storageUri: 'https://cdn.example/testnet/0x/demo/dashboard.webp',
           sha256: '0'.repeat(64),
           sizeBytes: 824_512,
           width: 1600,
@@ -59,8 +60,7 @@ describe('registration draft publish', () => {
         },
         {
           media: videoMedia,
-          walrusBlobId: 'demoBlobId',
-          walrusUrl: 'https://aggregator.test/v1/blobs/demoBlobId',
+          storageUri: 'https://cdn.example/testnet/0x/demo/demo.webm',
           sha256: '1'.repeat(64),
           sizeBytes: 4_200_000,
           width: 1920,
@@ -80,7 +80,7 @@ describe('registration draft publish', () => {
             id: 'dashboard',
             kind: 'image',
             role: 'thumbnail',
-            uri: 'walrus://blob/dashboardBlobId',
+            uri: 'https://cdn.example/testnet/0x/demo/dashboard.webp',
             mimeType: 'image/webp',
             sha256: '0'.repeat(64),
             sizeBytes: 824_512,
@@ -94,7 +94,7 @@ describe('registration draft publish', () => {
             kind: 'video',
             role: 'demo',
             poster: {
-              uri: 'walrus://blob/dashboardBlobId',
+              uri: 'https://cdn.example/testnet/0x/demo/dashboard.webp',
               mimeType: 'image/webp',
               sha256: '0'.repeat(64),
               sizeBytes: 824_512,
@@ -105,7 +105,7 @@ describe('registration draft publish', () => {
             },
             sources: [
               {
-                uri: 'walrus://blob/demoBlobId',
+                uri: 'https://cdn.example/testnet/0x/demo/demo.webm',
                 mimeType: 'video/webm',
                 sha256: '1'.repeat(64),
                 sizeBytes: 4_200_000,
@@ -127,8 +127,7 @@ describe('registration draft publish', () => {
       mediaAssets: [
         {
           media: videoMedia,
-          walrusBlobId: 'demoBlobId',
-          walrusUrl: 'https://aggregator.test/v1/blobs/demoBlobId',
+          storageUri: 'https://cdn.example/testnet/0x/demo/demo.webm',
           sha256: '1'.repeat(64),
           sizeBytes: 4_200_000,
           width: 1920,
@@ -145,6 +144,32 @@ describe('registration draft publish', () => {
         severity: 'error',
       }),
     ]);
+  });
+
+  test('reuses only valid S3 media checkpoints', () => {
+    expect(
+      getReusableS3StorageUri({
+        storageUri: 'https://cdn.example/demo/dashboard.webp',
+      }),
+    ).toBe('https://cdn.example/demo/dashboard.webp');
+    expect(getReusableS3StorageUri({})).toBeNull();
+    expect(
+      getReusableS3StorageUri({ storageUri: 'http://cdn.example/demo.webp' }),
+    ).toBeNull();
+  });
+
+  test('restores the public URL from legacy published Walrus drafts', () => {
+    expect(
+      resolvePublishedMetadataPublicUrl({
+        walrusUrl: 'https://aggregator.example/v1/blobs/abc123',
+      }),
+    ).toBe('https://aggregator.example/v1/blobs/abc123');
+    expect(
+      resolvePublishedMetadataPublicUrl({
+        storageUri: 'https://cdn.example/demo/metadata.json',
+        walrusUrl: 'https://aggregator.example/v1/blobs/abc123',
+      }),
+    ).toBe('https://cdn.example/demo/metadata.json');
   });
 
   test('chooses register for available slugs and update for owned slugs', () => {
@@ -207,7 +232,7 @@ describe('registration draft publish', () => {
         reviewReady: false,
         suiNetwork: 'devnet',
         walletAddress: null,
-        walrusAggregatorUrl: null,
+        uploadApiBase: null,
       }),
     ).toEqual({
       ready: false,
@@ -215,8 +240,8 @@ describe('registration draft publish', () => {
         'Fix review blockers first.',
         'Connect a wallet to publish.',
         'Configure registry package and object env vars.',
-        'Walrus publish supports testnet or mainnet.',
-        'Configure a Walrus aggregator URL.',
+        'Publish supports testnet or mainnet.',
+        'Configure VITE_UPLOAD_API_BASE for media uploads.',
       ],
     });
 
@@ -227,7 +252,7 @@ describe('registration draft publish', () => {
         suiNetwork: 'testnet',
         walletAddress:
           '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-        walrusAggregatorUrl: 'https://aggregator.test',
+        uploadApiBase: 'https://uploads.example.com',
       }),
     ).toEqual({
       ready: true,
@@ -244,7 +269,7 @@ describe('registration draft publish', () => {
         walletAddress:
           '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
         walletNetwork: 'testnet',
-        walrusAggregatorUrl: 'https://aggregator.test',
+        uploadApiBase: 'https://uploads.example.com',
         walletBalanceBlockers: ['Add at least 0.05 SUI for gas and registry fees.'],
       }),
     ).toEqual({
@@ -259,7 +284,7 @@ describe('registration draft publish', () => {
       reviewReady: false,
       suiNetwork: 'testnet',
       walletAddress: null,
-      walrusAggregatorUrl: 'https://aggregator.test',
+      uploadApiBase: 'https://uploads.example.com',
     });
 
     expect(getPublishNextBlockerMessage(readiness)).toBe(
@@ -274,7 +299,7 @@ describe('registration draft publish', () => {
           walletAddress:
             '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
           walletNetwork: 'testnet',
-          walrusAggregatorUrl: 'https://aggregator.test',
+          uploadApiBase: 'https://uploads.example.com',
         }),
       ),
     ).toBeNull();
