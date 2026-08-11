@@ -1,4 +1,3 @@
-import type { SuiObjectResponse } from '@mysten/sui/jsonRpc';
 import {
   asPlainRecord,
   coerceU8Vector,
@@ -11,6 +10,13 @@ export type OnChainListing = {
   metadata_uri: string;
   metadata_hash: number[];
   categories: string[];
+};
+
+/** Minimal object-response shape used by the legacy JSON listing parser. */
+type ListingObjectResponse = {
+  data?: {
+    content?: unknown;
+  } | null;
 };
 
 function parseListingFields(
@@ -62,7 +68,7 @@ function extractListingFromMoveObjectContent(
 }
 
 export function parseRegistryListingObject(
-  response: SuiObjectResponse,
+  response: ListingObjectResponse,
 ): OnChainListing | null {
   const data = response.data;
   if (!data?.content) return null;

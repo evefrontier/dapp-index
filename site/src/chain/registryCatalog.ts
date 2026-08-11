@@ -9,7 +9,7 @@ import {
   viteRegistryId,
   viteSuiNetwork,
 } from '@/chain/env';
-import { mapWithConcurrency, type OnChainListing } from '@/chain/slugLookup';
+import type { OnChainListing } from '@/chain/slugLookup';
 import {
   DAPP_INDEX_CATEGORIES,
   REGISTRY_SLUG_LOOKUP_MAX_PAGES,
@@ -23,6 +23,7 @@ import type {
   DappIndexServerTenant,
 } from '@/types/dapp-index';
 import { canonicalStringify, sha256Utf8Bytes } from '@/utils/canonicalJson';
+import { mapWithConcurrency } from '@/utils/mapWithConcurrency';
 
 const ALLOWED_CATEGORY = new Set<string>(
   DAPP_INDEX_CATEGORIES.map((category) => category.id),
