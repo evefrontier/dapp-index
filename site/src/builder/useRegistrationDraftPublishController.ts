@@ -40,7 +40,7 @@ import {
 import { UploadError } from '@/storage/uploadErrors';
 import { canonicalStringify } from '@/utils/canonicalJson';
 import { useCancellableAsync } from './cancellableAsync';
-import { getErrorMessage } from './errors';
+import { formatPublishErrorMessage } from './errors';
 import {
   buildRegistrationPublishMetadata,
   createRegistrationPublishReadiness,
@@ -159,6 +159,7 @@ export function useRegistrationDraftPublishController({
   const uploadApiBase = viteUploadApiBase() ?? null;
   const walletAddress = currentAccount?.address ?? null;
   const walletBalanceStatus = usePublishWalletBalances({
+    draft,
     targetNetwork: suiNetwork,
     walletAddress,
     walletNetwork: walletAddress ? currentWalletNetwork : null,
@@ -401,10 +402,9 @@ export function useRegistrationDraftPublishController({
       setPublishState((current) => ({
         status: 'error',
         action: current.action,
-        errorMessage: getErrorMessage(
-          caughtError,
-          'Could not publish listing.',
-        ),
+        errorMessage: formatPublishErrorMessage(caughtError, {
+          fallback: 'Could not publish listing.',
+        }),
         metadataHash: current.metadataHash,
         metadataUri: current.metadataUri,
         metadataPublicUrl: current.metadataPublicUrl,

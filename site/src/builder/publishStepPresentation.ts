@@ -29,13 +29,61 @@ export type PublishStatusRowModel = {
 };
 
 export type PublishStatusRowsModel = {
+  network: PublishStatusRowModel;
   publishJob: PublishStatusRowModel;
   publishSetup: PublishStatusRowModel;
   suiBalance: PublishStatusRowModel;
-  targetNetwork: PublishStatusRowModel;
   wallet: PublishStatusRowModel;
-  walletNetwork: PublishStatusRowModel;
 };
+
+export function getNetworkStatusRow({
+  suiNetwork,
+  walletAddress,
+  walletNetwork,
+}: Pick<
+  PublishStepControllerState,
+  'suiNetwork' | 'walletAddress' | 'walletNetwork'
+>): PublishStatusRowModel {
+  const networkReady = suiNetwork === 'testnet' || suiNetwork === 'mainnet';
+  const walletNetworkReady =
+    Boolean(walletAddress) && walletNetwork === suiNetwork;
+
+  if (!walletAddress) {
+    return {
+      label: 'Network',
+      status: 'Required',
+      detail: networkReady
+        ? `Connect wallet on ${suiNetwork}.`
+        : 'Publish needs testnet or mainnet.',
+      tone: 'warning',
+    };
+  }
+
+  if (!networkReady) {
+    return {
+      label: 'Network',
+      status: suiNetwork,
+      detail: 'Use testnet or mainnet.',
+      tone: 'warning',
+    };
+  }
+
+  if (!walletNetworkReady) {
+    return {
+      label: 'Network',
+      status: 'Mismatch',
+      detail: `Wallet on ${walletNetwork ?? 'unknown'} — switch to ${suiNetwork}.`,
+      tone: 'warning',
+    };
+  }
+
+  return {
+    label: 'Network',
+    status: suiNetwork,
+    detail: `Wallet on ${suiNetwork} · S3 media upload + Sui registry.`,
+    tone: 'ready',
+  };
+}
 
 export function getPublishStatusRows({
   publishReadiness,
@@ -45,10 +93,7 @@ export function getPublishStatusRows({
   walletBalanceStatus,
   walletNetwork,
 }: PublishStepControllerState): PublishStatusRowsModel {
-  const walletNetworkReady =
-    Boolean(walletAddress) && walletNetwork === suiNetwork;
   const setupBlockerCount = publishReadiness.blockers.length;
-  const networkReady = suiNetwork === 'testnet' || suiNetwork === 'mainnet';
 
   return {
     wallet: {
@@ -59,24 +104,11 @@ export function getPublishStatusRows({
       status: walletAddress ? 'Connected' : 'Required',
       tone: walletAddress ? 'ready' : 'warning',
     },
-    walletNetwork: {
-      detail: walletNetwork ?? 'Not connected.',
-      label: 'Wallet network',
-      status: !walletAddress
-        ? 'Required'
-        : walletNetworkReady
-          ? 'Ready'
-          : 'Mismatch',
-      tone: walletNetworkReady ? 'ready' : 'warning',
-    },
-    targetNetwork: {
-      detail: networkReady
-        ? 'S3 media upload + Sui registry.'
-        : 'Use testnet or mainnet.',
-      label: 'Target network',
-      status: suiNetwork,
-      tone: networkReady ? 'ready' : 'warning',
-    },
+    network: getNetworkStatusRow({
+      suiNetwork,
+      walletAddress,
+      walletNetwork,
+    }),
     suiBalance: getSuiBalanceRow(walletBalanceStatus),
     publishSetup: {
       detail: publishReadiness.ready
@@ -120,15 +152,23 @@ function getSuiBalanceRow(
         label: 'SUI balance',
         tone: 'error',
       };
-    case 'ready':
+    case 'ready': {
+      const txCount = status.suiEstimatedTxCount;
+      const hasEstimate =
+        status.suiEstimatedLabel !== null && txCount !== null && txCount > 0;
       return {
         label: 'SUI balance',
         status: status.suiSufficient ? 'Ready' : 'Low',
         detail: status.suiSufficient
-          ? `${status.suiFormatted} (min ${status.suiMinimumLabel})`
-          : `${status.suiFormatted} — need at least ${status.suiMinimumLabel}`,
+          ? hasEstimate
+            ? `${status.suiFormatted} (est. ${status.suiEstimatedLabel} for ~${txCount} txs)`
+            : `${status.suiFormatted} (min ${status.suiMinimumLabel})`
+          : hasEstimate
+            ? `${status.suiFormatted} — need about ${status.suiMinimumLabel}`
+            : `${status.suiFormatted} — need at least ${status.suiMinimumLabel}`,
         tone: status.suiSufficient ? 'ready' : 'warning',
       };
+    }
     default:
       return assertNever(status);
   }
