@@ -51,6 +51,34 @@ export function registrySlugFieldId(registryId: string, slug: string): string {
   );
 }
 
+function toOnChainListing(value: {
+  owner: string;
+  slug: string;
+  metadata_uri: string;
+  metadata_hash: number[];
+  categories: string[];
+}): OnChainListing {
+  return {
+    owner: value.owner,
+    slug: value.slug,
+    metadata_uri: value.metadata_uri,
+    metadata_hash: value.metadata_hash,
+    categories: value.categories,
+  };
+}
+
+/**
+ * Decode a bare `DappListing` value (as returned by listDynamicFields with
+ * `include: { value: true }`).
+ */
+export function parseDappListingBcs(contents: Uint8Array): OnChainListing | null {
+  try {
+    return toOnChainListing(DappListingBcs.parse(contents));
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Decode the contents of a registry slug dynamic field object.
  *
@@ -62,13 +90,7 @@ export function parseRegistryListingFieldBcs(
 ): OnChainListing | null {
   try {
     const { value } = RegistryListingFieldBcs.parse(contents);
-    return {
-      owner: value.owner,
-      slug: value.slug,
-      metadata_uri: value.metadata_uri,
-      metadata_hash: value.metadata_hash,
-      categories: value.categories,
-    };
+    return toOnChainListing(value);
   } catch {
     return null;
   }

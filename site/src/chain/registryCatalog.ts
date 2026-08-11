@@ -1,15 +1,21 @@
-import {
-  type DynamicFieldPage,
-  getJsonRpcFullnodeUrl,
-  SuiJsonRpcClient,
-  type SuiObjectResponse,
-} from '@mysten/sui/jsonRpc';
+/**
+ * On-chain registry catalog over gRPC.
+ *
+ * Lists dynamic fields on the shared DappRegistry, decodes each field's
+ * `DappListing` value from BCS, then hydrates display entries by fetching the
+ * listing metadata document (Walrus or HTTPS CDN).
+ */
+
 import {
   registryConfigured,
   viteRegistryId,
   viteSuiNetwork,
 } from '@/chain/env';
-import type { OnChainListing } from '@/chain/slugLookup';
+import {
+  parseDappListingBcs,
+  type OnChainListing,
+} from '@/chain/registryListingBcs';
+import { createSuiGrpcClient } from '@/chain/suiGrpcClient';
 import {
   DAPP_INDEX_CATEGORIES,
   REGISTRY_SLUG_LOOKUP_MAX_PAGES,
@@ -29,130 +35,30 @@ const ALLOWED_CATEGORY = new Set<string>(
   DAPP_INDEX_CATEGORIES.map((category) => category.id),
 );
 const METADATA_TIMEOUT_MS = 6_000;
-const DYNAMIC_FIELD_OBJECT_CONCURRENCY = 8;
 const METADATA_FETCH_CONCURRENCY = 6;
+const DYNAMIC_FIELDS_PAGE_SIZE = 50;
 
-async function withTimeout<T>(
-  promise: Promise<T>,
-  timeoutMs: number,
-  label: string,
-): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  const timeout = new Promise<never>((_, reject) => {
-    timer = setTimeout(() => {
-      reject(new Error(`${label} timed out after ${timeoutMs}ms`));
-    }, timeoutMs);
-  });
-  try {
-    return await Promise.race([promise, timeout]);
-  } finally {
-    if (timer) clearTimeout(timer);
-  }
-}
+export type CatalogDynamicFieldPage = {
+  dynamicFields: Array<{
+    value?: { type: string; bcs: Uint8Array };
+  }>;
+  cursor: string | null;
+  hasNextPage: boolean;
+};
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-  if (value && typeof value === 'object' && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
-  }
-  return null;
-}
+export type ListCatalogDynamicFields = (input: {
+  parentId: string;
+  cursor?: string | null;
+  limit?: number;
+  signal?: AbortSignal;
+}) => Promise<CatalogDynamicFieldPage>;
 
-function fromBase64ish(value: string): Uint8Array {
-  const bin = atob(value);
-  const out = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) {
-    out[i] = bin.charCodeAt(i);
-  }
-  return out;
-}
-
-function moveStringToUtf8(value: unknown): string | null {
-  if (typeof value === 'string') return value;
-  const record = asRecord(value);
-  if (!record) return null;
-  if (typeof record.bytes === 'string') {
-    try {
-      return new TextDecoder().decode(fromBase64ish(record.bytes));
-    } catch {
-      return null;
-    }
-  }
-  if (Array.isArray(record.bytes)) {
-    return new TextDecoder().decode(Uint8Array.from(record.bytes));
-  }
-  return null;
-}
-
-function coerceU8Vector(value: unknown): number[] | null {
-  if (!Array.isArray(value)) return null;
-  const out: number[] = [];
-  for (const byte of value) {
-    if (
-      typeof byte !== 'number' ||
-      !Number.isInteger(byte) ||
-      byte < 0 ||
-      byte > 255
-    ) {
-      return null;
-    }
-    out.push(byte);
-  }
-  return out;
-}
-
-function parseListingFields(
-  fields: Record<string, unknown>,
-): OnChainListing | null {
-  const owner = typeof fields.owner === 'string' ? fields.owner : null;
-  const slug = moveStringToUtf8(fields.slug);
-  const metadata_uri = moveStringToUtf8(fields.metadata_uri);
-  const metadata_hash = coerceU8Vector(fields.metadata_hash);
-  const categoriesRaw = fields.categories;
-  if (
-    !owner ||
-    !slug ||
-    !metadata_uri ||
-    !metadata_hash ||
-    !Array.isArray(categoriesRaw)
-  ) {
-    return null;
-  }
-
-  const categories: string[] = [];
-  for (const category of categoriesRaw) {
-    const normalized = moveStringToUtf8(category);
-    if (!normalized) return null;
-    categories.push(normalized);
-  }
-
-  return { owner, slug, metadata_uri, metadata_hash, categories };
-}
-
-function extractListingFromMoveObjectContent(
-  content: unknown,
-): OnChainListing | null {
-  const record = asRecord(content);
-  if (!record || record.dataType !== 'moveObject') return null;
-  const fields = asRecord(record.fields);
-  if (!fields) return null;
-  if ('value' in fields) {
-    const inner = asRecord(fields.value);
-    if (inner) {
-      const innerFields = asRecord(inner.fields);
-      return parseListingFields(innerFields ?? inner);
-    }
-  }
-  if ('owner' in fields && 'slug' in fields) {
-    return parseListingFields(fields);
-  }
-  return null;
-}
-
-function parseListingObject(response: SuiObjectResponse): OnChainListing | null {
-  const data = response.data;
-  if (!data?.content) return null;
-  return extractListingFromMoveObjectContent(data.content);
-}
+export type FetchOnChainCatalogOptions = {
+  /** Injectable for tests. Defaults to gRPC `listDynamicFields` with values. */
+  listDynamicFields?: ListCatalogDynamicFields;
+  /** Injectable registry object id for tests. */
+  registryId?: string;
+};
 
 function normalizeCategories(raw: string[]): DappIndexCategoryId[] {
   const categories = raw.filter((category): category is DappIndexCategoryId =>
@@ -250,17 +156,37 @@ async function listingToDisplayEntry(
   return fallbackEntry(listing);
 }
 
-export async function fetchOnChainCatalogEntries(): Promise<DappIndexEntry[]> {
-  if (!registryConfigured()) return [];
+function createDefaultListDynamicFields(): ListCatalogDynamicFields {
+  const client = createSuiGrpcClient(viteSuiNetwork());
+  return async ({ parentId, cursor, limit }) => {
+    const page = await client.listDynamicFields({
+      parentId,
+      cursor: cursor ?? undefined,
+      limit,
+      include: { value: true },
+    });
+    return {
+      dynamicFields: page.dynamicFields.map((field) => ({
+        value: field.value
+          ? { type: field.value.type, bcs: field.value.bcs }
+          : undefined,
+      })),
+      cursor: page.cursor,
+      hasNextPage: page.hasNextPage,
+    };
+  };
+}
 
-  const registryId = viteRegistryId();
+export async function fetchOnChainCatalogEntries(
+  options: FetchOnChainCatalogOptions = {},
+): Promise<DappIndexEntry[]> {
+  const listDynamicFields = options.listDynamicFields;
+  const registryId = options.registryId ?? viteRegistryId();
+
+  if (!listDynamicFields && !registryConfigured()) return [];
   if (!registryId) return [];
 
-  const network = viteSuiNetwork();
-  const client = new SuiJsonRpcClient({
-    url: getJsonRpcFullnodeUrl(network),
-    network,
-  });
+  const listFields = listDynamicFields ?? createDefaultListDynamicFields();
   const entries: DappIndexEntry[] = [];
   let cursor: string | null | undefined;
   const seenCursors = new Set<string | null>();
@@ -280,54 +206,31 @@ export async function fetchOnChainCatalogEntries(): Promise<DappIndexEntry[]> {
     seenCursors.add(cursor ?? null);
     pagesRead += 1;
 
-    let page: DynamicFieldPage;
+    let page: CatalogDynamicFieldPage;
     try {
-      page = await withTimeout(
-        client.getDynamicFields({
-          parentId: registryId,
-          cursor,
-        }),
-        REGISTRY_SLUG_LOOKUP_RPC_TIMEOUT_MS,
-        'registry getDynamicFields',
-      );
+      page = await listFields({
+        parentId: registryId,
+        cursor,
+        limit: DYNAMIC_FIELDS_PAGE_SIZE,
+        signal: AbortSignal.timeout(REGISTRY_SLUG_LOOKUP_RPC_TIMEOUT_MS),
+      });
     } catch (error) {
       console.warn('[registry-catalog] Failed to list dynamic fields:', error);
       break;
     }
 
-    const listingsOnPage = (
-      await mapWithConcurrency(
-        page.data,
-        DYNAMIC_FIELD_OBJECT_CONCURRENCY,
-        async (field) => {
-          try {
-            const object = await withTimeout(
-              client.getDynamicFieldObject({
-                parentId: registryId,
-                name: field.name,
-              }),
-              REGISTRY_SLUG_LOOKUP_RPC_TIMEOUT_MS,
-              'registry getDynamicFieldObject',
-            );
-            return parseListingObject(object);
-          } catch (error) {
-            console.warn('[registry-catalog] Failed to read listing object:', error);
-            return null;
-          }
-        },
+    const listingsOnPage = page.dynamicFields
+      .map((field) =>
+        field.value?.bcs ? parseDappListingBcs(field.value.bcs) : null,
       )
-    ).filter((listing): listing is OnChainListing => listing !== null);
+      .filter((listing): listing is OnChainListing => listing !== null);
 
     const entriesOnPage = await mapWithConcurrency(
       listingsOnPage,
       METADATA_FETCH_CONCURRENCY,
       async (listing) => {
         try {
-          return await withTimeout(
-            listingToDisplayEntry(listing),
-            METADATA_TIMEOUT_MS + 1_500,
-            'registry listingToDisplayEntry',
-          );
+          return await listingToDisplayEntry(listing);
         } catch (error) {
           console.warn('[registry-catalog] Failed to map listing entry:', error);
           return null;
@@ -340,8 +243,9 @@ export async function fetchOnChainCatalogEntries(): Promise<DappIndexEntry[]> {
     }
 
     if (!page.hasNextPage) break;
-    cursor = page.nextCursor ?? null;
+    cursor = page.cursor;
   }
 
   return entries.sort((left, right) => left.name.localeCompare(right.name));
 }
+

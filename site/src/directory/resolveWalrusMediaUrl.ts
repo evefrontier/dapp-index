@@ -7,17 +7,23 @@ import type {
   DappIndexImageMediaItem,
   DappIndexMediaItem,
 } from '@/types/dapp-index';
+import { resolveMediaUrl } from '@/utils/resolveMediaUrl';
 
+/**
+ * Browser-fetchable URL for listing media/metadata URIs.
+ * Passes HTTPS CDN URLs through; maps `walrus://blob/<id>` via aggregator/dev map.
+ */
 export function resolveWalrusBlobReadUrl(uri: string): string | null {
-  const match = /^walrus:\/\/blob\/(.+)$/i.exec(uri.trim());
-  if (!match?.[1]) return null;
+  return resolveMediaUrl(uri, {
+    resolveWalrusBlobId: (blobId) => {
+      const devUrl = resolveDevCatalogMediaUrl(blobId);
+      if (devUrl) return devUrl;
 
-  const devUrl = resolveDevCatalogMediaUrl(match[1]);
-  if (devUrl) return devUrl;
-
-  const aggregator = viteWalrusAggregatorUrl();
-  if (!aggregator) return null;
-  return walrusBlobReadUrl(aggregator, match[1]);
+      const aggregator = viteWalrusAggregatorUrl();
+      if (!aggregator) return null;
+      return walrusBlobReadUrl(aggregator, blobId);
+    },
+  });
 }
 
 export type ResolveWalrusMetadataFetchUrlOptions = {

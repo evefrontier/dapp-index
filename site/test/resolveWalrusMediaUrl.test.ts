@@ -4,6 +4,7 @@ import {
   WALRUS_AGGREGATOR_TESTNET_URL,
 } from '@/constants';
 import {
+  resolveWalrusBlobReadUrl,
   resolveWalrusMetadataFetchUrl,
   resolveWalrusMetadataReadUrl,
 } from '@/directory/resolveWalrusMediaUrl';
@@ -14,6 +15,17 @@ describe('resolveWalrusMetadataFetchUrl', () => {
     expect(
       resolveWalrusMetadataFetchUrl(`walrus://blob/${blobId}`),
     ).toBe(`${WALRUS_AGGREGATOR_TESTNET_URL}/v1/blobs/${blobId}`);
+  });
+
+  test('passes HTTPS CDN media URLs through for S3-published listings', () => {
+    const cdnUrl =
+      'https://cdn.example/testnet/0xabc/demo/thumbnail.webp';
+    expect(resolveWalrusBlobReadUrl(cdnUrl)).toBe(cdnUrl);
+    expect(resolveWalrusMetadataFetchUrl(cdnUrl)).toBe(cdnUrl);
+  });
+
+  test('rejects non-HTTPS media URLs', () => {
+    expect(resolveWalrusBlobReadUrl('http://cdn.example/file.webp')).toBeNull();
   });
 
   test('rewrites aggregator HTTPS URLs through the dev proxy when enabled', () => {

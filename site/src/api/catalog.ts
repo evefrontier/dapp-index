@@ -1,7 +1,5 @@
 import { fetchOnChainCatalogEntries } from '@/chain/registryCatalog';
 import { registryConfigured } from '@/chain/env';
-import { applyDevCatalogFixtures } from '@/content/devCatalogFixtures';
-import { listDappIndexFixtures } from '@/content/dappIndexFixtures';
 import type { DappIndexEntry } from '@/types/dapp-index';
 
 function catalogCacheKey(): string {
@@ -17,21 +15,19 @@ export function resetDappCatalogCache(): void {
   catalogPromises.clear();
 }
 
-function finalizeCatalogEntries(entries: DappIndexEntry[]): DappIndexEntry[] {
-  return applyDevCatalogFixtures(entries);
-}
-
+/**
+ * Chain-only catalog: never inject local demo fixtures.
+ * Empty registry or a failed read yields an empty list / error for the UI.
+ */
 async function loadCatalog(): Promise<DappIndexEntry[]> {
-  if (registryConfigured()) {
-    try {
-      const entries = await fetchOnChainCatalogEntries();
-      if (entries.length > 0) return finalizeCatalogEntries(entries);
-    } catch (error) {
-      console.warn('[dapp-catalog] On-chain registry read failed:', error);
-    }
-  }
+  if (!registryConfigured()) return [];
 
-  return finalizeCatalogEntries(listDappIndexFixtures());
+  try {
+    return await fetchOnChainCatalogEntries();
+  } catch (error) {
+    console.warn('[dapp-catalog] On-chain registry read failed:', error);
+    throw error;
+  }
 }
 
 export async function fetchDappCatalog(): Promise<DappIndexEntry[]> {
