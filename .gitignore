@@ -1,6 +1,12 @@
 .DS_Store
 node_modules
 
+# Personal Claude Code config, not yet proposed to the team
+.claude/settings.json
+.claude/settings.local.json
+.claude/skills/
+.claude/agents/
+
 # Local environment files
 .env
 .env.local
