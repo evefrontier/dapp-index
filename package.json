@@ -8,6 +8,7 @@
     "site:test": "bun test --cwd site",
     "site:typecheck": "bun run --cwd site typecheck",
     "site:build": "bun run --cwd site build",
+    "site:e2e": "bun run --cwd site e2e",
     "move:build": "sui move build --path registry/move",
     "move:test": "sui move test --path registry/move",
     "ci": "bun run site:test && bun run site:typecheck && bun run site:build && bun run move:build && bun run move:test"
