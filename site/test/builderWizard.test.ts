@@ -3,6 +3,7 @@ import {
   createWizardStepItems,
   getWizardAdjacentStep,
   getWizardStatusLabel,
+  getWizardStatusTone,
   getWizardStepLabel,
   resolveWizardRouteStep,
 } from '../src/builder/wizardModel';
@@ -71,5 +72,13 @@ describe('builder wizard model', () => {
     expect(getWizardStatusLabel('saving')).toBe('Saving');
     expect(getWizardStatusLabel('saved')).toBe('Saved');
     expect(getWizardStatusLabel('error')).toBe('Save failed');
+  });
+
+  test('maps autosave states to tag pill tones', () => {
+    expect(getWizardStatusTone('idle')).toBe('secondary');
+    expect(getWizardStatusTone('saved')).toBe('secondary');
+    expect(getWizardStatusTone('pending')).toBe('tertiary');
+    expect(getWizardStatusTone('saving')).toBe('tertiary');
+    expect(getWizardStatusTone('error')).toBe('error');
   });
 });
