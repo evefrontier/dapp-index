@@ -4,6 +4,7 @@ import {
   getWizardAdjacentStep,
   getWizardStatusLabel,
   getWizardStepLabel,
+  isWizardPlaceholderStep,
   resolveWizardRouteStep,
 } from '../src/builder/wizardModel';
 
@@ -71,5 +72,11 @@ describe('builder wizard model', () => {
     expect(getWizardStatusLabel('saving')).toBe('Saving');
     expect(getWizardStatusLabel('saved')).toBe('Saved');
     expect(getWizardStatusLabel('error')).toBe('Save failed');
+  });
+
+  test('keeps only future publish screens as placeholders', () => {
+    expect(isWizardPlaceholderStep('media')).toBe(false);
+    expect(isWizardPlaceholderStep('review')).toBe(true);
+    expect(isWizardPlaceholderStep('publish')).toBe(true);
   });
 });

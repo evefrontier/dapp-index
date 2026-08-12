@@ -1,49 +1,49 @@
 import { describe, expect, test } from 'bun:test';
 import {
-  MAX_DRAFT_SCREENSHOT_BYTES,
-  MAX_DRAFT_VIDEO_BYTES,
-  validateDraftMediaFile,
-} from '../src/storage/draftStorage';
+  LISTING_MEDIA_IMAGE_MAX_BYTES,
+  LISTING_MEDIA_VIDEO_MAX_BYTES,
+} from '@/constants';
+import { validateDraftMediaFileForKind } from '../src/storage/draftStorage';
 import { fileLike } from './draftTestUtils';
 
 describe('draft media validation', () => {
   test('keeps only supported MIME types and sizes eligible for draft media', () => {
     expect(
-      validateDraftMediaFile({
+      validateDraftMediaFileForKind({
         kind: 'video',
         file: new File(['video'], 'trailer.webm', { type: 'video/webm' }),
       }).ok,
     ).toBe(true);
 
     expect(
-      validateDraftMediaFile({
+      validateDraftMediaFileForKind({
         kind: 'video',
         file: new File(['video'], 'trailer.mp4', { type: 'video/mp4' }),
       }).ok,
     ).toBe(false);
 
     expect(
-      validateDraftMediaFile({
+      validateDraftMediaFileForKind({
         kind: 'video',
         file: fileLike({
-          size: MAX_DRAFT_VIDEO_BYTES + 1,
+          size: LISTING_MEDIA_VIDEO_MAX_BYTES + 1,
           type: 'video/webm',
         }),
       }).ok,
     ).toBe(false);
 
     expect(
-      validateDraftMediaFile({
+      validateDraftMediaFileForKind({
         kind: 'screenshot',
         file: new File(['image'], 'screen.webp', { type: 'image/webp' }),
       }).ok,
     ).toBe(true);
 
     expect(
-      validateDraftMediaFile({
+      validateDraftMediaFileForKind({
         kind: 'screenshot',
         file: fileLike({
-          size: MAX_DRAFT_SCREENSHOT_BYTES + 1,
+          size: LISTING_MEDIA_IMAGE_MAX_BYTES + 1,
           type: 'image/png',
         }),
       }).ok,

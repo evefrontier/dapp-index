@@ -80,11 +80,23 @@ export const DAPP_INDEX_MEDIA_ROLES = [
   'logo',
 ] as const;
 
+/** Max bytes per listing image (registry-entry.schema.json imageAssetBase). */
+export const LISTING_MEDIA_IMAGE_MAX_BYTES = 5_000_000;
+
+/** Max bytes per listing video source (registry-entry.schema.json videoSource). */
+export const LISTING_MEDIA_VIDEO_MAX_BYTES = 60_000_000;
+
+/** Max media items in a public listing (logo, thumbnail, gallery, video slots). */
+export const PUBLIC_MEDIA_ITEM_LIMIT = 6;
+
+/** Max gallery screenshot slots in a public listing. */
+export const PUBLIC_MEDIA_GALLERY_IMAGE_LIMIT = 3;
+
 /** Public listing media budget across images, posters, and video sources. */
 export const PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES = 150_000_000;
 
 /** Maximum number of video items allowed in public listing media. */
-export const PUBLIC_MEDIA_VIDEO_LIMIT = 2;
+export const PUBLIC_MEDIA_VIDEO_LIMIT = 1;
 
 /** Official Walrus aggregator hosts (metadata JSON at `/v1/blobs/{blobId}`). */
 export const WALRUS_AGGREGATOR_TESTNET_HOST =

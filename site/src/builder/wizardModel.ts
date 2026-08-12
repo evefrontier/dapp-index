@@ -81,7 +81,7 @@ export function getWizardStatusLabel(
 }
 
 export function isWizardPlaceholderStep(step: DraftStep): boolean {
-  return !isRegistrationDraftFieldStep(step);
+  return !isRegistrationDraftFieldStep(step) && step !== 'media';
 }
 
 function getWizardStepState(
