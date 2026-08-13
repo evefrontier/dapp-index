@@ -552,23 +552,23 @@ h3 {
   }
 
   .directory-detail-page {
-    @apply space-y-6;
+    @apply space-y-8;
   }
 
   .directory-detail-identity {
-    @apply space-y-4;
+    @apply space-y-5 border-b border-(--color-neutral-20) pb-8;
   }
 
   .directory-detail-identity-row {
-    @apply flex flex-wrap items-start gap-4;
+    @apply flex flex-wrap items-start gap-6;
   }
 
   .directory-detail-logo {
-    @apply h-16 w-16 shrink-0 border border-(--color-neutral-20) bg-(--color-crude-60) object-contain p-1;
+    @apply h-20 w-20 shrink-0 border border-(--color-neutral-20) bg-(--color-crude) object-contain p-1.5 shadow-sm;
   }
 
   .directory-detail-title {
-    @apply text-2xl font-bold uppercase tracking-wider text-(--color-neutral);
+    @apply text-3xl font-bold leading-tight text-(--color-neutral);
   }
 
   .directory-detail-tag-row {
@@ -576,39 +576,39 @@ h3 {
   }
 
   .directory-detail-summary {
-    @apply max-w-3xl text-sm font-bold uppercase text-(--color-neutral);
+    @apply max-w-3xl text-base font-semibold text-(--color-neutral);
   }
 
   .directory-detail-description {
-    @apply max-w-3xl text-sm text-(--color-neutral-60);
+    @apply max-w-3xl text-sm leading-relaxed text-(--color-neutral-60);
   }
 
   .directory-detail-section {
-    @apply border border-(--color-neutral-20) p-4;
+    @apply space-y-4;
   }
 
   .directory-detail-link-grid {
-    @apply grid gap-4 text-sm;
+    @apply grid gap-6 text-sm sm:grid-cols-2;
   }
 
   .directory-detail-external-link {
-    @apply break-all font-bold uppercase text-(--color-martian-red) underline-offset-2 hover:underline;
+    @apply break-all font-semibold text-(--color-martian-red) underline-offset-2 hover:underline;
   }
 
   .directory-detail-package-list {
-    @apply grid gap-3;
+    @apply grid gap-4;
   }
 
   .directory-detail-package-row {
-    @apply grid gap-2 border border-(--color-neutral-20) p-3 sm:grid-cols-[1fr_auto] sm:items-center;
+    @apply grid gap-3 border border-(--color-neutral-20) bg-(--color-crude) p-5 sm:grid-cols-[1fr_auto] sm:items-center hover:shadow-sm transition-shadow duration-200;
   }
 
   .directory-detail-package-meta {
-    @apply space-y-1;
+    @apply space-y-2;
   }
 
   .directory-detail-gallery {
-    @apply space-y-3 border border-(--color-neutral-20) p-4;
+    @apply space-y-5;
   }
 
   .directory-detail-gallery-header {
@@ -616,11 +616,11 @@ h3 {
   }
 
   .directory-detail-gallery-stage {
-    @apply grid gap-3;
+    @apply grid gap-4;
   }
 
   .directory-detail-gallery-frame {
-    @apply min-w-0 w-full;
+    @apply min-w-0 w-full overflow-hidden rounded-md border border-(--color-neutral-20) bg-(--color-crude-60);
   }
 
   .directory-detail-gallery-media {
@@ -628,7 +628,7 @@ h3 {
   }
 
   .directory-detail-gallery-caption {
-    @apply text-center text-sm text-(--color-neutral-60);
+    @apply text-center text-sm leading-relaxed text-(--color-neutral-60);
   }
 
   .directory-detail-gallery-controls {
@@ -636,11 +636,11 @@ h3 {
   }
 
   .directory-detail-gallery-dots {
-    @apply flex flex-wrap justify-center gap-2;
+    @apply flex flex-wrap justify-center gap-3;
   }
 
   .directory-detail-gallery-dot {
-    @apply h-2.5 w-2.5 border border-(--color-neutral-30) bg-transparent transition-colors;
+    @apply h-3 w-3 rounded-full border border-(--color-neutral-30) bg-transparent transition-all duration-200 hover:border-(--color-martian-red);
   }
 
   .directory-detail-gallery-dot[data-active='true'] {

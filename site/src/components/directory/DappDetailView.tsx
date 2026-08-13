@@ -32,34 +32,37 @@ function DappDetailIdentity({ model }: { model: DappDetailViewModel }) {
           />
         ) : null}
 
-        <div className="min-w-0 space-y-3">
-          <h1 className="directory-detail-title">{model.name}</h1>
-
-          <div className="directory-detail-tag-row">
-            {model.categories.map((category) => (
-              <Tag
-                key={category.id}
-                size="small"
-                text={category.label}
-                variant="secondary"
-              />
-            ))}
-            {model.smartAssemblyTypes.map((assembly) => (
-              <Tag
-                key={assembly.id}
-                size="small"
-                text={assembly.label}
-                variant="secondary"
-              />
-            ))}
+        <div className="min-w-0 flex-1 space-y-4">
+          <div>
+            <h1 className="directory-detail-title">{model.name}</h1>
+            <div className="directory-detail-tag-row mt-3">
+              {model.categories.map((category) => (
+                <Tag
+                  key={category.id}
+                  size="small"
+                  text={category.label}
+                  variant="secondary"
+                />
+              ))}
+              {model.smartAssemblyTypes.map((assembly) => (
+                <Tag
+                  key={assembly.id}
+                  size="small"
+                  text={assembly.label}
+                  variant="secondary"
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      <p className="directory-detail-summary">{model.summary}</p>
-      {model.description ? (
-        <p className="directory-detail-description">{model.description}</p>
-      ) : null}
+      <div className="space-y-3">
+        <p className="directory-detail-summary">{model.summary}</p>
+        {model.description ? (
+          <p className="directory-detail-description">{model.description}</p>
+        ) : null}
+      </div>
     </header>
   );
 }
@@ -103,7 +106,7 @@ function DappDetailLinks({
 
   return (
     <section className="directory-detail-section">
-      <h2 className="ds-type-label mb-3 text-(--color-neutral-60)">Links</h2>
+      <h2 className="ds-type-label text-(--color-neutral)">Links</h2>
       <div className="directory-detail-link-grid">
         <ExternalLinkRow href={model.liveUrl} label="Live" />
         {model.repositoryUrl ? (
@@ -133,7 +136,7 @@ function DappDetailPackages({
 
   return (
     <section className="directory-detail-section">
-      <h2 className="ds-type-label mb-3 text-(--color-neutral-60)">Packages</h2>
+      <h2 className="ds-type-label text-(--color-neutral)">Packages</h2>
       <div className="directory-detail-package-list">
         {packages.map((pkg) => (
           <article
@@ -141,18 +144,18 @@ function DappDetailPackages({
             className="directory-detail-package-row"
           >
             <div className="directory-detail-package-meta">
-              <p className="text-xs font-bold uppercase text-(--color-neutral)">
-                {pkg.network} · {pkg.role}
+              <p className="text-xs font-semibold uppercase text-(--color-neutral-60)">
+                {pkg.network} {pkg.role && `· ${pkg.role}`}
               </p>
               {pkg.mvrName ? (
-                <p className="text-sm text-(--color-neutral-60)">{pkg.mvrName}</p>
+                <p className="text-sm font-medium text-(--color-neutral)">{pkg.mvrName}</p>
               ) : null}
-              <p className="break-all text-xs text-(--color-neutral-60)">
+              <p className="break-all text-xs font-mono text-(--color-neutral-60)">
                 {pkg.packageId}
               </p>
               {pkg.packageInfoId ? (
-                <p className="break-all text-xs text-(--color-neutral-60)">
-                  Package info: {pkg.packageInfoId}
+                <p className="break-all text-xs font-mono text-(--color-neutral-60)">
+                  {pkg.packageInfoId}
                 </p>
               ) : null}
             </div>
@@ -177,8 +180,8 @@ function DappDetailPackages({
 function DappDetailNotes({ notes }: { notes: string }) {
   return (
     <section className="directory-detail-section">
-      <h2 className="ds-type-label mb-3 text-(--color-neutral-60)">Notes</h2>
-      <p className="text-sm text-(--color-neutral)">{notes}</p>
+      <h2 className="ds-type-label text-(--color-neutral)">Notes</h2>
+      <p className="text-sm leading-relaxed text-(--color-neutral-60)">{notes}</p>
     </section>
   );
 }
