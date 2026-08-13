@@ -7,13 +7,17 @@ import {
   type PublishWalletBalanceUiState,
 } from '@/chain/publishWalletBalances';
 import { isWalrusChainNetwork } from '@/chain/walrusClient';
+import { estimatePublishCost } from '@/builder/publishCostEstimate';
+import type { Draft } from '@/storage/draftTypes';
 import { getErrorMessage } from './errors';
 
 export function usePublishWalletBalances({
+  draft,
   targetNetwork,
   walletAddress,
   walletNetwork,
 }: {
+  draft: Draft | null;
   targetNetwork: string;
   walletAddress: string | null;
   walletNetwork: string | null;
@@ -24,6 +28,11 @@ export function usePublishWalletBalances({
     Boolean(walletNetwork) &&
     walletNetwork === targetNetwork &&
     isWalrusChainNetwork(targetNetwork);
+
+  const costEstimate = useMemo(
+    () => (draft ? estimatePublishCost(draft) : null),
+    [draft],
+  );
 
   const query = useQuery({
     queryKey: ['publishWalletBalances', walletAddress, walletNetwork],
@@ -67,13 +76,20 @@ export function usePublishWalletBalances({
       };
     }
 
-    const evaluation = evaluatePublishWalletBalances(query.data);
+    const evaluation = evaluatePublishWalletBalances({
+      snapshot: query.data,
+      walRequirement: costEstimate?.wal,
+      suiRequirement: costEstimate?.sui,
+      walRemainingBlobCount: costEstimate?.remainingBlobCount ?? null,
+      suiEstimatedTxCount: costEstimate?.estimatedWalrusTxCount ?? null,
+    });
     return {
       kind: 'ready',
       snapshot: query.data,
       ...evaluation,
     };
   }, [
+    costEstimate,
     query.data,
     query.error,
     query.isError,
