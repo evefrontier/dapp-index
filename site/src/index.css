@@ -514,15 +514,15 @@ h3 {
   }
 
   .directory-grid {
-    @apply grid gap-6 sm:grid-cols-2 xl:grid-cols-3;
+    @apply grid gap-4 sm:gap-6 sm:grid-cols-2 xl:grid-cols-3;
   }
 
   .directory-toolbar {
-    @apply flex min-w-0 flex-col gap-4 lg:flex-row lg:items-end lg:gap-6;
+    @apply flex min-w-0 flex-col gap-6 border-b border-(--color-neutral-20) pb-6 lg:flex-row lg:items-end lg:gap-8;
   }
 
   .directory-toolbar-search {
-    @apply min-w-0 lg:w-80 lg:shrink-0;
+    @apply min-w-0 lg:w-96 lg:shrink-0;
   }
 
   .directory-toolbar-filters {
@@ -530,35 +530,35 @@ h3 {
   }
 
   .directory-card {
-    @apply min-w-0 border border-(--color-neutral-20) bg-(--color-crude-60);
+    @apply min-w-0 flex flex-col border border-(--color-neutral-20) bg-(--color-crude) shadow-sm transition-shadow duration-200 hover:shadow-md hover:border-(--color-neutral-30);
   }
 
   .directory-card-link {
-    @apply relative block h-full no-underline;
+    @apply relative flex flex-col h-full no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-martian-red);
   }
 
   .directory-card-media {
-    @apply relative aspect-[16/10] overflow-hidden border-b border-(--color-neutral-20) bg-(--color-crude);
+    @apply relative aspect-[16/10] overflow-hidden bg-(--color-crude-60);
   }
 
   .directory-card-thumbnail {
-    @apply h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02];
+    @apply h-full w-full object-cover transition-transform duration-300 group-hover:scale-105;
   }
 
   .directory-card-thumbnail-fallback {
-    @apply flex h-full w-full items-center justify-center bg-(--color-crude-60) text-4xl font-bold uppercase text-(--color-neutral-30);
+    @apply flex h-full w-full items-center justify-center bg-gradient-to-br from-(--color-crude-30) to-(--color-crude-60) text-4xl font-bold uppercase text-(--color-neutral-30);
   }
 
   .directory-card-logo {
-    @apply absolute bottom-3 left-3 h-12 w-12 border border-(--color-neutral-20) bg-(--color-crude) object-contain p-1;
+    @apply absolute bottom-4 left-4 h-14 w-14 border border-(--color-neutral-20) bg-(--color-crude) object-contain p-1.5 shadow-md;
   }
 
   .directory-card-logo-fallback {
-    @apply absolute bottom-3 left-3 flex h-12 w-12 items-center justify-center border border-(--color-neutral-20) bg-(--color-crude) text-sm font-bold uppercase text-(--color-neutral);
+    @apply absolute bottom-4 left-4 flex h-14 w-14 items-center justify-center border border-(--color-neutral-20) bg-(--color-crude) text-sm font-bold uppercase text-(--color-neutral) shadow-md;
   }
 
   .directory-card-body {
-    @apply space-y-2 p-4;
+    @apply flex flex-col flex-1 space-y-3 p-5;
   }
 
   .directory-card-heading {
@@ -566,7 +566,7 @@ h3 {
   }
 
   .directory-card-title {
-    @apply min-w-0 text-base font-bold uppercase tracking-wide text-(--color-neutral);
+    @apply min-w-0 text-base font-bold leading-tight text-(--color-neutral);
   }
 
   .directory-card-summary {
@@ -574,7 +574,7 @@ h3 {
   }
 
   .directory-card-hover {
-    @apply pointer-events-none absolute inset-0 flex flex-col justify-end gap-2 bg-linear-to-t from-black/90 via-black/70 to-transparent p-4 opacity-0 transition-opacity duration-200 group-hover:opacity-100;
+    @apply pointer-events-none absolute inset-0 flex flex-col justify-end gap-3 bg-gradient-to-t from-black/95 via-black/50 to-transparent p-5 opacity-0 transition-opacity duration-200 group-hover:opacity-100;
   }
 
   .directory-card-hover-label {
@@ -582,7 +582,7 @@ h3 {
   }
 
   .directory-card-hover-copy {
-    @apply line-clamp-4 text-sm text-(--color-neutral);
+    @apply line-clamp-3 text-sm leading-snug text-(--color-neutral);
   }
 
   .directory-card-hover-cta {

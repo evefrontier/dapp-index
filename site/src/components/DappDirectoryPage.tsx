@@ -17,10 +17,12 @@ function DirectoryReadyView({
   return (
     <div className="min-w-0 space-y-8">
       <div className="directory-toolbar">
-        <DirectorySearchField
-          value={filters.search}
-          onChange={controller.actions.setSearch}
-        />
+        <div className="min-w-0">
+          <DirectorySearchField
+            value={filters.search}
+            onChange={controller.actions.setSearch}
+          />
+        </div>
         <DirectoryCategoryNav
           categoryFilter={filters.categoryFilter}
           onCategoryFilterChange={controller.actions.setCategoryFilter}
