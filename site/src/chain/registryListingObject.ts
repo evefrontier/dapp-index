@@ -5,6 +5,7 @@ import {
   moveStringToUtf8,
 } from '@/chain/moveObjectFields';
 
+/** Parsed registry listing fields. Names mirror the on-chain Move struct. */
 export type OnChainListing = {
   owner: string;
   slug: string;

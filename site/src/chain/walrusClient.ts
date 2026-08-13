@@ -9,7 +9,7 @@ export type WalrusChainNetwork = 'mainnet' | 'testnet';
 export function isWalrusChainNetwork(
   network: string,
 ): network is WalrusChainNetwork {
-  return network === 'testnet' || network === 'mainnet';
+  return network === 'mainnet' || network === 'testnet';
 }
 
 export type CreateWalrusSuiClientOptions = {
