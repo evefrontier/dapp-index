@@ -9,13 +9,17 @@ export function DirectoryStatusMessage({
 }: DirectoryStatusMessageProps) {
   if (tone === 'loading') {
     return (
-      <p className="text-sm text-(--color-neutral-60)">Loading catalog…</p>
+      <div className="py-12 text-center">
+        <p className="text-sm text-(--color-neutral-60)">Loading catalog…</p>
+      </div>
     );
   }
 
   return (
-    <p className="text-sm text-(--color-alert)">
-      Failed to load catalog: {message}
-    </p>
+    <div className="rounded-md border border-(--color-alert) bg-(--color-crude) p-4">
+      <p className="text-sm text-(--color-alert)">
+        <span className="font-semibold">Failed to load catalog:</span> {message}
+      </p>
+    </div>
   );
 }

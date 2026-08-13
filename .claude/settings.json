@@ -1,0 +1,12 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(bun run site:test)",
+			"Bash(bun run site:typecheck)",
+			"Bash(bun run site:build)",
+			"Bash(bun run move:build)",
+			"Bash(bun run move:test)",
+			"Bash(bun run ci)"
+		]
+	}
+}
