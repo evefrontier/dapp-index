@@ -12,10 +12,8 @@ import {
   type RegistryMetadataValidation,
 } from '@/utils/registryMetadata';
 import { createSchemaValidationIssues } from '@/utils/schemaValidationIssues';
-import type {
-  RegistrationDraftMetadataJson,
-  RegistrationDraftSlugCheckState,
-} from './registrationDraftReview';
+import type { RegistrationDraftMetadataJson } from './registrationDraftReview';
+import type { RegistrationDraftSlugCheckState } from './registrationDraftSlugCheck';
 
 export type RegistrationPublishAction = 'register' | 'update';
 

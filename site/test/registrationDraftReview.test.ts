@@ -4,9 +4,11 @@ import {
   createRegistrationDraftReview,
   createRegistrationMetadataHashHex,
   getReviewNextBlockerMessage,
+} from '../src/builder/registrationDraftReview';
+import {
   INITIAL_REGISTRATION_DRAFT_SLUG_CHECK,
   isReviewSlugCheckReady,
-} from '../src/builder/registrationDraftReview';
+} from '../src/builder/registrationDraftSlugCheck';
 import type { RegistrationDraftFields } from '../src/builder/registrationDraftFields';
 
 const packageId =

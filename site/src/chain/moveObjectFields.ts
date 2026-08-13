@@ -1,4 +1,4 @@
-import { base64 } from '@scure/base';
+import { fromBase64 } from '@mysten/sui/utils';
 
 export function asPlainRecord(
   value: unknown,
@@ -15,7 +15,7 @@ export function moveStringToUtf8(value: unknown): string | null {
   if (!record) return null;
   if (typeof record.bytes === 'string') {
     try {
-      return new TextDecoder().decode(base64.decode(record.bytes));
+      return new TextDecoder().decode(fromBase64(record.bytes));
     } catch {
       return null;
     }

@@ -79,7 +79,7 @@ export type Draft = {
 export type DraftMediaInput = {
   id: string;
   kind: DraftMediaKind;
-  role?: DappIndexMediaRole;
+  role: DappIndexMediaRole;
   name: string;
   mimeType?: string;
   alt?: string;

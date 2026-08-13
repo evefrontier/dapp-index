@@ -4,6 +4,7 @@ import type {
   DraftMedia,
   DraftMediaUpdate,
 } from '@/storage/draftStorage';
+import { REGISTRATION_DRAFT_MEDIA_TEXT_MAX_LENGTH } from '@/schemas/registration-draft-media';
 import { FieldError, TextField } from './FormFields';
 import { MediaPreviewModal } from './MediaPreviewModal';
 import { MEDIA_STEP_GUIDANCE } from './mediaRoleModel';
@@ -189,7 +190,7 @@ function MediaSlotPanel({
               error={errors?.alt}
               id={`builder-media-${media.id}-alt`}
               label="Alt text"
-              maxLength={240}
+              maxLength={REGISTRATION_DRAFT_MEDIA_TEXT_MAX_LENGTH}
               value={media.alt ?? ''}
               onChange={(alt) => {
                 void onUpdateMedia(media.id, { alt });
@@ -200,7 +201,7 @@ function MediaSlotPanel({
                 error={errors?.caption}
                 id={`builder-media-${media.id}-caption`}
                 label="Caption"
-                maxLength={240}
+                maxLength={REGISTRATION_DRAFT_MEDIA_TEXT_MAX_LENGTH}
                 value={media.caption ?? ''}
                 onChange={(caption) => {
                   void onUpdateMedia(media.id, { caption });

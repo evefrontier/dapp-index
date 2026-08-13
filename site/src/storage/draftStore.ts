@@ -18,9 +18,10 @@ import {
   type DappIndexMediaRole,
 } from '@/types/dapp-index';
 import { createIndexedDbDraftLocalMediaStore } from './draftLocalMediaStore';
-import { validateDraftMediaFile } from './draftMediaValidation';
+import { validateDraftMediaFileForKind } from './draftMediaValidation';
 
-const DEFAULT_DRAFT_MEDIA_ROLE: DappIndexMediaRole = 'gallery';
+/** Role assigned when another item takes thumbnail or logo exclusivity. */
+const EXCLUSIVE_ROLE_DEMOTION_ROLE: DappIndexMediaRole = 'gallery';
 const EXCLUSIVE_DRAFT_MEDIA_ROLES: ReadonlySet<DappIndexMediaRole> = new Set([
   'thumbnail',
   'logo',
@@ -168,7 +169,7 @@ export function createDraftStorage(
         }
 
         if (roleToMakeExclusive && item.role === roleToMakeExclusive) {
-          return { ...item, role: DEFAULT_DRAFT_MEDIA_ROLE };
+          return { ...item, role: EXCLUSIVE_ROLE_DEMOTION_ROLE };
         }
 
         return item;
@@ -315,7 +316,7 @@ export function createDraftStorage(
     content: Blob,
   ): DraftMedia {
     const mimeType = resolveMediaMimeType(input, content);
-    const validation = validateDraftMediaFile({
+    const validation = validateDraftMediaFileForKind({
       kind: input.kind,
       file: content,
       mimeType,
@@ -324,10 +325,14 @@ export function createDraftStorage(
       throw new Error(validation.reason);
     }
 
+    if (!input.role) {
+      throw new Error('Draft media role is required.');
+    }
+
     return {
       id: input.id,
       kind: input.kind,
-      role: input.role ?? DEFAULT_DRAFT_MEDIA_ROLE,
+      role: input.role,
       name: input.name,
       mimeType,
       size: content.size,
@@ -469,18 +474,17 @@ function normalizeDraftMedia(value: unknown): DraftMedia | null {
     media.size >= 0
       ? media.size
       : null;
+  const role = isDappIndexMediaRole(media.role) ? media.role : null;
   const createdAt =
     typeof media.createdAt === 'string' ? media.createdAt : null;
-  if (!id || !kind || !name || !mimeType || size === null || !createdAt) {
+  if (!id || !kind || !name || !mimeType || size === null || !createdAt || !role) {
     return null;
   }
 
   return {
     id,
     kind,
-    role: isDappIndexMediaRole(media.role)
-      ? media.role
-      : DEFAULT_DRAFT_MEDIA_ROLE,
+    role,
     name,
     mimeType,
     size,
