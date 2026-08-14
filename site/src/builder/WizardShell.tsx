@@ -8,6 +8,7 @@ import type {
   DraftStep,
 } from '@/storage/draftStorage';
 import { RegistrationStepScreen } from './RegistrationStepScreens';
+import { PublishStepGuide } from './PublishStepGuide';
 import {
   createWizardStepItems,
   getWizardAdjacentStep,
@@ -32,6 +33,7 @@ import {
   type RegistrationDraftReview,
 } from './registrationDraftReview';
 import type { PublishStepControllerState } from './publishStepPresentation';
+import { PublishStepFooter } from './PublishStepFooter';
 import {
   isReviewSlugCheckReady,
   type RegistrationDraftSlugCheckState,
@@ -344,6 +346,8 @@ function WizardStepPanel({
       >
         Add package
       </Button>
+    ) : activeStep === 'publish' && !readOnly ? (
+      <PublishStepGuide mediaItemCount={publishStep.mediaItemCount} />
     ) : null;
 
   return (
@@ -391,31 +395,37 @@ function WizardStepPanel({
         >
           Back to drafts
         </button>
-        <div className="builder-wizard-nav-actions">
-          {reviewNextBlocker ? (
-            <p className="builder-wizard-next-blocker">{reviewNextBlocker}</p>
-          ) : null}
-          <Button
-            variant="secondary"
-            size="small"
-            disabled={navigationPending || !previousStep}
-            onClick={() => {
-              if (previousStep) void onNavigateStep(previousStep);
-            }}
-          >
-            Back
-          </Button>
-          <Button
-            variant="primary"
-            size="small"
-            disabled={navigationPending || !nextStep || !canNavigateNext}
-            onClick={() => {
-              if (nextStep) void onNavigateStep(nextStep);
-            }}
-          >
-            Next
-          </Button>
-        </div>
+        {activeStep === 'publish' && !readOnly ? (
+          <PublishStepFooter publishStep={publishStep} />
+        ) : (
+          <div className="builder-wizard-nav-actions">
+            {reviewNextBlocker ? (
+              <p className="builder-wizard-next-blocker">{reviewNextBlocker}</p>
+            ) : null}
+            <Button
+              variant="secondary"
+              size="small"
+              disabled={navigationPending || !previousStep}
+              onClick={() => {
+                if (previousStep) void onNavigateStep(previousStep);
+              }}
+            >
+              Back
+            </Button>
+            {nextStep ? (
+              <Button
+                variant="primary"
+                size="small"
+                disabled={navigationPending || !canNavigateNext}
+                onClick={() => {
+                  void onNavigateStep(nextStep);
+                }}
+              >
+                Next
+              </Button>
+            ) : null}
+          </div>
+        )}
       </div>
     </main>
   );
