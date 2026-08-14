@@ -30,12 +30,14 @@ import type { RegistrationDraftMediaErrors } from './registrationDraftMedia';
 import type { MediaSlotId } from './mediaSlotModel';
 import {
   getReviewNextBlockerMessage,
-  isReviewSlugCheckReady,
   type RegistrationDraftReview,
-  type RegistrationDraftSlugCheckState,
 } from './registrationDraftReview';
 import type { PublishStepControllerState } from './publishStepPresentation';
 import { PublishStepFooter } from './PublishStepFooter';
+import {
+  isReviewSlugCheckReady,
+  type RegistrationDraftSlugCheckState,
+} from './registrationDraftSlugCheck';
 import type { ReviewStepControllerState } from './reviewStepPresentation';
 
 export type WizardShellProps = {

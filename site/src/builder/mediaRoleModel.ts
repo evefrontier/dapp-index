@@ -4,34 +4,23 @@ import {
   PUBLIC_MEDIA_GALLERY_IMAGE_LIMIT,
   PUBLIC_MEDIA_ITEM_LIMIT,
   PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES,
-  PUBLIC_MEDIA_VIDEO_LIMIT,
 } from '@/constants';
 import { formatDecimalMegabytes } from '@/storage/draftMediaValidation';
 import type { DappIndexMediaRole } from '@/types/dapp-index';
 import { MEDIA_SLOT_DEFINITIONS } from './mediaSlotModel';
 
-let mediaRoleLabelsCache: Partial<Record<DappIndexMediaRole, string>> | null =
-  null;
-
-function getMediaRoleLabels(): Partial<Record<DappIndexMediaRole, string>> {
-  if (mediaRoleLabelsCache) return mediaRoleLabelsCache;
-
-  const labels: Partial<Record<DappIndexMediaRole, string>> = {
-    hero: 'Hero',
-    gallery: 'Gallery',
-  };
-
-  for (const slot of MEDIA_SLOT_DEFINITIONS) {
-    if (slot.role === 'gallery') continue;
-    labels[slot.role] = slot.label;
-  }
-
-  mediaRoleLabelsCache = labels;
-  return labels;
-}
+const MEDIA_ROLE_LABELS: Partial<Record<DappIndexMediaRole, string>> = {
+  hero: 'Hero',
+  gallery: 'Gallery',
+  ...Object.fromEntries(
+    MEDIA_SLOT_DEFINITIONS.filter((slot) => slot.role !== 'gallery').map(
+      (slot) => [slot.role, slot.label],
+    ),
+  ),
+};
 
 export function getMediaRoleLabel(role: DappIndexMediaRole): string {
-  return getMediaRoleLabels()[role] ?? role;
+  return MEDIA_ROLE_LABELS[role] ?? role;
 }
 
 /** Copy and limits for the builder media step (aligned with published metadata). */
@@ -41,7 +30,6 @@ export const MEDIA_STEP_GUIDANCE = {
   totalLimit: formatDecimalMegabytes(PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES),
   itemLimit: PUBLIC_MEDIA_ITEM_LIMIT,
   galleryLimit: PUBLIC_MEDIA_GALLERY_IMAGE_LIMIT,
-  videoLimitCount: PUBLIC_MEDIA_VIDEO_LIMIT,
 } as const;
 
 /** Total wallet approvals for a publish run (media blobs + metadata + registry). */

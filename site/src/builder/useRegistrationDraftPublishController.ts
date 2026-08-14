@@ -57,9 +57,11 @@ import {
   createRegistrationMetadataHashHex,
   type RegistrationDraftMetadataJson,
   type RegistrationDraftReview,
-  type RegistrationDraftSlugCheckState,
 } from './registrationDraftReview';
-import { createSlugCheckFromLookupResult } from './registrationDraftSlugCheck';
+import {
+  createSlugCheckFromLookupResult,
+  type RegistrationDraftSlugCheckState,
+} from './registrationDraftSlugCheck';
 import { usePublishWalletBalances } from './usePublishWalletBalances';
 
 const WALRUS_STORAGE_EPOCHS = 5;

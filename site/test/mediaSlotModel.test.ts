@@ -4,7 +4,6 @@ import {
   getMediaForSlot,
   getMediaSlotDefinition,
   getMediaSlotStatus,
-  getStableMediaIdForSlot,
   MEDIA_SLOT_IDS,
   validateMediaSlots,
 } from '../src/builder/mediaSlotModel';
@@ -51,7 +50,6 @@ describe('media slot model', () => {
       createMedia({ id: 'gallery-1', role: 'gallery', kind: 'screenshot' }),
     ];
 
-    expect(getStableMediaIdForSlot('logo')).toBe('logo');
     expect(getMediaForSlot(media, 'logo')?.id).toBe('logo');
     expect(getMediaForSlot(media, 'gallery-2')).toBeNull();
   });
