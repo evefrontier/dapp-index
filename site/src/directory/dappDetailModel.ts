@@ -1,3 +1,5 @@
+import { formatAddress } from '@mysten/sui/utils';
+import { DAPP_INDEX_CORE_SUI_PACKAGE_ROLE } from '@/constants';
 import {
   resolveDetailGallerySlides,
   type DappDetailGallerySlide,
@@ -35,6 +37,14 @@ export type DappDetailViewModel = {
   logoUrl: string | null;
   categories: readonly { id: string; label: string }[];
   smartAssemblyTypes: readonly { id: string; label: string }[];
+  /** Breadcrumb trail: smart assembly type, then category. */
+  breadcrumbSegments: readonly string[];
+  /** Truncated `registryOwner`; null for entries not read from chain. */
+  creatorLabel: string | null;
+  /** Sui network(s) of the entry's packages, e.g. `Testnet`. */
+  networkLabel: string | null;
+  /** Category / assembly labels not already shown in the breadcrumb. */
+  tagLabels: readonly string[];
   gallerySlides: DappDetailGallerySlide[];
   packages: DappDetailPackageView[];
   notes: string | null;
@@ -57,12 +67,55 @@ function mapPackageView(pkg: DappIndexSuiPackage): DappDetailPackageView {
   };
 }
 
+function titleCase(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+/** Sui network of the core package, or every distinct network when there is no core. */
+function resolveNetworkLabel(
+  packages: readonly DappIndexSuiPackage[],
+): string | null {
+  if (packages.length === 0) return null;
+
+  const core = packages.find(
+    (pkg) => pkg.role === DAPP_INDEX_CORE_SUI_PACKAGE_ROLE,
+  );
+  if (core) return titleCase(core.network);
+
+  const networks = [...new Set(packages.map((pkg) => pkg.network))];
+  return networks.map(titleCase).join(' · ');
+}
+
 export function getDappDetailViewModel(
   entry: DappIndexEntry,
 ): DappDetailViewModel {
   const { logoUrl } = resolveListingMediaUrls(entry);
 
+  const categories = entry.categories.map((category) => ({
+    id: category,
+    label: getDappCategoryLabel(category),
+  }));
+  const smartAssemblyTypes = (entry.smartAssemblyTypes ?? []).map((assembly) => ({
+    id: assembly,
+    label: getSmartAssemblyTypeLabel(assembly),
+  }));
+
+  // Breadcrumb takes the leading assembly type and category; the tag row shows the rest.
+  const breadcrumbSegments = [
+    smartAssemblyTypes[0]?.label,
+    categories[0]?.label,
+  ].filter((label): label is string => Boolean(label));
+  const tagLabels = [...smartAssemblyTypes, ...categories]
+    .map((item) => item.label)
+    .filter((label) => !breadcrumbSegments.includes(label));
+
+  const registryOwner = entry.registryOwner?.trim();
+
   return {
+    breadcrumbSegments,
+    creatorLabel: registryOwner ? formatAddress(registryOwner) : null,
+    networkLabel: resolveNetworkLabel(entry.suiPackages ?? []),
+    tagLabels,
     name: entry.name,
     summary: entry.summary,
     description: entry.description?.trim() || null,
@@ -74,14 +127,8 @@ export function getDappDetailViewModel(
       ? resolveWalrusMetadataReadUrl(entry.metadataUri)
       : null,
     logoUrl,
-    categories: entry.categories.map((category) => ({
-      id: category,
-      label: getDappCategoryLabel(category),
-    })),
-    smartAssemblyTypes: (entry.smartAssemblyTypes ?? []).map((assembly) => ({
-      id: assembly,
-      label: getSmartAssemblyTypeLabel(assembly),
-    })),
+    categories,
+    smartAssemblyTypes,
     gallerySlides: resolveDetailGallerySlides(entry),
     packages: (entry.suiPackages ?? []).map(mapPackageView),
     notes: entry.notes?.trim() || null,
