@@ -694,16 +694,23 @@ h3 {
     @apply flex items-center gap-3;
   }
 
-  .directory-detail-hero-dots {
-    @apply flex flex-wrap gap-3;
+  /* Step indicator: done = small square, current = large glowing square, upcoming = dash. */
+  .directory-detail-hero-steps {
+    @apply flex flex-wrap items-center gap-1.5;
   }
 
-  .directory-detail-hero-dot {
-    @apply h-3 w-3 rounded-full border border-(--color-neutral-30) bg-transparent transition-all duration-200 hover:border-(--color-martian-red);
+  .directory-detail-hero-step {
+    @apply h-1 w-6 shrink-0 rounded-full bg-(--color-martian-red) transition-all duration-200;
   }
 
-  .directory-detail-hero-dot[data-active='true'] {
-    @apply border-(--color-martian-red) bg-(--color-martian-red);
+  .directory-detail-hero-step[data-state='done'] {
+    @apply h-2.5 w-2.5 rounded-sm;
+  }
+
+  .directory-detail-hero-step[data-state='current'] {
+    @apply h-3.5 w-3.5 rounded-sm;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-martian-red) 30%, transparent),
+      0 0 16px 2px color-mix(in srgb, var(--color-martian-red) 70%, transparent);
   }
 
   .directory-detail-cta {

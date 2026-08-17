@@ -104,14 +104,20 @@ export function DappDetailHero({
             </Button>
           </div>
 
-          <div className="directory-detail-hero-dots">
+          <div className="directory-detail-hero-steps">
             {slides.map((slide, index) => (
               <button
                 key={slide.id}
                 aria-current={index === activeIndex ? 'true' : undefined}
                 aria-label={`Show slide ${index + 1}`}
-                className="directory-detail-hero-dot"
-                data-active={index === activeIndex ? 'true' : 'false'}
+                className="directory-detail-hero-step"
+                data-state={
+                  index === activeIndex
+                    ? 'current'
+                    : index < activeIndex
+                      ? 'done'
+                      : 'upcoming'
+                }
                 type="button"
                 onClick={() => setActiveIndex(index)}
               />
