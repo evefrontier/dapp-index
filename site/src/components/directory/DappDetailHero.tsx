@@ -77,47 +77,51 @@ export function DappDetailHero({
         </div>
       </div>
 
-      {activeSlide?.caption ? (
-        <p className="directory-detail-hero-caption">{activeSlide.caption}</p>
-      ) : null}
+      {activeSlide?.caption || hasMultipleSlides ? (
+        <div className="directory-detail-hero-footer">
+          {activeSlide?.caption ? (
+            <p className="directory-detail-hero-caption">{activeSlide.caption}</p>
+          ) : null}
 
-      {hasMultipleSlides ? (
-        <>
-          <div className="directory-detail-hero-controls">
-            <Button
-              aria-label="Previous slide"
-              size="small"
-              type="button"
-              variant="secondary"
-              onClick={showPrevious}
-            >
-              ← Prev
-            </Button>
-            <Button
-              aria-label="Next slide"
-              size="small"
-              type="button"
-              variant="secondary"
-              onClick={showNext}
-            >
-              Next →
-            </Button>
-          </div>
+          {hasMultipleSlides ? (
+            <>
+              <div className="directory-detail-hero-steps">
+                {slides.map((slide, index) => (
+                  <button
+                    key={slide.id}
+                    aria-current={index === activeIndex ? 'true' : undefined}
+                    aria-label={`Show slide ${index + 1}`}
+                    className="directory-detail-hero-step"
+                    data-state={index === activeIndex ? 'current' : 'inactive'}
+                    type="button"
+                    onClick={() => setActiveIndex(index)}
+                  />
+                ))}
+              </div>
 
-          <div className="directory-detail-hero-steps">
-            {slides.map((slide, index) => (
-              <button
-                key={slide.id}
-                aria-current={index === activeIndex ? 'true' : undefined}
-                aria-label={`Show slide ${index + 1}`}
-                className="directory-detail-hero-step"
-                data-state={index === activeIndex ? 'current' : 'inactive'}
-                type="button"
-                onClick={() => setActiveIndex(index)}
-              />
-            ))}
-          </div>
-        </>
+              <div className="directory-detail-hero-controls">
+                <Button
+                  aria-label="Previous slide"
+                  size="small"
+                  type="button"
+                  variant="secondary"
+                  onClick={showPrevious}
+                >
+                  ← Prev
+                </Button>
+                <Button
+                  aria-label="Next slide"
+                  size="small"
+                  type="button"
+                  variant="secondary"
+                  onClick={showNext}
+                >
+                  Next →
+                </Button>
+              </div>
+            </>
+          ) : null}
+        </div>
       ) : null}
     </section>
   );
