@@ -1,6 +1,6 @@
+import { Button } from '@evefrontier/ui';
 import { Link } from '@tanstack/react-router';
-import { Tag } from '@evefrontier/ui';
-import { DappDetailGallery } from '@/components/directory/DappDetailGallery';
+import { DappDetailHero } from '@/components/directory/DappDetailHero';
 import { getDappDetailViewModel } from '@/directory/dappDetailModel';
 import type {
   DappDetailPackageView,
@@ -10,59 +10,74 @@ import type { DappIndexEntry } from '@/types/dapp-index';
 
 function DirectoryBackLink() {
   return (
-    <Link
-      to="/"
-      className="text-sm font-bold uppercase text-(--color-martian-red)"
-    >
-      ← Directory
+    <Link className="directory-detail-back" to="/">
+      ← Back
     </Link>
   );
 }
 
-function DappDetailIdentity({ model }: { model: DappDetailViewModel }) {
+function DappDetailBreadcrumb({ segments }: { segments: readonly string[] }) {
+  if (segments.length === 0) return null;
+
   return (
-    <header className="directory-detail-identity">
-      <div className="directory-detail-identity-row">
-        {model.logoUrl ? (
-          <img
-            alt=""
-            className="directory-detail-logo"
-            src={model.logoUrl}
-          />
-        ) : null}
+    <p className="directory-detail-breadcrumb">{segments.join(' > ')}</p>
+  );
+}
 
-        <div className="min-w-0 flex-1 space-y-4">
-          <div>
-            <h1 className="directory-detail-title">{model.name}</h1>
-            <div className="directory-detail-tag-row mt-3">
-              {model.categories.map((category) => (
-                <Tag
-                  key={category.id}
-                  size="small"
-                  text={category.label}
-                  variant="secondary"
-                />
-              ))}
-              {model.smartAssemblyTypes.map((assembly) => (
-                <Tag
-                  key={assembly.id}
-                  size="small"
-                  text={assembly.label}
-                  variant="secondary"
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+function DappDetailMetaCell({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="min-w-0">
+      <h2 className="directory-detail-meta-label">{label}</h2>
+      <p className="directory-detail-meta-value">{value}</p>
+    </div>
+  );
+}
 
-      <div className="space-y-3">
-        <p className="directory-detail-summary">{model.summary}</p>
-        {model.description ? (
-          <p className="directory-detail-description">{model.description}</p>
-        ) : null}
-      </div>
-    </header>
+function DappDetailMetaRow({ model }: { model: DappDetailViewModel }) {
+  if (!model.creatorLabel && !model.networkLabel) return null;
+
+  return (
+    <div className="directory-detail-meta-row">
+      {model.creatorLabel ? (
+        <DappDetailMetaCell label="Creator" value={model.creatorLabel} />
+      ) : (
+        <span />
+      )}
+      {model.networkLabel ? (
+        <DappDetailMetaCell label="Network" value={model.networkLabel} />
+      ) : null}
+    </div>
+  );
+}
+
+function DappDetailTags({ labels }: { labels: readonly string[] }) {
+  if (labels.length === 0) return null;
+
+  return (
+    <ul className="directory-detail-tag-row">
+      {labels.map((label) => (
+        <li key={label} className="directory-detail-tag-text">
+          {label}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function DappDetailSummary({ model }: { model: DappDetailViewModel }) {
+  return (
+    <div className="space-y-3">
+      <p className="directory-detail-summary">{model.summary}</p>
+      {model.description ? (
+        <p className="directory-detail-description">{model.description}</p>
+      ) : null}
+    </div>
   );
 }
 
@@ -74,26 +89,22 @@ function ExternalLinkRow({
   label: string;
 }) {
   return (
-    <div>
-      <h3 className="ds-type-label mb-1 text-(--color-neutral-60)">{label}</h3>
-      <a
-        className="directory-detail-external-link"
-        href={href}
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        {href}
-      </a>
-    </div>
+    <a
+      className="directory-detail-link-row"
+      href={href}
+      rel="noopener noreferrer"
+      target="_blank"
+      title={href}
+    >
+      <h3 className="directory-detail-link-label">{label}</h3>
+      <p className="directory-detail-external-link">{href}</p>
+    </a>
   );
 }
 
 function DappDetailLinks({ model }: { model: DappDetailViewModel }) {
   const hasLinks =
-    model.liveUrl ||
-    model.repositoryUrl ||
-    model.documentationUrl ||
-    model.metadataReadUrl;
+    model.repositoryUrl || model.documentationUrl || model.metadataReadUrl;
 
   if (!hasLinks) return null;
 
@@ -101,7 +112,6 @@ function DappDetailLinks({ model }: { model: DappDetailViewModel }) {
     <section className="directory-detail-section">
       <h2 className="ds-type-label text-(--color-neutral)">Links</h2>
       <div className="directory-detail-link-grid">
-        <ExternalLinkRow href={model.liveUrl} label="Live" />
         {model.repositoryUrl ? (
           <ExternalLinkRow href={model.repositoryUrl} label="Repository" />
         ) : null}
@@ -128,7 +138,7 @@ function DappDetailPackages({
 
   return (
     <section className="directory-detail-section">
-      <h2 className="ds-type-label text-(--color-neutral)">Packages</h2>
+      <h2 className="ds-type-label text-(--color-neutral)">Package</h2>
       <div className="directory-detail-package-list">
         {packages.map((pkg) => (
           <article
@@ -178,6 +188,16 @@ function DappDetailNotes({ notes }: { notes: string }) {
   );
 }
 
+function DappDetailConnect({ liveUrl }: { liveUrl: string }) {
+  return (
+    <div className="directory-detail-cta">
+      <Button external href={liveUrl} size="large" variant="primary">
+        Connect
+      </Button>
+    </div>
+  );
+}
+
 export function DappDetailNotFound() {
   return (
     <div className="space-y-4">
@@ -192,12 +212,21 @@ export function DappDetailView({ entry }: { entry: DappIndexEntry }) {
 
   return (
     <div className="directory-detail-page">
-      <DirectoryBackLink />
-      <DappDetailIdentity model={model} />
-      <DappDetailGallery slides={model.gallerySlides} />
+      <div className="space-y-2">
+        <DirectoryBackLink />
+        <DappDetailBreadcrumb segments={model.breadcrumbSegments} />
+      </div>
+
+      <DappDetailHero name={model.name} slides={model.gallerySlides} />
+      <DappDetailMetaRow model={model} />
+      <DappDetailTags labels={model.tagLabels} />
+      <DappDetailSummary model={model} />
+
       <DappDetailLinks model={model} />
-      <DappDetailPackages packages={model.packages} />
       {model.notes ? <DappDetailNotes notes={model.notes} /> : null}
+
+      <DappDetailPackages packages={model.packages} />
+      <DappDetailConnect liveUrl={model.liveUrl} />
     </div>
   );
 }
