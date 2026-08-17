@@ -691,12 +691,12 @@ h3 {
   }
 
   .directory-detail-hero-controls {
-    @apply flex items-center gap-3;
+    @apply flex items-center justify-center gap-3;
   }
 
   /* Carousel indicator: inactive slides are dashes, the current slide is a glowing square. */
   .directory-detail-hero-steps {
-    @apply flex flex-wrap items-center gap-1.5;
+    @apply flex flex-wrap items-center justify-center gap-1.5;
   }
 
   .directory-detail-hero-step {
