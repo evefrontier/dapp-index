@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 import { Tag } from '@evefrontier/ui';
 import { DappDetailGallery } from '@/components/directory/DappDetailGallery';
+import { InstallDappButton } from '@/components/directory/InstallDappButton';
 import { getDappDetailViewModel } from '@/directory/dappDetailModel';
 import type {
   DappDetailPackageView,
@@ -85,7 +86,13 @@ function ExternalLinkRow({
   );
 }
 
-function DappDetailLinks({ model }: { model: DappDetailViewModel }) {
+function DappDetailLinks({
+  model,
+  entry,
+}: {
+  model: DappDetailViewModel;
+  entry: DappIndexEntry;
+}) {
   const hasLinks =
     model.liveUrl ||
     model.repositoryUrl ||
@@ -112,6 +119,7 @@ function DappDetailLinks({ model }: { model: DappDetailViewModel }) {
           />
         ) : null}
       </div>
+      <InstallDappButton entry={entry} />
     </section>
   );
 }
@@ -192,7 +200,7 @@ export function DappDetailView({ entry }: { entry: DappIndexEntry }) {
       <DirectoryBackLink />
       <DappDetailIdentity model={model} />
       <DappDetailGallery slides={model.gallerySlides} />
-      <DappDetailLinks model={model} />
+      <DappDetailLinks model={model} entry={entry} />
       <DappDetailPackages packages={model.packages} />
       {model.notes ? <DappDetailNotes notes={model.notes} /> : null}
     </div>
