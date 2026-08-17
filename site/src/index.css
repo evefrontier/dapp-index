@@ -694,17 +694,13 @@ h3 {
     @apply flex items-center gap-3;
   }
 
-  /* Step indicator: done = small square, current = large glowing square, upcoming = dash. */
+  /* Carousel indicator: inactive slides are dashes, the current slide is a glowing square. */
   .directory-detail-hero-steps {
     @apply flex flex-wrap items-center gap-1.5;
   }
 
   .directory-detail-hero-step {
     @apply h-1 w-6 shrink-0 rounded-full bg-(--color-martian-red) transition-all duration-200;
-  }
-
-  .directory-detail-hero-step[data-state='done'] {
-    @apply h-2.5 w-2.5 rounded-sm;
   }
 
   .directory-detail-hero-step[data-state='current'] {

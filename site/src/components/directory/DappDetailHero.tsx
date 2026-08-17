@@ -111,13 +111,7 @@ export function DappDetailHero({
                 aria-current={index === activeIndex ? 'true' : undefined}
                 aria-label={`Show slide ${index + 1}`}
                 className="directory-detail-hero-step"
-                data-state={
-                  index === activeIndex
-                    ? 'current'
-                    : index < activeIndex
-                      ? 'done'
-                      : 'upcoming'
-                }
+                data-state={index === activeIndex ? 'current' : 'inactive'}
                 type="button"
                 onClick={() => setActiveIndex(index)}
               />
