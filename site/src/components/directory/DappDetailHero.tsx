@@ -84,7 +84,7 @@ export function DappDetailHero({
           ) : null}
 
           {hasMultipleSlides ? (
-            <>
+            <div className="directory-detail-hero-nav">
               <div className="directory-detail-hero-steps">
                 {slides.map((slide, index) => (
                   <button
@@ -119,7 +119,7 @@ export function DappDetailHero({
                   Next →
                 </Button>
               </div>
-            </>
+            </div>
           ) : null}
         </div>
       ) : null}
