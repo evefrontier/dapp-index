@@ -72,7 +72,7 @@ function DappDetailTags({ labels }: { labels: readonly string[] }) {
 
 function DappDetailSummary({ model }: { model: DappDetailViewModel }) {
   return (
-    <div className="space-y-3">
+    <div className="directory-detail-copy">
       <p className="directory-detail-summary">{model.summary}</p>
       {model.description ? (
         <p className="directory-detail-description">{model.description}</p>
@@ -212,15 +212,18 @@ export function DappDetailView({ entry }: { entry: DappIndexEntry }) {
 
   return (
     <div className="directory-detail-page">
-      <div className="space-y-2">
+      <div className="directory-detail-topbar">
         <DirectoryBackLink />
         <DappDetailBreadcrumb segments={model.breadcrumbSegments} />
       </div>
 
       <DappDetailHero name={model.name} slides={model.gallerySlides} />
-      <DappDetailMetaRow model={model} />
-      <DappDetailTags labels={model.tagLabels} />
-      <DappDetailSummary model={model} />
+
+      <div className="directory-detail-identity">
+        <DappDetailMetaRow model={model} />
+        <DappDetailTags labels={model.tagLabels} />
+        <DappDetailSummary model={model} />
+      </div>
 
       <DappDetailLinks model={model} />
       {model.notes ? <DappDetailNotes notes={model.notes} /> : null}
