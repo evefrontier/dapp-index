@@ -551,8 +551,25 @@ h3 {
     @apply text-xs font-bold uppercase text-(--color-martian-red);
   }
 
+  /*
+   * Vertical rhythm uses `gap`, not `space-y`. Tailwind v4 emits space-y as
+   * `:where(...)` (zero specificity), so any margin utility on a child — `m-0` on a
+   * reset list, for example — silently cancels it. `gap` cannot be overridden that way.
+   *
+   * Scale: 40px between major sections, 20px inside a group, 12px header-to-content,
+   * 4px for a label/value pair. The contrast is what creates the grouping.
+   */
   .directory-detail-page {
-    @apply space-y-8;
+    @apply flex flex-col gap-10;
+  }
+
+  .directory-detail-topbar {
+    @apply flex flex-col gap-1;
+  }
+
+  /* Creator/network, categories, and the summary copy read as one identity band. */
+  .directory-detail-identity {
+    @apply flex flex-col gap-5;
   }
 
   .directory-detail-back {
@@ -576,11 +593,16 @@ h3 {
   }
 
   .directory-detail-tag-row {
-    @apply m-0 flex list-none flex-wrap gap-x-4 gap-y-2 p-0;
+    @apply flex list-none flex-wrap gap-x-3 gap-y-2 p-0;
   }
 
+  /* Dimmer and smaller than the summary so categories stop competing with it. */
   .directory-detail-tag-text {
-    @apply text-base uppercase text-(--color-neutral);
+    @apply text-sm uppercase tracking-wider text-(--color-neutral-60);
+  }
+
+  .directory-detail-copy {
+    @apply flex flex-col gap-2;
   }
 
   .directory-detail-summary {
@@ -592,15 +614,15 @@ h3 {
   }
 
   .directory-detail-section {
-    @apply space-y-4;
+    @apply flex flex-col gap-3;
   }
 
   .directory-detail-link-grid {
-    @apply grid gap-4 text-sm sm:grid-cols-2;
+    @apply grid gap-x-6 gap-y-5 text-sm sm:grid-cols-2;
   }
 
   .directory-detail-link-row {
-    @apply block space-y-1;
+    @apply flex flex-col gap-1;
   }
 
   .directory-detail-link-label {
@@ -620,11 +642,11 @@ h3 {
   }
 
   .directory-detail-package-meta {
-    @apply space-y-2;
+    @apply flex flex-col gap-2;
   }
 
   .directory-detail-hero {
-    @apply space-y-4;
+    @apply flex flex-col gap-4;
   }
 
   .directory-detail-hero-frame {
@@ -761,7 +783,7 @@ h3 {
   }
 
   .directory-detail-cta {
-    @apply flex pt-2;
+    @apply flex;
   }
 
   .builder-info-dialog:not([open]) {
