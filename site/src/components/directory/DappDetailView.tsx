@@ -34,7 +34,7 @@ function DappDetailMetaCell({
 }) {
   return (
     <div className="min-w-0">
-      <h2 className="directory-detail-meta-label">{label}</h2>
+      <p className="directory-detail-field-label">{label}</p>
       <p className="directory-detail-meta-value">{value}</p>
     </div>
   );
@@ -97,7 +97,7 @@ function ExternalLinkRow({
       target="_blank"
       title={href}
     >
-      <h3 className="directory-detail-link-label">{label}</h3>
+      <p className="directory-detail-field-label">{label}</p>
       <p className="directory-detail-external-link">{href}</p>
     </a>
   );
@@ -117,7 +117,7 @@ function DappDetailLinks({
 
   return (
     <section className="directory-detail-section">
-      <h2 className="ds-type-label text-(--color-neutral)">Links</h2>
+      <h2 className="directory-detail-section-title">Links</h2>
       <div className="directory-detail-link-grid">
         {model.repositoryUrl ? (
           <ExternalLinkRow href={model.repositoryUrl} label="Repository" />
@@ -146,7 +146,7 @@ function DappDetailPackages({
 
   return (
     <section className="directory-detail-section">
-      <h2 className="ds-type-label text-(--color-neutral)">Package</h2>
+      <h2 className="directory-detail-section-title">Package</h2>
       <div className="directory-detail-package-list">
         {packages.map((pkg) => (
           <article
@@ -154,19 +154,15 @@ function DappDetailPackages({
             className="directory-detail-package-row"
           >
             <div className="directory-detail-package-meta">
-              <p className="text-xs font-semibold uppercase text-(--color-neutral-60)">
+              <p className="directory-detail-field-label">
                 {pkg.network} {pkg.role && `· ${pkg.role}`}
               </p>
               {pkg.mvrName ? (
-                <p className="text-sm font-medium text-(--color-neutral)">{pkg.mvrName}</p>
+                <p className="directory-detail-package-name">{pkg.mvrName}</p>
               ) : null}
-              <p className="break-all text-xs font-mono text-(--color-neutral-60)">
-                {pkg.packageId}
-              </p>
+              <p className="directory-detail-package-id">{pkg.packageId}</p>
               {pkg.packageInfoId ? (
-                <p className="break-all text-xs font-mono text-(--color-neutral-60)">
-                  {pkg.packageInfoId}
-                </p>
+                <p className="directory-detail-package-id">{pkg.packageInfoId}</p>
               ) : null}
             </div>
 
@@ -190,8 +186,8 @@ function DappDetailPackages({
 function DappDetailNotes({ notes }: { notes: string }) {
   return (
     <section className="directory-detail-section">
-      <h2 className="ds-type-label text-(--color-neutral)">Notes</h2>
-      <p className="text-sm leading-relaxed text-(--color-neutral-60)">{notes}</p>
+      <h2 className="directory-detail-section-title">Notes</h2>
+      <p className="directory-detail-description">{notes}</p>
     </section>
   );
 }
