@@ -214,8 +214,9 @@ The builder-facing listing data uses the same concepts across Sui and Walrus:
   video for the public directory. The builder media step uses six fixed slots
   (logo, thumbnail, three gallery images, one video). Logo, thumbnail, and at
   least one gallery image are required before publish.
-- `suiPackages`: required Move Registry package identities with at least one
-  core package;
+- `suiPackages`: optional Sui packages surfaced with the listing; each entry
+  requires `network`, `role`, and `packageId`, with `mvrName` and
+  `packageInfoId` recommended when available;
 - `serverTenant`: required EVE Frontier game server tenant;
 - `repositoryUrl`, `documentationUrl`, `proofs`, and `notes`: optional listing
   context. Package maintainers, source links, and package icons should come from
