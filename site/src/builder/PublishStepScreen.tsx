@@ -36,7 +36,8 @@ export function PublishStepScreen({
     <div className="grid gap-5">
       <div className="grid border-y border-(--color-neutral-20)">
         <PublishStatusRow {...statusRows.wallet} />
-        <PublishStatusRow {...statusRows.network} />
+        <PublishStatusRow {...statusRows.walletNetwork} />
+        <PublishStatusRow {...statusRows.targetNetwork} />
         <PublishStatusRow {...statusRows.suiBalance} />
         <PublishStatusRow {...statusRows.publishSetup} />
         <PublishStatusRow {...statusRows.publishJob} />

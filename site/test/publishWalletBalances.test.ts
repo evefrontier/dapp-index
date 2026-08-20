@@ -66,7 +66,7 @@ describe('publish wallet balances', () => {
     expect(evaluation.walSufficient).toBe(true);
   });
 
-  test('blocks when wallet is below draft-aware WAL and SUI estimates', () => {
+  test('blocks on SUI only when below draft-aware estimates (WAL not required for S3 publish)', () => {
     const cost = estimatePublishCost({
       ...baseDraft,
       media: [
@@ -89,8 +89,9 @@ describe('publish wallet balances', () => {
     });
 
     expect(evaluation.suiSufficient).toBe(false);
+    // WAL is still reported for the mainnet Walrus path, but no longer blocks.
     expect(evaluation.walSufficient).toBe(false);
-    expect(evaluation.blockers).toHaveLength(2);
+    expect(evaluation.blockers).toHaveLength(1);
     expect(evaluation.walEstimatedLabel).toBe(cost.wal.estimatedLabel);
     expect(evaluation.suiEstimatedTxCount).toBe(cost.estimatedWalrusTxCount);
   });

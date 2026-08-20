@@ -24,7 +24,7 @@ const validFields: RegistrationDraftFields = {
   liveUrl: 'https://frontier-map.example',
   repositoryUrl: 'https://github.com/example/frontier-map',
   documentationUrl: 'https://docs.frontier-map.example',
-  categories: ['logistics', 'intel'],
+  categories: ['commerce', 'intel'],
   smartAssemblyTypes: ['gate'],
   serverTenant: 'stillness',
   suiPackages: [
@@ -48,7 +48,7 @@ describe('registration draft review', () => {
       name: 'Frontier Map',
       summary: 'Maps routes and gate networks.',
       description: 'A route planning dapp.',
-      categories: ['logistics', 'intel'],
+      categories: ['commerce', 'intel'],
       smartAssemblyTypes: ['gate'],
       liveUrl: 'https://frontier-map.example',
       repositoryUrl: 'https://github.com/example/frontier-map',
@@ -118,7 +118,7 @@ describe('registration draft review', () => {
     expect(review.schemaValidation.ok).toBe(true);
     expect(review.issues).toEqual([]);
     expect(review.canonicalJson).toBe(
-      '{"categories":["logistics","intel"],"description":"A route planning dapp.","documentationUrl":"https://docs.frontier-map.example","id":"frontier-map","liveUrl":"https://frontier-map.example","name":"Frontier Map","repositoryUrl":"https://github.com/example/frontier-map","schema":"evefrontier.dapp-index.metadata","schemaVersion":1,"serverTenant":"stillness","smartAssemblyTypes":["gate"],"suiPackages":[{"mvrName":"@frontier/map","network":"testnet","packageId":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","packageInfoId":"0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","role":"core"}],"summary":"Maps routes and gate networks."}',
+      '{"categories":["commerce","intel"],"description":"A route planning dapp.","documentationUrl":"https://docs.frontier-map.example","id":"frontier-map","liveUrl":"https://frontier-map.example","name":"Frontier Map","repositoryUrl":"https://github.com/example/frontier-map","schema":"evefrontier.dapp-index.metadata","schemaVersion":1,"serverTenant":"stillness","smartAssemblyTypes":["gate"],"suiPackages":[{"mvrName":"@frontier/map","network":"testnet","packageId":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","packageInfoId":"0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","role":"core"}],"summary":"Maps routes and gate networks."}',
     );
   });
 

@@ -17,7 +17,7 @@ const baseMetadata = {
   id: 'frontier-map',
   name: 'Frontier Map',
   summary: 'Maps routes and gate networks.',
-  categories: ['logistics', 'intel'],
+  categories: ['commerce', 'intel'],
   liveUrl: 'https://frontier-map.example',
   serverTenant: 'stillness',
 };

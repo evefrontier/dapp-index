@@ -29,62 +29,13 @@ export type PublishStatusRowModel = {
 };
 
 export type PublishStatusRowsModel = {
-  network: PublishStatusRowModel;
   publishJob: PublishStatusRowModel;
   publishSetup: PublishStatusRowModel;
   suiBalance: PublishStatusRowModel;
-  walBalance: PublishStatusRowModel;
+  targetNetwork: PublishStatusRowModel;
   wallet: PublishStatusRowModel;
+  walletNetwork: PublishStatusRowModel;
 };
-
-export function getNetworkStatusRow({
-  suiNetwork,
-  walletAddress,
-  walletNetwork,
-}: Pick<
-  PublishStepControllerState,
-  'suiNetwork' | 'walletAddress' | 'walletNetwork'
->): PublishStatusRowModel {
-  const walrusEnabled = isWalrusChainNetwork(suiNetwork);
-  const walletNetworkReady =
-    Boolean(walletAddress) && walletNetwork === suiNetwork;
-
-  if (!walletAddress) {
-    return {
-      label: 'Network',
-      status: 'Required',
-      detail: walrusEnabled
-        ? `Connect wallet on ${suiNetwork}.`
-        : `Walrus publish needs testnet or mainnet.`,
-      tone: 'warning',
-    };
-  }
-
-  if (!walrusEnabled) {
-    return {
-      label: 'Network',
-      status: suiNetwork,
-      detail: 'Walrus publish needs testnet or mainnet.',
-      tone: 'warning',
-    };
-  }
-
-  if (!walletNetworkReady) {
-    return {
-      label: 'Network',
-      status: 'Mismatch',
-      detail: `Wallet on ${walletNetwork ?? 'unknown'} — switch to ${suiNetwork}.`,
-      tone: 'warning',
-    };
-  }
-
-  return {
-    label: 'Network',
-    status: suiNetwork,
-    detail: `Wallet on ${suiNetwork} · Walrus publish enabled.`,
-    tone: 'ready',
-  };
-}
 
 export function getPublishStatusRows({
   publishReadiness,
@@ -94,6 +45,8 @@ export function getPublishStatusRows({
   walletBalanceStatus,
   walletNetwork,
 }: PublishStepControllerState): PublishStatusRowsModel {
+  const walletNetworkReady =
+    Boolean(walletAddress) && walletNetwork === suiNetwork;
   const setupBlockerCount = publishReadiness.blockers.length;
   const networkReady = suiNetwork === 'testnet' || suiNetwork === 'mainnet';
 
@@ -106,13 +59,25 @@ export function getPublishStatusRows({
       status: walletAddress ? 'Connected' : 'Required',
       tone: walletAddress ? 'ready' : 'warning',
     },
-    network: getNetworkStatusRow({
-      suiNetwork,
-      walletAddress,
-      walletNetwork,
-    }),
-    suiBalance: getCoinBalanceRow(walletBalanceStatus, 'sui'),
-    walBalance: getCoinBalanceRow(walletBalanceStatus, 'wal'),
+    walletNetwork: {
+      detail: walletNetwork ?? 'Not connected.',
+      label: 'Wallet network',
+      status: !walletAddress
+        ? 'Required'
+        : walletNetworkReady
+          ? 'Ready'
+          : 'Mismatch',
+      tone: walletNetworkReady ? 'ready' : 'warning',
+    },
+    targetNetwork: {
+      detail: networkReady
+        ? 'S3 media upload + Sui registry.'
+        : 'Use testnet or mainnet.',
+      label: 'Target network',
+      status: suiNetwork,
+      tone: networkReady ? 'ready' : 'warning',
+    },
+    suiBalance: getSuiBalanceRow(walletBalanceStatus),
     publishSetup: {
       detail: publishReadiness.ready
         ? 'All prerequisites met.'
@@ -155,39 +120,23 @@ function getSuiBalanceRow(
         label: 'SUI balance',
         tone: 'error',
       };
-    case 'ready':
-      if (coin === 'sui') {
-        const txCount = status.suiEstimatedTxCount;
-        const hasEstimate =
-          status.suiEstimatedLabel !== null && txCount !== null && txCount > 0;
-        return {
-          label: 'SUI balance',
-          status: status.suiSufficient ? 'Ready' : 'Low',
-          detail: status.suiSufficient
-            ? hasEstimate
-              ? `${status.suiFormatted} (est. ${status.suiEstimatedLabel} for ~${txCount} txs)`
-              : `${status.suiFormatted} (min ${status.suiMinimumLabel})`
-            : hasEstimate
-              ? `${status.suiFormatted} — need about ${status.suiMinimumLabel}`
-              : `${status.suiFormatted} — need at least ${status.suiMinimumLabel}`,
-          tone: status.suiSufficient ? 'ready' : 'warning',
-        };
-      }
-      const blobCount = status.walRemainingBlobCount;
-      const hasWalEstimate =
-        status.walEstimatedLabel !== null && blobCount !== null && blobCount > 0;
+    case 'ready': {
+      const txCount = status.suiEstimatedTxCount;
+      const hasEstimate =
+        status.suiEstimatedLabel !== null && txCount !== null && txCount > 0;
       return {
-        label: 'WAL balance',
-        status: status.walSufficient ? 'Ready' : 'Low',
-        detail: status.walSufficient
-          ? hasWalEstimate
-            ? `${status.walFormatted} (est. ${status.walEstimatedLabel} for ${blobCount} blob${blobCount === 1 ? '' : 's'})`
-            : `${status.walFormatted} (min ${status.walMinimumLabel})`
-          : hasWalEstimate
-            ? `${status.walFormatted} — need about ${status.walMinimumLabel}`
-            : `${status.walFormatted} — need at least ${status.walMinimumLabel}`,
-        tone: status.walSufficient ? 'ready' : 'warning',
+        label: 'SUI balance',
+        status: status.suiSufficient ? 'Ready' : 'Low',
+        detail: status.suiSufficient
+          ? hasEstimate
+            ? `${status.suiFormatted} (est. ${status.suiEstimatedLabel} for ~${txCount} txs)`
+            : `${status.suiFormatted} (min ${status.suiMinimumLabel})`
+          : hasEstimate
+            ? `${status.suiFormatted} — need about ${status.suiMinimumLabel}`
+            : `${status.suiFormatted} — need at least ${status.suiMinimumLabel}`,
+        tone: status.suiSufficient ? 'ready' : 'warning',
       };
+    }
     default:
       return assertNever(status);
   }

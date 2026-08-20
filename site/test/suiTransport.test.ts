@@ -1,7 +1,9 @@
+import { fileURLToPath } from 'node:url';
 import { Glob } from 'bun';
 import { describe, expect, test } from 'bun:test';
 
-const SRC_DIR = new URL('../src/', import.meta.url).pathname;
+// fileURLToPath (not URL.pathname) so the drive-letter form works on Windows.
+const SRC_DIR = fileURLToPath(new URL('../src/', import.meta.url));
 
 describe('Sui transport', () => {
   /**

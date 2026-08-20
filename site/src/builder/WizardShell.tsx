@@ -105,6 +105,7 @@ export function WizardShell({
   );
   const title = getWizardStepLabel(activeStep);
   const nextStep = getWizardAdjacentStep(activeStep, 'next');
+  const previousStep = getWizardAdjacentStep(activeStep, 'previous');
   const errorMessage = navigationError ?? autosaveError;
   const canNavigateNext =
     readOnly ||
@@ -142,12 +143,12 @@ export function WizardShell({
           fieldErrors={fieldErrors}
           fields={fields}
           nextStep={nextStep}
+          previousStep={previousStep}
           title={title}
           activeStep={activeStep}
           canNavigateNext={canNavigateNext}
           navigationPending={navigationPending}
           readOnly={readOnly}
-          onExitWizard={onExitWizard}
           onDeleteMedia={onDeleteMedia}
           onNavigateStep={onNavigateStep}
           onUpdateMedia={onUpdateMedia}
@@ -313,7 +314,6 @@ function WizardStepPanel({
   reviewStep,
   title,
   onDeleteMedia,
-  onExitWizard,
   onNavigateStep,
   onUpdateMedia,
   onUpdateFields,
@@ -338,7 +338,6 @@ function WizardStepPanel({
   reviewStep: ReviewStepControllerState;
   title: string;
   onDeleteMedia: (mediaId: string) => Promise<void>;
-  onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
   onUpdateMedia: (
     mediaId: string,
