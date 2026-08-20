@@ -41,7 +41,7 @@ import type {
 import { readLocalMediaDescriptor } from '@/storage/localMediaProbe';
 import { canonicalStringify } from '@/utils/canonicalJson';
 import { useCancellableAsync } from './cancellableAsync';
-import { getErrorMessage } from './errors';
+import { formatPublishErrorMessage } from './errors';
 import {
   buildRegistrationPublishMetadata,
   createRegistrationPublishReadiness,
@@ -63,8 +63,7 @@ import {
   type RegistrationDraftSlugCheckState,
 } from './registrationDraftSlugCheck';
 import { usePublishWalletBalances } from './usePublishWalletBalances';
-
-const WALRUS_STORAGE_EPOCHS = 5;
+import { WALRUS_STORAGE_EPOCHS } from './publishCostEstimate';
 
 export type RegistrationDraftPublishState =
   | {
@@ -171,6 +170,7 @@ export function useRegistrationDraftPublishController({
   const walrusAggregatorUrl = viteWalrusAggregatorUrl() ?? null;
   const walletAddress = currentAccount?.address ?? null;
   const walletBalanceStatus = usePublishWalletBalances({
+    draft,
     targetNetwork: suiNetwork,
     walletAddress,
     walletNetwork: walletAddress ? currentWalletNetwork : null,
@@ -423,10 +423,9 @@ export function useRegistrationDraftPublishController({
       setPublishState((current) => ({
         status: 'error',
         action: current.action,
-        errorMessage: getErrorMessage(
-          caughtError,
-          'Could not publish listing.',
-        ),
+        errorMessage: formatPublishErrorMessage(caughtError, {
+          fallback: 'Could not publish listing.',
+        }),
         metadataHash: current.metadataHash,
         metadataUri: current.metadataUri,
         metadataWalrusUrl: current.metadataWalrusUrl,

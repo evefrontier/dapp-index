@@ -21,6 +21,19 @@ export type PublishWalletBalanceSnapshot = {
   walTotalMist: bigint;
 };
 
+export type PublishCoinRequirement = {
+  estimatedMist: bigint;
+  estimatedLabel: string;
+};
+
+export type EvaluatePublishWalletBalancesInput = {
+  snapshot: PublishWalletBalanceSnapshot;
+  walRequirement?: PublishCoinRequirement;
+  suiRequirement?: PublishCoinRequirement;
+  walRemainingBlobCount?: number | null;
+  suiEstimatedTxCount?: number | null;
+};
+
 export type PublishWalletBalanceUiState =
   | {
       kind: 'skipped';
@@ -42,6 +55,10 @@ export type PublishWalletBalanceUiState =
       walSufficient: boolean;
       suiMinimumLabel: string;
       walMinimumLabel: string;
+      walEstimatedLabel: string | null;
+      walRemainingBlobCount: number | null;
+      suiEstimatedLabel: string | null;
+      suiEstimatedTxCount: number | null;
       blockers: string[];
     };
 
@@ -64,15 +81,23 @@ export async function fetchPublishWalletBalances(
   };
 }
 
-export function evaluatePublishWalletBalances(
-  snapshot: PublishWalletBalanceSnapshot,
-): {
+export function evaluatePublishWalletBalances({
+  snapshot,
+  walRequirement,
+  suiRequirement,
+  walRemainingBlobCount = null,
+  suiEstimatedTxCount = null,
+}: EvaluatePublishWalletBalancesInput): {
   suiFormatted: string;
   walFormatted: string;
   suiSufficient: boolean;
   walSufficient: boolean;
   suiMinimumLabel: string;
   walMinimumLabel: string;
+  walEstimatedLabel: string | null;
+  walRemainingBlobCount: number | null;
+  suiEstimatedLabel: string | null;
+  suiEstimatedTxCount: number | null;
   blockers: string[];
 } {
   const suiFormatted = formatUnits(
@@ -81,28 +106,31 @@ export function evaluatePublishWalletBalances(
     'SUI',
   );
   const walFormatted = formatUnits(snapshot.walTotalMist, SUI_DECIMALS, 'WAL');
-  const suiSufficient = snapshot.suiTotalMist >= PUBLISH_MIN_SUI_MIST;
-  const walSufficient = snapshot.walTotalMist >= PUBLISH_MIN_WAL_MIST;
-  const suiMinimumLabel = formatUnits(
-    PUBLISH_MIN_SUI_MIST,
-    SUI_DECIMALS,
-    'SUI',
-  );
-  const walMinimumLabel = formatUnits(
-    PUBLISH_MIN_WAL_MIST,
-    SUI_DECIMALS,
-    'WAL',
-  );
+
+  const walThresholdMist =
+    walRequirement?.estimatedMist ?? PUBLISH_MIN_WAL_MIST;
+  const suiThresholdMist =
+    suiRequirement?.estimatedMist ?? PUBLISH_MIN_SUI_MIST;
+
+  const walMinimumLabel =
+    walRequirement?.estimatedLabel ??
+    formatUnits(PUBLISH_MIN_WAL_MIST, SUI_DECIMALS, 'WAL');
+  const suiMinimumLabel =
+    suiRequirement?.estimatedLabel ??
+    formatUnits(PUBLISH_MIN_SUI_MIST, SUI_DECIMALS, 'SUI');
+
+  const suiSufficient = snapshot.suiTotalMist >= suiThresholdMist;
+  const walSufficient = snapshot.walTotalMist >= walThresholdMist;
 
   const blockers: string[] = [];
   if (!suiSufficient) {
     blockers.push(
-      `Add at least ${suiMinimumLabel} for gas and registry fees (wallet has ${suiFormatted}).`,
+      `Add about ${suiMinimumLabel} for gas and registry fees (wallet has ${suiFormatted}).`,
     );
   }
   if (!walSufficient) {
     blockers.push(
-      `Add at least ${walMinimumLabel} for Walrus storage (wallet has ${walFormatted}).`,
+      `Add about ${walMinimumLabel} for Walrus storage (wallet has ${walFormatted}).`,
     );
   }
 
@@ -113,6 +141,10 @@ export function evaluatePublishWalletBalances(
     walSufficient,
     suiMinimumLabel,
     walMinimumLabel,
+    walEstimatedLabel: walRequirement?.estimatedLabel ?? null,
+    walRemainingBlobCount: walRequirement ? walRemainingBlobCount : null,
+    suiEstimatedLabel: suiRequirement?.estimatedLabel ?? null,
+    suiEstimatedTxCount: suiRequirement ? suiEstimatedTxCount : null,
     blockers,
   };
 }
