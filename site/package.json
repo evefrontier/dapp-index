@@ -13,7 +13,9 @@
     "typecheck": "tsc -b",
     "typecheck:test": "tsc --project tsconfig.test.json",
     "preview": "vite preview",
-    "router:generate": "tsr generate"
+    "router:generate": "tsr generate",
+    "e2e": "playwright test --config e2e/playwright.config.ts",
+    "e2e:update": "playwright test --config e2e/playwright.config.ts --update-snapshots"
   },
   "dependencies": {
     "@evefrontier/dapp-kit": "^0.1.9",
@@ -32,6 +34,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4.2.2",
     "@tanstack/router-plugin": "^1.167.35",
     "@types/node": "^25.6.2",

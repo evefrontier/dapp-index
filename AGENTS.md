@@ -54,6 +54,7 @@ Optimize for reviewability over delivery speed. A PR should answer one clear que
 ## Verification Matrix
 
 - Frontend or site utilities: `bun run site:test`, `bun run site:typecheck`, and `bun run site:build`.
+- Frontend visual changes: `bun run site:build` then `bun run site:e2e` (Playwright screenshot baselines under `site/e2e/__screenshots__/`; update with `bun run --cwd site e2e:update`).
 - Registry schema or metadata validation: `bun run site:test` plus docs updates when public metadata changes.
 - Sui Move registry package: `bun run move:build` and `bun run move:test`.
 - Cross-surface changes: `bun run ci`.
