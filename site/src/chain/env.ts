@@ -41,6 +41,14 @@ export function registryConfigured(): boolean {
   return Boolean(vitePackageId() && viteRegistryId());
 }
 
+/** Lambda Function URL / upload API base (no trailing slash). */
+export function viteUploadApiBase(): string | undefined {
+  const raw = import.meta.env.VITE_UPLOAD_API_BASE;
+  if (typeof raw !== 'string') return undefined;
+  const t = raw.trim().replace(/\/+$/, '');
+  return t === '' ? undefined : t;
+}
+
 /**
  * Public media CDN origin (no trailing slash).
  * Override with `VITE_MEDIA_CDN_BASE` only for non-prod/test; default is

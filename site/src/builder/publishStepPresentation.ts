@@ -1,6 +1,5 @@
 import { formatAddress } from '@mysten/sui/utils';
 import type { PublishWalletBalanceUiState } from '@/chain/publishWalletBalances';
-import { isWalrusChainNetwork } from '@/chain/walrusClient';
 import { assertNever } from '@/utils/assertNever';
 import type { RegistrationPublishReadiness } from './registrationDraftPublish';
 import type {
@@ -96,6 +95,7 @@ export function getPublishStatusRows({
   walletNetwork,
 }: PublishStepControllerState): PublishStatusRowsModel {
   const setupBlockerCount = publishReadiness.blockers.length;
+  const networkReady = suiNetwork === 'testnet' || suiNetwork === 'mainnet';
 
   return {
     wallet: {
@@ -130,30 +130,29 @@ export function getPublishStatusRows({
   };
 }
 
-function getCoinBalanceRow(
+function getSuiBalanceRow(
   status: PublishWalletBalanceUiState,
-  coin: 'sui' | 'wal',
 ): PublishStatusRowModel {
   switch (status.kind) {
     case 'skipped':
       return {
         status: '—',
         detail: status.reason,
-        label: coin === 'sui' ? 'SUI balance' : 'WAL balance',
+        label: 'SUI balance',
         tone: 'muted',
       };
     case 'loading':
       return {
         status: 'Checking',
         detail: 'Reading wallet balance…',
-        label: coin === 'sui' ? 'SUI balance' : 'WAL balance',
+        label: 'SUI balance',
         tone: 'muted',
       };
     case 'error':
       return {
         status: 'Error',
         detail: status.message,
-        label: coin === 'sui' ? 'SUI balance' : 'WAL balance',
+        label: 'SUI balance',
         tone: 'error',
       };
     case 'ready':

@@ -128,11 +128,6 @@ export function evaluatePublishWalletBalances({
       `Add about ${suiMinimumLabel} for gas and registry fees (wallet has ${suiFormatted}).`,
     );
   }
-  if (!walSufficient) {
-    blockers.push(
-      `Add about ${walMinimumLabel} for Walrus storage (wallet has ${walFormatted}).`,
-    );
-  }
 
   return {
     suiFormatted,

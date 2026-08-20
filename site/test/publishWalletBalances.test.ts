@@ -39,7 +39,7 @@ describe('publish wallet balances', () => {
     expect(formatUnits(0n, 9, 'WAL')).toBe('0 WAL');
   });
 
-  test('flags low SUI and WAL balances against flat floors', () => {
+  test('flags low SUI balances only (WAL not required for S3 publish)', () => {
     const evaluation = evaluatePublishWalletBalances({
       snapshot: {
         suiTotalMist: PUBLISH_MIN_SUI_MIST - 1n,
@@ -49,7 +49,8 @@ describe('publish wallet balances', () => {
 
     expect(evaluation.suiSufficient).toBe(false);
     expect(evaluation.walSufficient).toBe(false);
-    expect(evaluation.blockers).toHaveLength(2);
+    expect(evaluation.blockers).toHaveLength(1);
+    expect(evaluation.blockers[0]).toContain('SUI');
   });
 
   test('accepts balances above minimum thresholds', () => {

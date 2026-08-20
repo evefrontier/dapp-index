@@ -57,8 +57,13 @@ export type DappIndexVideoMimeType = typeof DAPP_INDEX_VIDEO_MIME_TYPE;
 export type DappIndexMediaRole =
   (typeof DAPP_INDEX_MEDIA_ROLES)[number];
 
+/** Public media URI: Walrus blob or HTTPS CDN (temporary S3 MVP). */
+export type DappIndexMediaUri =
+  | `walrus://blob/${string}`
+  | `https://${string}`;
+
 export interface DappIndexImageAsset {
-  uri: `walrus://blob/${string}`;
+  uri: DappIndexMediaUri;
   mimeType: DappIndexImageMimeType;
   sha256: string;
   sizeBytes: number;
@@ -75,7 +80,7 @@ export interface DappIndexImageMediaItem extends DappIndexImageAsset {
 }
 
 export interface DappIndexVideoSource {
-  uri: `walrus://blob/${string}`;
+  uri: DappIndexMediaUri;
   mimeType: DappIndexVideoMimeType;
   codecs?: string;
   sha256: string;

@@ -101,12 +101,20 @@ describe('registry metadata media schema', () => {
     expect(validateRegistryMetadataJson(validMetadata())).toEqual({ ok: true });
   });
 
-  test('rejects external public media URLs', () => {
+  test('rejects http public media URLs', () => {
     const metadata = validMetadata();
     (metadata.media.items[0] as DappIndexImageMediaItem).uri =
-      'https://cdn.example/dashboard.webp' as unknown as `walrus://blob/${string}`;
+      'http://cdn.example/dashboard.webp' as DappIndexImageMediaItem['uri'];
 
     expect(validateRegistryMetadataJson(metadata).ok).toBe(false);
+  });
+
+  test('accepts HTTPS CDN public media URLs', () => {
+    const metadata = validMetadata();
+    (metadata.media.items[0] as DappIndexImageMediaItem).uri =
+      'https://cdn.example/dashboard.webp';
+
+    expect(validateRegistryMetadataJson(metadata).ok).toBe(true);
   });
 
   test('rejects unsupported video formats', () => {

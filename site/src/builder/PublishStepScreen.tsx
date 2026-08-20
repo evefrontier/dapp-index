@@ -38,7 +38,6 @@ export function PublishStepScreen({
         <PublishStatusRow {...statusRows.wallet} />
         <PublishStatusRow {...statusRows.network} />
         <PublishStatusRow {...statusRows.suiBalance} />
-        <PublishStatusRow {...statusRows.walBalance} />
         <PublishStatusRow {...statusRows.publishSetup} />
         <PublishStatusRow {...statusRows.publishJob} />
       </div>
@@ -96,9 +95,9 @@ function PublishResult({
         <dd className="break-all text-(--color-neutral)">
           {publishState.metadataUri}
         </dd>
-        <dt className="builder-review-label">Read URL</dt>
+        <dt className="builder-review-label">CDN URL</dt>
         <dd className="break-all text-(--color-neutral)">
-          {publishState.metadataWalrusUrl}
+          {publishState.metadataPublicUrl}
         </dd>
         <dt className="builder-review-label">Digest</dt>
         <dd className="break-all text-(--color-neutral)">

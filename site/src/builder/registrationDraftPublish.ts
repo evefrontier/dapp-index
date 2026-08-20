@@ -1,9 +1,13 @@
-import { isWalrusChainNetwork } from '@/chain/walrusClient';
-import type { DraftMedia } from '@/storage/draftStorage';
+import type {
+  DraftMedia,
+  DraftPublishedMediaCheckpoint,
+  DraftPublishCheckpoint,
+} from '@/storage/draftStorage';
 import type {
   DappIndexImageMediaItem,
   DappIndexImageMimeType,
   DappIndexMediaGallery,
+  DappIndexMediaUri,
   DappIndexVideoMediaItem,
   DappIndexVideoMimeType,
 } from '@/types/dapp-index';
@@ -11,6 +15,7 @@ import {
   validateRegistryMetadataJson,
   type RegistryMetadataValidation,
 } from '@/utils/registryMetadata';
+import { resolveMediaUrl } from '@/utils/resolveMediaUrl';
 import { createSchemaValidationIssues } from '@/utils/schemaValidationIssues';
 import type { RegistrationDraftMetadataJson } from './registrationDraftReview';
 import type { RegistrationDraftSlugCheckState } from './registrationDraftSlugCheck';
@@ -26,8 +31,7 @@ export type RegistrationPublishIssue = {
 
 export type RegistrationPublishMediaAsset = {
   media: DraftMedia;
-  walrusBlobId: string;
-  walrusUrl: string;
+  storageUri: string;
   sha256: string;
   sizeBytes: number;
   width: number;
@@ -65,6 +69,25 @@ export function getDraftVideoPosterBlockers(
 export type RegistrationPublishActionResult =
   | { ok: true; action: RegistrationPublishAction }
   | { ok: false; message: string };
+
+export function getReusableS3StorageUri(
+  checkpoint: Pick<DraftPublishedMediaCheckpoint, 'storageUri'>,
+): string | null {
+  return checkpoint.storageUri
+    ? resolveMediaUrl(checkpoint.storageUri)
+    : null;
+}
+
+export function resolvePublishedMetadataPublicUrl(
+  checkpoint: Pick<DraftPublishCheckpoint, 'storageUri' | 'walrusUrl'>,
+): string | null {
+  for (const uri of [checkpoint.storageUri, checkpoint.walrusUrl]) {
+    if (!uri) continue;
+    const publicUrl = resolveMediaUrl(uri);
+    if (publicUrl) return publicUrl;
+  }
+  return null;
+}
 
 export function buildRegistrationPublishMetadata({
   baseMetadata,
@@ -128,7 +151,7 @@ export function createRegistrationPublishReadiness({
   suiNetwork,
   walletAddress,
   walletNetwork,
-  walrusAggregatorUrl,
+  uploadApiBase,
   walletBalanceBlockers = [],
 }: {
   registryConfigured: boolean;
@@ -136,7 +159,7 @@ export function createRegistrationPublishReadiness({
   suiNetwork: string;
   walletAddress: string | null;
   walletNetwork?: string | null;
-  walrusAggregatorUrl: string | null;
+  uploadApiBase: string | null;
   walletBalanceBlockers?: string[];
 }): RegistrationPublishReadiness {
   const blockers: string[] = [];
@@ -146,11 +169,11 @@ export function createRegistrationPublishReadiness({
   if (!registryConfigured) {
     blockers.push('Configure registry package and object env vars.');
   }
-  if (!isWalrusChainNetwork(suiNetwork)) {
-    blockers.push('Walrus publish supports testnet or mainnet.');
+  if (suiNetwork !== 'testnet' && suiNetwork !== 'mainnet') {
+    blockers.push('Publish supports testnet or mainnet.');
   }
-  if (!walrusAggregatorUrl) {
-    blockers.push('Configure a Walrus aggregator URL.');
+  if (!uploadApiBase) {
+    blockers.push('Configure VITE_UPLOAD_API_BASE for media uploads.');
   }
   if (walletAddress && walletNetwork && walletNetwork !== suiNetwork) {
     blockers.push(`Switch wallet network to ${suiNetwork}.`);
@@ -171,10 +194,6 @@ export function getPublishNextBlockerMessage(
     return null;
   }
   return readiness.blockers[0] ?? null;
-}
-
-function walrusBlobUri(blobId: string): `walrus://blob/${string}` {
-  return `walrus://blob/${blobId}`;
 }
 
 function buildMediaGallery(
@@ -223,7 +242,7 @@ function createImageMediaItem(
     id: asset.media.id,
     kind: 'image',
     role: asset.media.role,
-    uri: walrusBlobUri(asset.walrusBlobId),
+    uri: asMediaUri(asset.storageUri),
     mimeType: asset.media.mimeType as DappIndexImageMimeType,
     sha256: asset.sha256,
     sizeBytes: asset.sizeBytes,
@@ -245,7 +264,7 @@ function createVideoMediaItem(
     poster: imageItemToImageAsset(poster),
     sources: [
       {
-        uri: walrusBlobUri(asset.walrusBlobId),
+        uri: asMediaUri(asset.storageUri),
         mimeType: asset.media.mimeType as DappIndexVideoMimeType,
         sha256: asset.sha256,
         sizeBytes: asset.sizeBytes,
@@ -257,6 +276,10 @@ function createVideoMediaItem(
     ],
     ...optionalCaption(asset.media.caption),
   };
+}
+
+function asMediaUri(uri: string): DappIndexMediaUri {
+  return uri as DappIndexMediaUri;
 }
 
 function createMediaGalleryPointers(
