@@ -208,17 +208,21 @@ export function useListingStepController({
   });
   const publishStep = useMemo(
     () =>
-      createPublishStepState({
-        publishReadiness,
-        publishState,
-        suiNetwork,
-        walletAddress,
-        walletBalanceStatus,
-        walletNetwork,
-        onConnectWallet,
-        onPublish,
-      }),
+      createPublishStepState(
+        {
+          publishReadiness,
+          publishState,
+          suiNetwork,
+          walletAddress,
+          walletBalanceStatus,
+          walletNetwork,
+          onConnectWallet,
+          onPublish,
+        },
+        draft?.media.length ?? 0,
+      ),
     [
+      draft?.media.length,
       onConnectWallet,
       onPublish,
       publishReadiness,

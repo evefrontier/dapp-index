@@ -9,6 +9,7 @@ import type {
 } from './useRegistrationDraftPublishController';
 
 export type PublishStepControllerState = {
+  mediaItemCount: number;
   publishReadiness: RegistrationPublishReadiness;
   publishState: RegistrationDraftPublishState;
   suiNetwork: string;
@@ -241,8 +242,10 @@ export type PublishStepControllerSlice = Pick<
 
 export function createPublishStepState(
   controller: PublishStepControllerSlice,
+  mediaItemCount: number,
 ): PublishStepControllerState {
   return {
+    mediaItemCount,
     publishReadiness: controller.publishReadiness,
     publishState: controller.publishState,
     suiNetwork: controller.suiNetwork,

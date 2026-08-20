@@ -727,11 +727,23 @@ h3 {
     @apply shrink-0 text-sm whitespace-nowrap text-(--color-neutral-60);
   }
 
-  .builder-publish-actions {
-    @apply grid gap-2;
+  .builder-info-dialog:not([open]) {
+    display: none;
   }
 
-  .builder-publish-blocker {
-    @apply text-sm text-(--color-neutral);
+  .builder-info-dialog[open] {
+    @apply fixed inset-0 z-50 m-0 flex h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-transparent p-4;
+  }
+
+  .builder-info-dialog[open]::backdrop {
+    background: rgb(0 0 0 / 60%);
+  }
+
+  .builder-info-dialog-panel {
+    @apply mx-auto max-w-lg border border-(--color-neutral-20) bg-(--color-crude) p-4;
+  }
+
+  .builder-info-dialog-close {
+    @apply border border-(--color-neutral-20) px-3 py-2 text-xs font-bold uppercase text-(--color-neutral-60) transition-colors hover:border-(--color-neutral-50) hover:text-(--color-neutral);
   }
 }

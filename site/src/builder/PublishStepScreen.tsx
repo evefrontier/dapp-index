@@ -1,5 +1,3 @@
-import { Button } from '@evefrontier/ui';
-import { getPublishNextBlockerMessage } from './registrationDraftPublish';
 import type { PublishStepControllerState } from './publishStepPresentation';
 import {
   getPublishStatusRows,
@@ -12,21 +10,18 @@ export type PublishStepScreenProps = PublishStepControllerState & {
 };
 
 export function PublishStepScreen({
+  mediaItemCount,
   publishReadiness,
   publishState,
   suiNetwork,
   walletAddress,
   walletBalanceStatus,
   walletNetwork,
-  readOnly,
   onConnectWallet,
   onPublish,
 }: PublishStepScreenProps) {
-  const isPublishing = publishState.status === 'publishing';
-  const publishBlocker = getPublishNextBlockerMessage(publishReadiness, {
-    isPublishing,
-  });
   const statusRows = getPublishStatusRows({
+    mediaItemCount,
     publishReadiness,
     publishState,
     suiNetwork,
@@ -48,43 +43,6 @@ export function PublishStepScreen({
         <PublishStatusRow {...statusRows.publishJob} />
       </div>
       <PublishResult publishState={publishState} />
-      {readOnly ? null : (
-        <div className="builder-publish-actions">
-          <div className="flex flex-wrap items-center gap-3">
-            {!walletAddress ? (
-              <Button
-                disabled={isPublishing}
-                size="small"
-                type="button"
-                variant="primary"
-                onClick={onConnectWallet}
-              >
-                Connect wallet
-              </Button>
-            ) : (
-              <Button
-                disabled={isPublishing || !publishReadiness.ready}
-                size="small"
-                type="button"
-                variant="primary"
-                onClick={() => {
-                  void onPublish();
-                }}
-              >
-                {isPublishing ? 'Publishing' : 'Publish listing'}
-              </Button>
-            )}
-            <p className="text-xs text-(--color-neutral-60)">
-              Uploads local media, metadata, then Sui.
-            </p>
-          </div>
-          {publishBlocker ? (
-            <p className="builder-publish-blocker" role="status">
-              {publishBlocker}
-            </p>
-          ) : null}
-        </div>
-      )}
     </div>
   );
 }
