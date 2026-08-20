@@ -70,6 +70,14 @@ Optimize for reviewability over delivery speed. A PR should answer one clear que
 - Cross-surface changes: `bun run ci`.
 - Docs-only changes: inspect links/commands touched and state that code tests were not run.
 
+## Release Process
+
+- **Branch & release strategy:** See `.github/BRANCH_STRATEGY.md` for complete workflow (PR → main → dev → test/uat → live).
+- **Automated release:** Use GitHub Actions "Release" workflow (workflow_dispatch on main). Provide semantic version (e.g., `0.2.0`). Workflow creates tag, generates release notes, bumps version, and merges to live.
+- **Sui Move publishing:** Manual step, wallet-funded. Run `cd registry/move && sui move publish --gas-budget 100000000` after live deploys. Update docs with new package ID and commit to main.
+- **Hotfixes:** Fix on main via PR, then cherry-pick to live if urgent.
+- **PR release notes:** State what was deferred, affected surfaces (site, schema, Move, Walrus, docs), and which verification commands were run (see Verification Matrix).
+
 ## Review Guidelines
 
 - Prioritize correctness, trust, governance, schema compatibility, wallet safety, and missing tests.
