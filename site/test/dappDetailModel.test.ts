@@ -47,7 +47,7 @@ describe('getDappDetailViewModel', () => {
   });
 
   test('truncates the registry owner for the creator slot', () => {
-    const entry = listDappIndexFixtures().find(
+    const entry = listDirectoryTestFixtures().find(
       (fixture) => fixture.id === 'frontier-library',
     );
     expect(entry).toBeDefined();
