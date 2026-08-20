@@ -6,9 +6,9 @@ export const DAPP_INDEX_CATEGORIES = [
     subLabel: 'Risk · Finance — insurance, escrow, bounties',
   },
   {
-    id: 'logistics',
-    label: 'Logistics',
-    subLabel: 'Trade · Commerce — jobs, hauling, trade routes, marketplaces',
+    id: 'commerce',
+    label: 'Commerce',
+    subLabel: 'Trade · Logistics — jobs, hauling, trade routes, marketplaces',
   },
   {
     id: 'infrastructure',
