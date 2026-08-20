@@ -99,3 +99,37 @@ Follow these in site UI code, especially forms and multi-step flows.
 
 - Prefer **`switch` on discriminated status or state** over long `if` chains when mapping enum-like values to labels or copy.
 - Branch UI behavior on structured state, not on exact user-facing string literals.
+
+## TypeScript conventions
+
+Follow these in domain logic, chain helpers, and builder modules — not just UI.
+
+### Avoid trivial helpers
+
+Do not add functions whose body is shorter than their name unless they are reused or encode a real domain concept.
+
+Common anti-patterns to avoid:
+
+- **One-liner wrappers** — e.g. `normalizedAddress(x) { return x.trim().toLowerCase(); }` used once. Inline the expression at the call site.
+- **Passthrough re-exports** — e.g. `createSchemaPublishIssues(v) { return createSchemaValidationIssues(v); }`. Call the existing helper directly.
+- **Predicate aliases** — e.g. `isImageMediaAsset(a) { return a.media.kind === 'screenshot'; }` used only in one `.filter()`. Put the condition inline.
+- **Optional-field spread helpers** — e.g. `optionalCaption(caption)` returning `{ caption } | {}`. Use `const value = x?.trim(); ...(value ? { caption: value } : {})` at the call site unless the pattern is repeated many times.
+- **Reimplementing dependencies** — prefer existing SDK utilities (e.g. `fromHex` from `@mysten/sui/utils`) over hand-rolled parsers in `src/`.
+
+Extract a helper when it:
+
+- Is called from **two or more** places,
+- Names a **non-obvious domain rule** (poster selection priority, publish readiness ordering),
+- Or **composes** several steps into one readable unit (`buildMediaGallery`, transaction builders).
+
+### Discriminated unions and readiness checks
+
+- Use **`switch` + an exhaustiveness check** (`assertNever(x)` or `const _exhaustive: never = x`) on typed status unions in domain logic — not only in UI copy. This keeps exhaustiveness checking when new statuses are added.
+- For ordered blocker or readiness lists, prefer a **declarative array** of `condition && message` entries filtered to strings over sequential `if (!x) blockers.push(...)` chains. Preserve order when the first blocker is shown to users.
+
+### Exports and tests
+
+- Export only what other **production** code needs. Tests are not a reason to keep a public helper alive.
+- Do not add **test-only utilities under `src/`**. Use `site/test/` helpers or test behavior through the module boundary callers actually use.
+- Do not add tests that only assert a thin wrapper around a library or existing helper works.
+- After refactors, remove helpers and exports that no longer have production callers.

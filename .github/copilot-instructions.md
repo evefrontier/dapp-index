@@ -5,9 +5,10 @@ Read `AGENTS.md` before making repo changes. It is the canonical shared source f
 Highest-priority reminders:
 
 - Protect user work and never revert unrelated changes.
-- Prefer small branches from `main`.
+- Prefer small branches from `main` named per [Conventional Branch](https://conventionalbranch.org/).
 - Keep Move, Walrus metadata, MVR verification, frontend UI, and docs changes reviewable as separate surfaces.
 - Run the smallest relevant verification commands before claiming completion.
 - Do not automate Sui publishing, wallet-funded transactions, mainnet release steps, or governance decisions without explicit approval.
 - Read scoped `AGENTS.md` files when working under `site/`, `registry/move/`, or `registry/schema/`.
 - Minimize new dependencies (npm/bun packages and GitHub Actions alike). Prefer first-party/official options or a short script over a third-party action; see the dependency policy in `AGENTS.md`.
+- In site TypeScript, avoid trivial one-liner helpers and test-only exports from `src/`; see `site/AGENTS.md` → TypeScript conventions.

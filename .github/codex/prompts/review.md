@@ -24,3 +24,6 @@ This repository owns the EVE Frontier Dapp Index web app, Sui Move registry pack
 - Move changes should be covered by `bun run move:build` and `bun run move:test`.
 - Metadata schema changes should include TypeScript type updates, validation tests, and docs updates.
 - Public metadata changes should avoid duplicate sources of truth and should not keep legacy fields unless explicitly required.
+- Site TypeScript: watch for **trivial helpers** (one-liner wrappers, passthrough re-exports, optional-field spread helpers used once), **test-only code exported from `src/`**, and **long `if` chains** on discriminated status unions where `switch` + an exhaustiveness check (e.g. `assertNever` or `never` assignment) would catch missing cases. See `site/AGENTS.md` → TypeScript conventions.
+- Branch names should follow [Conventional Branch 1.1.0](https://conventionalbranch.org/).
+- PR descriptions should follow the template, include verification commands run, and must not contain tool attribution ("Made with Cursor", etc.).
