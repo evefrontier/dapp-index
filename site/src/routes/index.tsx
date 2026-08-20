@@ -1,17 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { ChainIdentifierReadout } from '@/components/ChainIdentifierReadout';
+import { DappDirectoryPage } from '@/components/DappDirectoryPage';
 
 export const Route = createFileRoute('/')({
-  component: IndexPage,
+  component: DappDirectoryPage,
 });
-
-function IndexPage() {
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold uppercase tracking-wider text-(--color-neutral)">
-        Discover EVE Frontier dapps
-      </h1>
-      <ChainIdentifierReadout />
-    </div>
-  );
-}
