@@ -3,6 +3,7 @@ import {
   createWizardStepItems,
   getWizardAdjacentStep,
   getWizardStatusLabel,
+  getWizardStatusTone,
   getWizardStepLabel,
   isWizardPlaceholderStep,
   resolveWizardRouteStep,
@@ -78,5 +79,13 @@ describe('builder wizard model', () => {
     expect(isWizardPlaceholderStep('media')).toBe(false);
     expect(isWizardPlaceholderStep('review')).toBe(true);
     expect(isWizardPlaceholderStep('publish')).toBe(true);
+  });
+
+  test('maps autosave states to tag pill tones', () => {
+    expect(getWizardStatusTone('idle')).toBe('secondary');
+    expect(getWizardStatusTone('saved')).toBe('secondary');
+    expect(getWizardStatusTone('pending')).toBe('tertiary');
+    expect(getWizardStatusTone('saving')).toBe('tertiary');
+    expect(getWizardStatusTone('error')).toBe('error');
   });
 });
