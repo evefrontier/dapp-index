@@ -1,6 +1,7 @@
 import { SuiGrpcClient } from '@mysten/sui/grpc';
-import { getJsonRpcFullnodeUrl } from '@mysten/sui/jsonRpc';
 import { walrus } from '@mysten/walrus';
+
+import { suiGrpcFullnodeUrl } from '@/chain/suiGrpcClient';
 
 import walrusWasmUrl from '@mysten/walrus-wasm/web/walrus_wasm_bg.wasm?url';
 
@@ -22,7 +23,7 @@ export type CreateWalrusSuiClientOptions = {
  */
 export function createWalrusSuiClient(options: CreateWalrusSuiClientOptions) {
   const baseUrl =
-    options.grpcBaseUrl?.trim() || getJsonRpcFullnodeUrl(options.network);
+    options.grpcBaseUrl?.trim() || suiGrpcFullnodeUrl(options.network);
 
   const uploadRelayHost = options.uploadRelayHost?.trim();
   const uploadRelay =
