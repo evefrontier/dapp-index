@@ -1,6 +1,16 @@
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { getDappDetailViewModel } from '@/directory/dappDetailModel';
 import { listDirectoryTestFixtures } from './directoryTestFixtures';
+
+// The Walrus read path is off by default; enable it only for these cases
+// and restore afterwards so file order cannot leak the flag.
+beforeAll(() => {
+  process.env.VITE_ENABLE_WALRUS = 'true';
+});
+
+afterAll(() => {
+  delete process.env.VITE_ENABLE_WALRUS;
+});
 
 describe('getDappDetailViewModel', () => {
   test('maps wizard metadata fields for frontier-library', () => {

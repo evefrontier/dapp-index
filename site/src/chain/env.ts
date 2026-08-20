@@ -41,6 +41,33 @@ export function registryConfigured(): boolean {
   return Boolean(vitePackageId() && viteRegistryId());
 }
 
+function viteFlagEnabled(raw: unknown): boolean {
+  return typeof raw === 'string' && raw.trim().toLowerCase() === 'true';
+}
+
+/**
+ * Whether to merge local fixture listings into the catalog.
+ *
+ * Off unless `VITE_ENABLE_FIXTURE_DATA=true`, so a deployed environment only
+ * ever shows fixtures when it opts in. `test` and `live` leave this unset and
+ * therefore render chain data only — a chain read failure must surface as an
+ * empty catalog, never as fabricated listings.
+ */
+export function viteFixtureDataEnabled(): boolean {
+  return viteFlagEnabled(import.meta.env.VITE_ENABLE_FIXTURE_DATA);
+}
+
+/**
+ * Whether the Walrus read/publish path is available.
+ *
+ * Off unless `VITE_ENABLE_WALRUS=true`. S3 is the current storage provider; the
+ * Walrus code is kept for the later mainnet flow and gated behind this flag
+ * rather than deleted.
+ */
+export function viteWalrusEnabled(): boolean {
+  return viteFlagEnabled(import.meta.env.VITE_ENABLE_WALRUS);
+}
+
 /** Lambda Function URL / upload API base (no trailing slash). */
 export function viteUploadApiBase(): string | undefined {
   const raw = import.meta.env.VITE_UPLOAD_API_BASE;
@@ -79,8 +106,13 @@ function defaultWalrusUploadRelayHost(
   return undefined;
 }
 
-/** Base URL for Walrus aggregator reads (no trailing slash required). */
+/**
+ * Base URL for Walrus aggregator reads (no trailing slash required).
+ * `undefined` while Walrus is disabled, which makes `walrus://` URIs resolve to
+ * null instead of reaching an aggregator.
+ */
 export function viteWalrusAggregatorUrl(): string | undefined {
+  if (!viteWalrusEnabled()) return undefined;
   const raw = import.meta.env.VITE_WALRUS_AGGREGATOR_URL;
   if (typeof raw === 'string') {
     const t = raw.trim();
@@ -89,8 +121,12 @@ export function viteWalrusAggregatorUrl(): string | undefined {
   return defaultWalrusAggregatorBaseUrl(viteSuiNetwork());
 }
 
-/** Optional Walrus upload relay host (enables browser-friendly uploads). */
+/**
+ * Optional Walrus upload relay host (enables browser-friendly uploads).
+ * `undefined` while Walrus is disabled.
+ */
 export function viteWalrusUploadRelayHost(): string | undefined {
+  if (!viteWalrusEnabled()) return undefined;
   const raw = import.meta.env.VITE_WALRUS_UPLOAD_RELAY;
   if (typeof raw === 'string') {
     const t = raw.trim();

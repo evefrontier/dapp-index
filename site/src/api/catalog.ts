@@ -1,10 +1,12 @@
 import { fetchOnChainCatalogEntries } from '@/chain/registryCatalog';
-import { registryConfigured } from '@/chain/env';
+import { registryConfigured, viteFixtureDataEnabled } from '@/chain/env';
+import { applyDevCatalogFixtures } from '@/content/devCatalogFixtures';
 import { applyHiddenListings } from '@/content/hiddenListings';
 import type { DappIndexEntry } from '@/types/dapp-index';
 
 function catalogCacheKey(): string {
   return JSON.stringify({
+    fixtures: viteFixtureDataEnabled(),
     registry: registryConfigured(),
     registryId: import.meta.env.VITE_REGISTRY_ID?.trim() ?? '',
   });
@@ -16,8 +18,14 @@ export function resetDappCatalogCache(): void {
   catalogPromises.clear();
 }
 
+/**
+ * Fixtures are additive and opt-in (`VITE_ENABLE_FIXTURE_DATA=true`). With the
+ * flag unset — test and live — this is chain data only, including on the
+ * failure paths below, so an unreachable registry yields an empty catalog
+ * rather than fabricated listings.
+ */
 function finalizeCatalogEntries(entries: DappIndexEntry[]): DappIndexEntry[] {
-  return applyHiddenListings(entries);
+  return applyHiddenListings(applyDevCatalogFixtures(entries));
 }
 
 async function loadCatalog(): Promise<DappIndexEntry[]> {

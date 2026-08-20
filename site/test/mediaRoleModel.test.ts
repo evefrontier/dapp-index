@@ -45,7 +45,7 @@ describe('media role model', () => {
 
     expect(guidance).toHaveLength(3);
     expect(guidance[0]).toContain('Logo, thumbnail');
-    expect(guidance[2]).toContain('Walrus');
+    expect(guidance[2]).toContain('storage');
   });
 
   test('builds media step guide sections with slot bullets', () => {

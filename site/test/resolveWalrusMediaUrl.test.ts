@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import {
   WALRUS_AGGREGATOR_PROXY_TESTNET,
   WALRUS_AGGREGATOR_TESTNET_URL,
@@ -8,6 +8,16 @@ import {
   resolveWalrusMetadataFetchUrl,
   resolveWalrusMetadataReadUrl,
 } from '@/directory/resolveWalrusMediaUrl';
+
+// The Walrus read path is off by default; enable it only for these cases
+// and restore afterwards so file order cannot leak the flag.
+beforeAll(() => {
+  process.env.VITE_ENABLE_WALRUS = 'true';
+});
+
+afterAll(() => {
+  delete process.env.VITE_ENABLE_WALRUS;
+});
 
 describe('resolveWalrusMetadataFetchUrl', () => {
   test('maps walrus blob URIs to aggregator read URLs', () => {

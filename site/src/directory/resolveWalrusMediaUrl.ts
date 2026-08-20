@@ -1,6 +1,7 @@
 import { viteWalrusAggregatorUrl } from '@/chain/env';
 import { rewriteWalrusAggregatorMetadataFetchUrl } from '@/chain/walrusProxy';
 import { walrusBlobReadUrl } from '@/chain/walrusClient';
+import { resolveDevCatalogMediaUrl } from '@/content/devCatalogMediaUrls';
 import type {
   DappIndexEntry,
   DappIndexImageMediaItem,
@@ -15,6 +16,11 @@ import { resolveMediaUrl } from '@/utils/resolveMediaUrl';
 export function resolveWalrusBlobReadUrl(uri: string): string | null {
   return resolveMediaUrl(uri, {
     resolveWalrusBlobId: (blobId) => {
+      // Fixture media (dev only) resolves to bundled assets, never the network.
+      const devUrl = resolveDevCatalogMediaUrl(blobId);
+      if (devUrl) return devUrl;
+      // Returns undefined while Walrus is disabled, so walrus:// URIs resolve
+      // to null instead of hitting an aggregator.
       const aggregator = viteWalrusAggregatorUrl();
       if (!aggregator) return null;
       return walrusBlobReadUrl(aggregator, blobId);

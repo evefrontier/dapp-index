@@ -151,7 +151,7 @@ export function getMediaStepGuideSections(
       },
     ],
     footer:
-      'Media stays on this device until publish. Each file is uploaded to Walrus during publish.',
+      'Media stays on this device until publish. Each file is uploaded to storage during publish.',
   };
 }
 
