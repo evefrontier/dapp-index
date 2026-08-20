@@ -6,6 +6,10 @@
  * than the decoded JSON shape the old JSON-RPC API produced, so the struct
  * layout here must stay in sync with `DappListing` in
  * `registry/move/sources/registry.move`.
+ *
+ * Two read shapes exist, so both decoders are needed: a single slug read
+ * returns the `Field` wrapper, while catalog reads via `listDynamicFields`
+ * with `include: { value: true }` return a bare `DappListing`.
  */
 
 import { bcs, TypeTagSerializer } from '@mysten/sui/bcs';
@@ -62,6 +66,27 @@ export function parseRegistryListingFieldBcs(
 ): OnChainListing | null {
   try {
     const { value } = RegistryListingFieldBcs.parse(contents);
+    return {
+      owner: value.owner,
+      slug: value.slug,
+      metadata_uri: value.metadata_uri,
+      metadata_hash: value.metadata_hash,
+      categories: value.categories,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Decode a bare `DappListing` value (as returned by listDynamicFields with
+ * `include: { value: true }`).
+ */
+export function parseDappListingBcs(
+  contents: Uint8Array,
+): OnChainListing | null {
+  try {
+    const value = DappListingBcs.parse(contents);
     return {
       owner: value.owner,
       slug: value.slug,
