@@ -5,14 +5,30 @@ import {
   type Draft,
   type DraftMedia,
   type DraftMediaInput,
+  type DraftMediaKind,
+  type DraftMediaUpdate,
   type DraftPublishCheckpoint,
   type DraftStatus,
   type DraftStep,
   type DraftStorage,
   type DraftStorageOptions,
 } from './draftTypes';
+import {
+  DAPP_INDEX_MEDIA_ROLES,
+  type DappIndexMediaRole,
+} from '@/types/dapp-index';
 import { createIndexedDbDraftLocalMediaStore } from './draftLocalMediaStore';
-import { validateDraftMediaFile } from './draftMediaValidation';
+import { validateDraftMediaFileForKind } from './draftMediaValidation';
+
+/** Role assigned when another item takes thumbnail or logo exclusivity. */
+const EXCLUSIVE_ROLE_DEMOTION_ROLE: DappIndexMediaRole = 'gallery';
+const EXCLUSIVE_DRAFT_MEDIA_ROLES: ReadonlySet<DappIndexMediaRole> = new Set([
+  'thumbnail',
+  'logo',
+]);
+const DRAFT_MEDIA_ROLE_VALUES: ReadonlySet<string> = new Set(
+  DAPP_INDEX_MEDIA_ROLES,
+);
 
 export function createDraftStorage(
   options: DraftStorageOptions = {},
@@ -137,6 +153,71 @@ export function createDraftStorage(
     });
   }
 
+  async function updateMedia(
+    draftId: string,
+    mediaId: string,
+    input: DraftMediaUpdate,
+  ): Promise<Draft> {
+    return updateDraft(draftId, (draft) => {
+      let didFindMedia = false;
+      const roleToMakeExclusive =
+        input.role && isExclusiveMediaRole(input.role) ? input.role : null;
+      const media = draft.media.map((item) => {
+        if (item.id === mediaId) {
+          didFindMedia = true;
+          return updateDraftMedia(item, input);
+        }
+
+        if (roleToMakeExclusive && item.role === roleToMakeExclusive) {
+          return { ...item, role: EXCLUSIVE_ROLE_DEMOTION_ROLE };
+        }
+
+        return item;
+      });
+
+      if (!didFindMedia) {
+        throw new Error(`Draft media not found: ${mediaId}`);
+      }
+
+      return {
+        ...draft,
+        media,
+        updatedAt: now().toISOString(),
+      };
+    });
+  }
+
+  async function deleteMedia(
+    draftId: string,
+    mediaId: string,
+  ): Promise<Draft> {
+    return withDraftLock(draftId, async () => {
+      const { drafts, draft } = readRequiredDraft(draftId);
+      const media = draft.media.filter((item) => item.id !== mediaId);
+      if (media.length === draft.media.length) {
+        throw new Error(`Draft media not found: ${mediaId}`);
+      }
+
+      const updatedDraft = {
+        ...draft,
+        media,
+        updatedAt: now().toISOString(),
+      };
+
+      drafts[draftId] = updatedDraft;
+      writeDrafts(drafts);
+
+      try {
+        await localMediaStore.delete(draftId, mediaId);
+      } catch (error) {
+        rollbackDraft(draftId, draft);
+        throw error;
+      }
+
+      return updatedDraft;
+    });
+  }
+
   async function getLocalMedia(
     draftId: string,
     mediaId: string,
@@ -167,6 +248,8 @@ export function createDraftStorage(
     completeDraftStep,
     savePublishCheckpoint,
     saveMedia,
+    updateMedia,
+    deleteMedia,
     getLocalMedia,
     deleteDraft,
     clearPublishedDraft: deleteDraft,
@@ -233,7 +316,7 @@ export function createDraftStorage(
     content: Blob,
   ): DraftMedia {
     const mimeType = resolveMediaMimeType(input, content);
-    const validation = validateDraftMediaFile({
+    const validation = validateDraftMediaFileForKind({
       kind: input.kind,
       file: content,
       mimeType,
@@ -242,13 +325,20 @@ export function createDraftStorage(
       throw new Error(validation.reason);
     }
 
+    if (!input.role) {
+      throw new Error('Draft media role is required.');
+    }
+
     return {
       id: input.id,
       kind: input.kind,
+      role: input.role,
       name: input.name,
       mimeType,
       size: content.size,
       createdAt: now().toISOString(),
+      alt: normalizeOptionalMediaText(input.alt),
+      caption: normalizeOptionalMediaText(input.caption),
     };
   }
 
@@ -279,6 +369,22 @@ export function createDraftStorage(
       media: [...draft.media.filter((item) => item.id !== media.id), media],
     };
     writeDrafts(drafts);
+  }
+
+  function updateDraftMedia(
+    media: DraftMedia,
+    input: DraftMediaUpdate,
+  ): DraftMedia {
+    return {
+      ...media,
+      role: input.role ?? media.role,
+      alt: Object.hasOwn(input, 'alt')
+        ? normalizeOptionalMediaText(input.alt)
+        : media.alt,
+      caption: Object.hasOwn(input, 'caption')
+        ? normalizeOptionalMediaText(input.caption)
+        : media.caption,
+    };
   }
 
   async function putLocalMediaOrRollback(
@@ -343,7 +449,51 @@ function normalizeDraft(draftId: string, value: unknown): Draft {
     updatedAt: typeof draft.updatedAt === 'string' ? draft.updatedAt : '',
     fields:
       draft.fields && typeof draft.fields === 'object' ? draft.fields : {},
-    media: Array.isArray(draft.media) ? draft.media : [],
+    media: Array.isArray(draft.media)
+      ? draft.media
+          .map(normalizeDraftMedia)
+          .filter((media): media is DraftMedia => Boolean(media))
+      : [],
+  };
+}
+
+function normalizeDraftMedia(value: unknown): DraftMedia | null {
+  const media =
+    value && typeof value === 'object'
+      ? (value as Partial<DraftMedia>)
+      : null;
+  if (!media) return null;
+
+  const id = typeof media.id === 'string' ? media.id : null;
+  const kind = isDraftMediaKind(media.kind) ? media.kind : null;
+  const name = typeof media.name === 'string' ? media.name : null;
+  const mimeType = typeof media.mimeType === 'string' ? media.mimeType : null;
+  const size =
+    typeof media.size === 'number' &&
+    Number.isFinite(media.size) &&
+    media.size >= 0
+      ? media.size
+      : null;
+  const role = isDappIndexMediaRole(media.role) ? media.role : null;
+  const createdAt =
+    typeof media.createdAt === 'string' ? media.createdAt : null;
+  if (!id || !kind || !name || !mimeType || size === null || !createdAt || !role) {
+    return null;
+  }
+
+  return {
+    id,
+    kind,
+    role,
+    name,
+    mimeType,
+    size,
+    createdAt,
+    alt: normalizeOptionalMediaText(media.alt),
+    caption: normalizeOptionalMediaText(media.caption),
+    walrusBlobId:
+      typeof media.walrusBlobId === 'string' ? media.walrusBlobId : undefined,
+    walrusUrl: typeof media.walrusUrl === 'string' ? media.walrusUrl : undefined,
   };
 }
 
@@ -364,6 +514,24 @@ function isDraftStatus(
     status === 'ready-to-publish' ||
     status === 'published'
   );
+}
+
+function isDraftMediaKind(value: unknown): value is DraftMediaKind {
+  return value === 'screenshot' || value === 'video';
+}
+
+function isDappIndexMediaRole(value: unknown): value is DappIndexMediaRole {
+  return typeof value === 'string' && DRAFT_MEDIA_ROLE_VALUES.has(value);
+}
+
+function isExclusiveMediaRole(
+  value: DappIndexMediaRole,
+): value is 'thumbnail' | 'logo' {
+  return EXCLUSIVE_DRAFT_MEDIA_ROLES.has(value);
+}
+
+function normalizeOptionalMediaText(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value : undefined;
 }
 
 function normalizeCompletedDraftSteps(steps: readonly unknown[]): DraftStep[] {
