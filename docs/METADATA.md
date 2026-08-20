@@ -36,7 +36,7 @@ The Move package stores one `DappListing` per slug:
   "slug": "route-planner",
   "metadata_uri": "walrus://blob/METADATA_BLOB_ID",
   "metadata_hash": [180, 23, 246, 5, 202, 88, 131, 17, 64, 201, 37, 155, 98, 44, 7, 219, 113, 250, 60, 141, 88, 179, 24, 7, 34, 118, 93, 41, 206, 77, 162, 5],
-  "categories": ["commerce", "infrastructure"],
+  "categories": ["logistics", "infrastructure"],
   "created_at_epoch": 123,
   "updated_at_epoch": 123
 }
@@ -51,7 +51,7 @@ Registration and update transactions provide:
   "slug": "route-planner",
   "metadataUri": "walrus://blob/METADATA_BLOB_ID",
   "metadataHash": "64-char-hex-sha256-of-canonical-metadata-json",
-  "categories": ["commerce", "infrastructure"]
+  "categories": ["logistics", "infrastructure"]
 }
 ```
 
@@ -70,7 +70,7 @@ manifest fields and the registry record should treat the listing as invalid.
   "name": "Route Planner",
   "summary": "Plan and share Frontier hauling routes.",
   "description": "A route planning dapp for coordinating storage-unit and gate logistics.",
-  "categories": ["commerce", "infrastructure"],
+  "categories": ["logistics", "infrastructure"],
   "smartAssemblyTypes": ["storage-unit", "gate"],
   "serverTenant": "stillness",
   "liveUrl": "https://route-planner.example",
@@ -89,12 +89,11 @@ manifest fields and the registry record should treat the listing as invalid.
   ],
   "media": {
     "thumbnail": "dashboard",
-    "hero": "dashboard",
     "items": [
       {
         "id": "dashboard",
         "kind": "image",
-        "role": "hero",
+        "role": "thumbnail",
         "uri": "walrus://blob/dashboardBlobId",
         "mimeType": "image/webp",
         "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
@@ -150,9 +149,8 @@ manifest fields and the registry record should treat the listing as invalid.
 - WebM videos should use `vp9,opus` or `vp8,opus`.
 - Each image or poster is limited to `5 MB`.
 - Each video source is limited to `60 MB`, `1920x1080`, and `60` seconds.
-- A listing may include at most `6` media items (logo, thumbnail, up to three
-  gallery images, and one optional video) and at most `1` video.
+- A listing may include at most `10` media items and at most `2` videos.
 - Total public media across screenshots, posters, and video sources is limited
   to `150 MB`.
-- Gallery `thumbnail` must reference an id in `media.items`.
+- Gallery `thumbnail` values must reference IDs from `media.items`.
 - Media IDs must be unique within the listing.
