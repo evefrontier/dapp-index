@@ -98,7 +98,11 @@ export function getWizardStatusTone(
 }
 
 export function isWizardPlaceholderStep(step: DraftStep): boolean {
-  return !isRegistrationDraftFieldStep(step) && step !== 'media';
+  return (
+    !isRegistrationDraftFieldStep(step) &&
+    step !== 'media' &&
+    step !== 'review'
+  );
 }
 
 function getWizardStepState(

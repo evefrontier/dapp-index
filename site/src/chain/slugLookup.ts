@@ -36,7 +36,7 @@ export async function lookupRegistrySlug(
   slug: string,
   options: RegistrySlugLookupOptions = {},
 ): Promise<RegistrySlugLookupResult> {
-  const normalized = slug.trim().toLowerCase();
+  const normalized = normalizeRegistrySlug(slug);
   if (!normalized) {
     return { status: 'error', message: 'Slug is empty.' };
   }

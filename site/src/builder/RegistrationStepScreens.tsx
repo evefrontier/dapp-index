@@ -8,13 +8,15 @@ import { BasicsStepScreen } from './BasicsStepScreen';
 import { DiscoveryStepScreen } from './DiscoveryStepScreen';
 import { MediaStepScreen } from './MediaStepScreen';
 import { PackagesStepScreen } from './PackagesStepScreen';
+import { ReviewStepScreen } from './ReviewStepScreen';
 import type { MediaSlotId } from './mediaSlotModel';
 import type {
   RegistrationDraftFieldErrors,
   RegistrationDraftFields,
 } from './registrationDraftFields';
-import type { RegistrationDraftPackageVerificationState } from './registrationDraftPackages';
 import type { RegistrationDraftMediaErrors } from './registrationDraftMedia';
+import type { RegistrationDraftPackageVerificationState } from './registrationDraftPackages';
+import type { ReviewStepControllerState } from './reviewStepPresentation';
 
 export type RegistrationStepScreenProps = {
   activeStep: DraftStep;
@@ -26,6 +28,7 @@ export type RegistrationStepScreenProps = {
   mediaPending: boolean;
   mediaPreviewUrls: Record<string, string>;
   packageVerification: RegistrationDraftPackageVerificationState;
+  reviewStep: ReviewStepControllerState;
   onDeleteMedia: (mediaId: string) => Promise<void>;
   onUpdateMedia: (
     mediaId: string,
@@ -49,6 +52,7 @@ export function RegistrationStepScreen({
   mediaPending,
   mediaPreviewUrls,
   packageVerification,
+  reviewStep,
   onDeleteMedia,
   onUpdateMedia,
   onUpdateFields,
@@ -102,6 +106,8 @@ export function RegistrationStepScreen({
           onUploadMediaForSlot={onUploadMediaForSlot}
         />
       );
+    case 'review':
+      return <ReviewStepScreen {...reviewStep} />;
     default:
       return (
         <p className="text-sm text-(--color-neutral-60)">
