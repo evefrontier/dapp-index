@@ -62,6 +62,7 @@ export type DraftPublishCheckpoint = {
   walrusUrl?: string;
   metadataHash?: string;
   suiTransactionDigest?: string;
+  publishAction?: 'register' | 'update';
 };
 
 export type Draft = {
@@ -132,6 +133,10 @@ export type DraftStorage = {
     nextStep?: DraftStep,
   ): Promise<Draft>;
   savePublishCheckpoint(
+    draftId: string,
+    checkpoint: DraftPublishCheckpoint,
+  ): Promise<Draft>;
+  finalizePublishedDraft(
     draftId: string,
     checkpoint: DraftPublishCheckpoint,
   ): Promise<Draft>;

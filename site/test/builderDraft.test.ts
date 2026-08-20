@@ -45,7 +45,22 @@ describe('builder draft helpers', () => {
     ).toMatchObject({
       currentStep: 'publish',
       currentStepLabel: 'Publish',
+      isPublished: false,
+      statusLabel: 'Step: Publish',
       title: 'Frontier Map',
+    });
+  });
+
+  test('marks published drafts as read-only records on the home list', () => {
+    expect(
+      createHomeDraftItem({
+        ...draft,
+        status: 'published',
+        currentStep: 'publish',
+      }),
+    ).toMatchObject({
+      isPublished: true,
+      statusLabel: 'Published',
     });
   });
 

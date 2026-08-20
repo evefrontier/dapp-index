@@ -726,4 +726,12 @@ h3 {
   .builder-wizard-next-blocker {
     @apply shrink-0 text-sm whitespace-nowrap text-(--color-neutral-60);
   }
+
+  .builder-publish-actions {
+    @apply grid gap-2;
+  }
+
+  .builder-publish-blocker {
+    @apply text-sm text-(--color-neutral);
+  }
 }
