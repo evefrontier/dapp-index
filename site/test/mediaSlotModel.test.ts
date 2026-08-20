@@ -1,10 +1,20 @@
 import { describe, expect, test } from 'bun:test';
 import type { DraftMedia } from '@/storage/draftStorage';
 import {
+  getActiveSlotId,
+  getCategoryNavLabel,
+  getDefaultGalleryIndex,
   getMediaForSlot,
+  getMediaNavGroupStatus,
   getMediaSlotDefinition,
+  getMediaSlotNavLabel,
   getMediaSlotStatus,
+  MEDIA_CATEGORY_NAV_IDS,
+  MEDIA_GALLERY_NAV_SLOT_IDS,
+  MEDIA_NAV_GROUPS,
   MEDIA_SLOT_IDS,
+  parseMediaSlotNav,
+  resolveSlotFromCategory,
   validateMediaSlots,
 } from '../src/builder/mediaSlotModel';
 
@@ -36,8 +46,8 @@ describe('media slot model', () => {
 
     expect(firstGallery.label).toBe('Gallery image');
     expect(secondGallery.label).toBe('Gallery image');
-    expect(firstGallery.navLabel).toBe('Gallery · 1');
-    expect(secondGallery.navLabel).toBe('Gallery · 2');
+    expect(firstGallery.navLabel).toBe('Image 1');
+    expect(secondGallery.navLabel).toBe('Image 2');
     expect(firstGallery.guide).toBe(secondGallery.guide);
     expect(firstGallery.required).toBe(true);
     expect(secondGallery.required).toBe(false);
@@ -117,5 +127,70 @@ describe('media slot model', () => {
 
     expect(validateMediaSlots(media)).toEqual({ ok: true });
     expect(getMediaSlotStatus(media, 'gallery-2')).toBe('empty');
+  });
+
+  test('defines two-row media nav slot lists', () => {
+    expect(MEDIA_CATEGORY_NAV_IDS).toEqual([
+      'logo',
+      'thumbnail',
+      'gallery',
+      'video',
+    ]);
+    expect(MEDIA_GALLERY_NAV_SLOT_IDS).toEqual([
+      'gallery-1',
+      'gallery-2',
+      'gallery-3',
+    ]);
+    expect(getMediaSlotNavLabel('gallery-2')).toBe('Image 2');
+    expect(getCategoryNavLabel('gallery')).toBe('Gallery');
+  });
+
+  test('defines horizontal media nav groups', () => {
+    expect(MEDIA_NAV_GROUPS.map((group) => group.id)).toEqual([
+      'logo',
+      'thumbnail',
+      'gallery',
+      'video',
+    ]);
+    expect(MEDIA_NAV_GROUPS.find((group) => group.id === 'gallery')?.slotIds).toEqual([
+      'gallery-1',
+      'gallery-2',
+      'gallery-3',
+    ]);
+  });
+
+  test('resolves active slot ids from nav group selection', () => {
+    expect(getActiveSlotId('logo', 0)).toBe('logo');
+    expect(getActiveSlotId('gallery', 1)).toBe('gallery-2');
+    expect(resolveSlotFromCategory('gallery', 2)).toBe('gallery-3');
+    expect(parseMediaSlotNav('gallery-3')).toEqual({
+      groupId: 'gallery',
+      galleryIndex: 2,
+    });
+  });
+
+  test('picks the first empty gallery slot by default', () => {
+    const media = [
+      createMedia({ id: 'gallery-1', role: 'gallery', kind: 'screenshot' }),
+    ];
+
+    expect(getDefaultGalleryIndex(media)).toBe(1);
+    expect(getDefaultGalleryIndex([])).toBe(0);
+  });
+
+  test('aggregates gallery nav group status from slot states', () => {
+    expect(getMediaNavGroupStatus([], 'gallery')).toBe('required-missing');
+    expect(
+      getMediaNavGroupStatus(
+        [createMedia({ id: 'gallery-1', role: 'gallery', kind: 'screenshot' })],
+        'gallery',
+      ),
+    ).toBe('filled');
+    expect(
+      getMediaNavGroupStatus(
+        [createMedia({ id: 'logo', role: 'logo', kind: 'screenshot' })],
+        'logo',
+      ),
+    ).toBe('filled');
   });
 });

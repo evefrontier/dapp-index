@@ -8,6 +8,7 @@ import type {
   DraftStep,
 } from '@/storage/draftStorage';
 import { RegistrationStepScreen } from './RegistrationStepScreens';
+import { MediaStepGuide } from './MediaStepGuide';
 import {
   createWizardStepItems,
   getWizardAdjacentStep,
@@ -315,10 +316,18 @@ function WizardStepPanel({
       >
         Add package
       </Button>
+    ) : activeStep === 'media' ? (
+      <MediaStepGuide mediaItemCount={draft.media.length} />
     ) : null;
 
   return (
-    <main className="min-w-0 space-y-5">
+    <main
+      className={
+        activeStep === 'media'
+          ? 'builder-media-step-panel min-w-0 space-y-5'
+          : 'min-w-0 space-y-5'
+      }
+    >
       <section>
         <div className="space-y-4">
           <WizardStepPanelHeader
