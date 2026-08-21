@@ -1,4 +1,3 @@
-import { formatAddress } from '@mysten/sui/utils';
 import { DAPP_INDEX_CORE_SUI_PACKAGE_ROLE } from '@/constants';
 import {
   resolveDetailGallerySlides,
@@ -39,8 +38,10 @@ export type DappDetailViewModel = {
   smartAssemblyTypes: readonly { id: string; label: string }[];
   /** Breadcrumb trail: smart assembly type, then category. */
   breadcrumbSegments: readonly string[];
-  /** Truncated `registryOwner`; null for entries not read from chain. */
-  creatorLabel: string | null;
+  /** Team/corporation the builder submitted on behalf of. */
+  tribeLabel: string | null;
+  /** Individual Rider (solo-builder) display name. */
+  riderLabel: string | null;
   /** Sui network(s) of the entry's packages, e.g. `Testnet`. */
   networkLabel: string | null;
   /** Category / assembly labels not already shown in the breadcrumb. */
@@ -109,11 +110,10 @@ export function getDappDetailViewModel(
     .map((item) => item.label)
     .filter((label) => !breadcrumbSegments.includes(label));
 
-  const registryOwner = entry.registryOwner?.trim();
-
   return {
     breadcrumbSegments,
-    creatorLabel: registryOwner ? formatAddress(registryOwner) : null,
+    tribeLabel: entry.tribe?.trim() || null,
+    riderLabel: entry.riderName?.trim() || null,
     networkLabel: resolveNetworkLabel(entry.suiPackages ?? []),
     tagLabels,
     name: entry.name,

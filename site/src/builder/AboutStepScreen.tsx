@@ -21,6 +21,8 @@ export function AboutStepScreen({
   const { form, updateField } = useRegistrationDraftStepForm({
     values: {
       description: fields.description,
+      tribe: fields.tribe,
+      riderName: fields.riderName,
       liveUrl: fields.liveUrl,
       repositoryUrl: fields.repositoryUrl,
       documentationUrl: fields.documentationUrl,
@@ -48,6 +50,44 @@ export function AboutStepScreen({
             value={field.state.value}
             onChange={(description) =>
               updateField('description', description, field.handleChange)
+            }
+          />
+        )}
+      </form.Field>
+      <form.Field
+        name="tribe"
+        validators={{
+          onChange: zodFieldValidator(RegistrationDraftAboutSchema.shape.tribe),
+        }}
+      >
+        {(field) => (
+          <TextField
+            error={field.state.meta.errors[0] ?? errors.tribe}
+            id="builder-tribe"
+            label="Tribe"
+            maxLength={80}
+            value={field.state.value}
+            onChange={(tribe) => updateField('tribe', tribe, field.handleChange)}
+          />
+        )}
+      </form.Field>
+      <form.Field
+        name="riderName"
+        validators={{
+          onChange: zodFieldValidator(
+            RegistrationDraftAboutSchema.shape.riderName,
+          ),
+        }}
+      >
+        {(field) => (
+          <TextField
+            error={field.state.meta.errors[0] ?? errors.riderName}
+            id="builder-rider-name"
+            label="Rider"
+            maxLength={80}
+            value={field.state.value}
+            onChange={(riderName) =>
+              updateField('riderName', riderName, field.handleChange)
             }
           />
         )}

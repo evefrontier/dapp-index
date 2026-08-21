@@ -195,6 +195,9 @@ The builder-facing listing data uses the same concepts across Sui and Walrus:
 
 - `id` / slug: stable URL-safe identifier;
 - `name` and `summary`: display copy;
+- `tribe` and `riderName`: optional builder identity — the team/corporation
+  (tribe) and/or individual Rider name behind the listing, shown on the detail
+  page in place of the raw registry owner address;
 - `categories`: index categories such as Money, Commerce, Infrastructure,
   Intel, Coordination, Build, and Social;
 - `smartAssemblyTypes`: optional assembly facets such as Storage unit, Turret,

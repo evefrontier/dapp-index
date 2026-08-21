@@ -28,6 +28,8 @@ export type RegistrationDraftFields = {
   slug: string;
   summary: string;
   description: string;
+  tribe: string;
+  riderName: string;
   liveUrl: string;
   repositoryUrl: string;
   documentationUrl: string;
@@ -48,6 +50,8 @@ export const REGISTRATION_DRAFT_FIELD_KEYS = [
   'slug',
   'summary',
   'description',
+  'tribe',
+  'riderName',
   'liveUrl',
   'repositoryUrl',
   'documentationUrl',
@@ -80,7 +84,14 @@ const STEP_SCHEMAS = {
 
 const STEP_FIELD_GROUPS = {
   basics: ['name', 'slug', 'summary'],
-  about: ['description', 'liveUrl', 'repositoryUrl', 'documentationUrl'],
+  about: [
+    'description',
+    'tribe',
+    'riderName',
+    'liveUrl',
+    'repositoryUrl',
+    'documentationUrl',
+  ],
   discovery: ['categories', 'smartAssemblyTypes', 'serverTenant'],
   packages: ['suiPackages'],
 } satisfies Record<
@@ -94,6 +105,8 @@ export function createRegistrationDraftFields(): RegistrationDraftFields {
     slug: '',
     summary: '',
     description: '',
+    tribe: '',
+    riderName: '',
     liveUrl: '',
     repositoryUrl: '',
     documentationUrl: '',

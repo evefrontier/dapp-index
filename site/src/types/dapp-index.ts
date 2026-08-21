@@ -137,6 +137,10 @@ export interface DappIndexEntry {
   name: string;
   summary: string;
   description?: string;
+  /** Team or corporation the builder is submitting on behalf of. */
+  tribe?: string;
+  /** Individual Rider (solo-builder) display name. */
+  riderName?: string;
   /** Search & filter; dapps can appear under multiple categories. */
   categories: DappIndexCategoryId[];
   /**

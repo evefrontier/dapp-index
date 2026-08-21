@@ -18,6 +18,8 @@ const FIXTURE_ENTRIES: DappIndexEntry[] = [
     summary: 'Browse and share verified builder metadata for Frontier tools.',
     description:
       'A catalog and documentation hub for Frontier ecosystem dapps, with registry-backed listings and Walrus-hosted metadata.',
+    tribe: 'Frontier Library Guild',
+    riderName: 'Ada Builder',
     categories: ['build', 'intel'],
     smartAssemblyTypes: ['storage-unit'],
     serverTenant: 'stillness',
