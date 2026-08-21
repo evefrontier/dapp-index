@@ -19,6 +19,8 @@ const validFields: RegistrationDraftFields = {
   slug: 'frontier-map',
   summary: ' Maps routes and gate networks. ',
   description: ' A route planning dapp. ',
+  tribe: ' Frontier Cartographers ',
+  riderName: ' Ada Builder ',
   liveUrl: 'https://frontier-map.example',
   repositoryUrl: 'https://github.com/example/frontier-map',
   documentationUrl: 'https://docs.frontier-map.example',
@@ -46,6 +48,8 @@ describe('registration draft review', () => {
       name: 'Frontier Map',
       summary: 'Maps routes and gate networks.',
       description: 'A route planning dapp.',
+      tribe: 'Frontier Cartographers',
+      riderName: 'Ada Builder',
       categories: ['commerce', 'intel'],
       smartAssemblyTypes: ['gate'],
       liveUrl: 'https://frontier-map.example',
@@ -116,7 +120,7 @@ describe('registration draft review', () => {
     expect(review.schemaValidation.ok).toBe(true);
     expect(review.issues).toEqual([]);
     expect(review.canonicalJson).toBe(
-      '{"categories":["commerce","intel"],"description":"A route planning dapp.","documentationUrl":"https://docs.frontier-map.example","id":"frontier-map","liveUrl":"https://frontier-map.example","name":"Frontier Map","repositoryUrl":"https://github.com/example/frontier-map","schema":"evefrontier.dapp-index.metadata","schemaVersion":1,"serverTenant":"stillness","smartAssemblyTypes":["gate"],"suiPackages":[{"mvrName":"@frontier/map","network":"testnet","packageId":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","packageInfoId":"0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","role":"core"}],"summary":"Maps routes and gate networks."}',
+      '{"categories":["commerce","intel"],"description":"A route planning dapp.","documentationUrl":"https://docs.frontier-map.example","id":"frontier-map","liveUrl":"https://frontier-map.example","name":"Frontier Map","repositoryUrl":"https://github.com/example/frontier-map","riderName":"Ada Builder","schema":"evefrontier.dapp-index.metadata","schemaVersion":1,"serverTenant":"stillness","smartAssemblyTypes":["gate"],"suiPackages":[{"mvrName":"@frontier/map","network":"testnet","packageId":"0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","packageInfoId":"0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","role":"core"}],"summary":"Maps routes and gate networks.","tribe":"Frontier Cartographers"}',
     );
   });
 
@@ -124,6 +128,8 @@ describe('registration draft review', () => {
     const review = createRegistrationDraftReview({
       ...validFields,
       description: '',
+      tribe: '',
+      riderName: '',
       repositoryUrl: '',
       documentationUrl: '',
       smartAssemblyTypes: [],
@@ -135,6 +141,14 @@ describe('registration draft review', () => {
       expect.arrayContaining([
         expect.objectContaining({
           id: 'optional.description',
+          severity: 'warning',
+        }),
+        expect.objectContaining({
+          id: 'optional.tribe',
+          severity: 'warning',
+        }),
+        expect.objectContaining({
+          id: 'optional.riderName',
           severity: 'warning',
         }),
         expect.objectContaining({
@@ -168,6 +182,8 @@ describe('registration draft review', () => {
       repositoryUrl: metadata.repositoryUrl,
       documentationUrl: metadata.documentationUrl,
       description: metadata.description,
+      tribe: metadata.tribe,
+      riderName: metadata.riderName,
     };
 
     await expect(createRegistrationMetadataHashHex(metadata)).resolves.toBe(
