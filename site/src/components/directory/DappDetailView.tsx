@@ -41,12 +41,20 @@ function DappDetailMetaCell({
 }
 
 function DappDetailMetaRow({ model }: { model: DappDetailViewModel }) {
-  if (!model.creatorLabel && !model.networkLabel) return null;
+  const hasIdentity = Boolean(model.tribeLabel || model.riderLabel);
+  if (!hasIdentity && !model.networkLabel) return null;
 
   return (
     <div className="directory-detail-meta-row">
-      {model.creatorLabel ? (
-        <DappDetailMetaCell label="Creator" value={model.creatorLabel} />
+      {hasIdentity ? (
+        <div className="flex flex-wrap gap-4">
+          {model.tribeLabel ? (
+            <DappDetailMetaCell label="Tribe" value={model.tribeLabel} />
+          ) : null}
+          {model.riderLabel ? (
+            <DappDetailMetaCell label="Rider" value={model.riderLabel} />
+          ) : null}
+        </div>
       ) : (
         <span />
       )}

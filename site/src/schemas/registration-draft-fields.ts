@@ -47,6 +47,8 @@ export const RegistrationDraftAboutSchema = z.object({
   description: z
     .string()
     .max(4000, 'Description must be 4000 characters or fewer.'),
+  tribe: z.string().max(80, 'Tribe must be 80 characters or fewer.'),
+  riderName: z.string().max(80, 'Rider name must be 80 characters or fewer.'),
   liveUrl: z
     .string()
     .trim()
@@ -120,6 +122,8 @@ export const RegistrationDraftFieldsStorageSchema = z.object({
   slug: storedString(),
   summary: storedString(),
   description: storedString(),
+  tribe: storedString(),
+  riderName: storedString(),
   liveUrl: storedString(),
   repositoryUrl: storedString(),
   documentationUrl: storedString(),

@@ -63,6 +63,8 @@ const FIELD_LABELS = {
   slug: 'Slug',
   summary: 'Summary',
   description: 'Description',
+  tribe: 'Tribe',
+  riderName: 'Rider',
   liveUrl: 'Live URL',
   repositoryUrl: 'Repo URL',
   documentationUrl: 'Docs URL',
@@ -104,6 +106,8 @@ export function buildRegistrationDraftMetadata(
   }
 
   addOptionalText(metadata, 'description', fields.description);
+  addOptionalText(metadata, 'tribe', fields.tribe);
+  addOptionalText(metadata, 'riderName', fields.riderName);
   addOptionalText(metadata, 'repositoryUrl', fields.repositoryUrl);
   addOptionalText(metadata, 'documentationUrl', fields.documentationUrl);
   if (fields.smartAssemblyTypes.length > 0) {
@@ -214,6 +218,18 @@ const OPTIONAL_FIELD_WARNINGS: OptionalFieldWarning[] = [
     label: 'Description',
     message: 'Add a description if this listing needs more context.',
     isMissing: (fields) => !fields.description.trim(),
+  },
+  {
+    id: 'optional.tribe',
+    label: 'Tribe',
+    message: 'Add a tribe if you’re submitting on behalf of a team or corporation.',
+    isMissing: (fields) => !fields.tribe.trim(),
+  },
+  {
+    id: 'optional.riderName',
+    label: 'Rider',
+    message: 'Add your Rider name if you’d like credit for this listing.',
+    isMissing: (fields) => !fields.riderName.trim(),
   },
   {
     id: 'optional.repositoryUrl',
