@@ -199,6 +199,11 @@ PR, and merging. This does not remove the on-chain registry record; other
 clients may still see it. Replace this overlay with registry visibility state
 when ADR-003 moderation lands.
 
+Owner-initiated removal ships first, as a hard delete that frees the slug.
+Reversible visibility states remain future work under this ADR: they need a
+visibility field on `DappListing` and a package upgrade, so they cannot be
+added by the frontend alone.
+
 ## Registry Metadata Model
 
 The builder-facing listing data uses the same concepts across Sui and Walrus:
@@ -295,6 +300,24 @@ The intended builder path is:
    version.
 5. The Dapp Index frontend shows the listing in All dapps and any selected
    assembly views.
+6. When the dapp is no longer maintained, the owner removes the listing from
+   the index.
+
+Removal is owner-controlled and happens in the builder. The **Published
+listings** section on `/builder` reads the registry, filters it to the
+connected wallet, and calls `remove_app` for the listing the owner selects.
+
+Two distinct actions share the builder home and should not be confused:
+
+- **Remove local copy** deletes the browser-local draft. The on-chain listing
+  is untouched.
+- **Remove from index** deletes the on-chain listing. The local draft and any
+  uploaded media are untouched.
+
+Removal is a hard delete: the registry entry is destroyed rather than hidden,
+and the slug becomes available for anyone to register. Re-listing means
+publishing again, which registers a new entry. There is no reversible hide
+state yet — see ADR-003.
 
 ## Open Decisions
 
