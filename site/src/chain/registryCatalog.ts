@@ -121,6 +121,7 @@ function fallbackEntry(listing: OnChainListing): DappIndexEntry {
     metadataUri: listing.metadata_uri,
     metadataHash: bytesToHex(listing.metadata_hash),
     registryOwner: listing.owner,
+    registrySlug: listing.slug,
     serverTenant: 'stillness' satisfies DappIndexServerTenant,
   };
 }
@@ -150,6 +151,7 @@ async function listingToDisplayEntry(
       metadataUri: listing.metadata_uri,
       metadataHash: bytesToHex(listing.metadata_hash),
       registryOwner: listing.owner,
+      registrySlug: listing.slug,
     };
   }
 

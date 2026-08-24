@@ -32,6 +32,20 @@ describe('formatPublishErrorMessage', () => {
     expect(message).toContain('Wallet approval timed out');
   });
 
+  test('maps wallet rejections to neutral copy', () => {
+    for (const raw of [
+      'User rejected the request.',
+      'user cancelled',
+      'Rejected request by user',
+    ]) {
+      expect(
+        formatPublishErrorMessage(new Error(raw), { fallback: 'fallback' }),
+      ).toBe(
+        'Wallet request was rejected. Approve the prompt in your wallet to continue.',
+      );
+    }
+  });
+
   test('falls back to the original error message', () => {
     const message = formatPublishErrorMessage(new Error('Custom failure'), {
       fallback: 'fallback',
