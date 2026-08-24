@@ -200,6 +200,20 @@ describe('registration draft publish', () => {
     ).toEqual({ ok: true, action: 'update' });
   });
 
+  test('treats a short-form wallet address as the padded registry owner', () => {
+    expect(
+      resolveRegistrationPublishAction({
+        slugCheck: {
+          status: 'taken',
+          checkedSlug: 'frontier-map',
+          owner: `0x${'0'.repeat(63)}2`,
+          message: 'Owned by connected wallet.',
+        },
+        walletAddress: '0x2',
+      }),
+    ).toEqual({ ok: true, action: 'update' });
+  });
+
   test('blocks publish when slug is owned by another wallet', () => {
     expect(
       resolveRegistrationPublishAction({

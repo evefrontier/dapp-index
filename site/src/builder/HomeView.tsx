@@ -238,7 +238,7 @@ function DraftListCard({
           className="text-sm font-bold uppercase text-(--color-neutral-60) hover:text-(--color-alert)"
           onClick={handleDeleteClick}
         >
-          Delete
+          {draft.deleteLabel}
         </button>
       </div>
     </article>

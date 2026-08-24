@@ -55,7 +55,13 @@ export function useHomeController(): HomeViewProps {
 
   const deleteDraft = useCallback(
     async (draftId: string) => {
-      const confirmed = window.confirm('Delete this draft?');
+      // The card the user clicked is the only source of the right wording, and
+      // its absence means the list moved under us — do nothing rather than
+      // guess a confirmation for a draft we can no longer describe.
+      const item = drafts.find((draft) => draft.id === draftId);
+      if (!item) return;
+
+      const confirmed = window.confirm(item.deleteConfirmMessage);
       if (!confirmed) return;
 
       setDraftListError(null);
@@ -68,7 +74,7 @@ export function useHomeController(): HomeViewProps {
         );
       }
     },
-    [refreshDrafts, setDraftListError, storage],
+    [drafts, refreshDrafts, setDraftListError, storage],
   );
 
   return {

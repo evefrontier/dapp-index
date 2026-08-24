@@ -10,6 +10,13 @@ export type HomeDraftItem = {
   isPublished: boolean;
   statusLabel: string;
   updatedAtLabel: string;
+  /**
+   * Deleting a draft only clears browser storage. For a published draft that
+   * reads as "unpublish", so the label and confirmation say what it really
+   * does; removing the listing itself lives in the published listings section.
+   */
+  deleteLabel: string;
+  deleteConfirmMessage: string;
 };
 
 export function createHomeDraftItem(
@@ -27,6 +34,10 @@ export function createHomeDraftItem(
       ? 'Published'
       : `Step: ${getWizardStepLabel(draft.currentStep)}`,
     updatedAtLabel: formatDraftDate(draft.updatedAt),
+    deleteLabel: published ? 'Remove local copy' : 'Delete',
+    deleteConfirmMessage: published
+      ? 'Remove this local copy? Your published on-chain listing is not affected — remove it from the published listings section.'
+      : 'Delete this draft?',
   };
 }
 

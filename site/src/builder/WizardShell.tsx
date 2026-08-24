@@ -174,8 +174,9 @@ function WizardPublishedBanner() {
       className="border border-(--color-neutral-20) bg-(--color-crude-20) p-3 text-sm text-(--color-neutral-60)"
       role="status"
     >
-      Published on Sui. This local draft is kept as a read-only record. Delete it
-      from the drafts list when you no longer need it.
+      Published on Sui. This local draft is kept as a read-only record. Removing
+      the local copy from the drafts list leaves the on-chain listing in the
+      index; to take the listing down, use the published listings section.
     </div>
   );
 }

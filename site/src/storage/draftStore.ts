@@ -270,7 +270,6 @@ export function createDraftStorage(
     deleteMedia,
     getLocalMedia,
     deleteDraft,
-    clearPublishedDraft: deleteDraft,
     clearDrafts,
   };
 
