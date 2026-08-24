@@ -156,6 +156,12 @@ export interface DappIndexEntry {
   metadataHash?: string;
   /** Owner address recorded in the on-chain registry. */
   registryOwner?: string;
+  /**
+   * Slug this listing is keyed by on chain. `id` comes from the fetched
+   * metadata document, which is off-chain and not authoritative, so registry
+   * writes such as `remove_app` must key off this instead.
+   */
+  registrySlug?: string;
   /** Frontier server tenant; not Sui devnet/testnet/mainnet. */
   serverTenant: DappIndexServerTenant;
   /** Walrus-hosted public gallery for cards, detail pages, and video demos. */

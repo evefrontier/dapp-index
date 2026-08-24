@@ -112,8 +112,82 @@ describe('fetchOnChainCatalogEntries', () => {
           name: 'Route Planner',
           metadataUri: 'https://cdn.example/testnet/0x/demo/metadata.json',
           registryOwner: `0x${'22'.repeat(32)}`,
+          registrySlug: 'route-planner',
         }),
       ]);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test('keeps registrySlug on the on-chain key when metadata claims another id', async () => {
+    const listingBytes = encodeDappListing({
+      slug: 'route-planner',
+      metadataUri: 'https://cdn.example/testnet/0x/demo/metadata.json',
+      categories: ['build'],
+    });
+
+    const page: CatalogDynamicFieldPage = {
+      dynamicFields: [{ value: { type: 'DappListing', bcs: listingBytes } }],
+      cursor: null,
+      hasNextPage: false,
+    };
+
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      new Response(
+        JSON.stringify({
+          schema: 'evefrontier.dapp-index.metadata',
+          schemaVersion: 1,
+          id: 'someone-elses-slug',
+          name: 'Route Planner',
+          summary: 'Plans routes.',
+          categories: ['build'],
+          liveUrl: 'https://route-planner.example',
+          serverTenant: 'stillness',
+          suiPackages: [],
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      )) as typeof fetch;
+
+    try {
+      const entries = await fetchOnChainCatalogEntries({
+        registryId: `0x${'81'.repeat(32)}`,
+        listDynamicFields: async () => page,
+      });
+
+      // `id` still reflects the metadata document; registry writes must not.
+      expect(entries[0]?.id).toBe('someone-elses-slug');
+      expect(entries[0]?.registrySlug).toBe('route-planner');
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  test('sets registrySlug on the fallback entry when metadata cannot be read', async () => {
+    const listingBytes = encodeDappListing({
+      slug: 'route-planner',
+      metadataUri: 'https://cdn.example/testnet/0x/demo/metadata.json',
+      categories: ['build'],
+    });
+
+    const page: CatalogDynamicFieldPage = {
+      dynamicFields: [{ value: { type: 'DappListing', bcs: listingBytes } }],
+      cursor: null,
+      hasNextPage: false,
+    };
+
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async () =>
+      new Response('nope', { status: 500 })) as typeof fetch;
+
+    try {
+      const entries = await fetchOnChainCatalogEntries({
+        registryId: `0x${'81'.repeat(32)}`,
+        listDynamicFields: async () => page,
+      });
+
+      expect(entries[0]?.registrySlug).toBe('route-planner');
     } finally {
       globalThis.fetch = originalFetch;
     }

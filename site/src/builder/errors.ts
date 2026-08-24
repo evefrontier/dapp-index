@@ -24,6 +24,10 @@ export function formatPublishErrorMessage(
     return 'Insufficient SUI for gas. Add SUI to your wallet and retry.';
   }
 
+  if (/user rejected|rejected (the )?request|user cancell?ed/.test(lower)) {
+    return 'Wallet request was rejected. Approve the prompt in your wallet to continue.';
+  }
+
   if (message.includes('Transaction approval timed out')) {
     return 'Wallet approval timed out. Approve the prompt in your wallet and try again.';
   }

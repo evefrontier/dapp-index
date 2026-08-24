@@ -157,6 +157,5 @@ export type DraftStorage = {
   deleteMedia(draftId: string, mediaId: string): Promise<Draft>;
   getLocalMedia(draftId: string, mediaId: string): Promise<Blob | null>;
   deleteDraft(draftId: string): Promise<void>;
-  clearPublishedDraft(draftId: string): Promise<void>;
   clearDrafts(): Promise<void>;
 };
