@@ -1,5 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { viteSuiNetwork } from '@/chain/env';
+import { usePublishedListingsController } from './usePublishedListingsController';
 import type { HomeViewProps } from './HomeView';
 import { getErrorMessage } from './errors';
 import { createHomeDraftItem } from './homeModel';
@@ -30,6 +32,7 @@ export function useHomeController(): HomeViewProps {
   const [storage] = useState<DraftStorage>(() => createDraftStorage());
   const {
     drafts,
+    rawDrafts,
     error,
     loading,
     refreshDrafts,
@@ -37,6 +40,7 @@ export function useHomeController(): HomeViewProps {
   } = useDraftList(storage);
   const { tutorialSkipped, showTutorial, skipTutorial } =
     useTutorialPreference();
+  const publishedListings = usePublishedListingsController(rawDrafts);
 
   const createDraft = useCallback(async () => {
     setDraftListError(null);
@@ -82,6 +86,11 @@ export function useHomeController(): HomeViewProps {
     error,
     loading,
     tutorialSkipped,
+    publishedListings: {
+      ...publishedListings,
+      suiNetwork: viteSuiNetwork(),
+      onDeleteDraft: deleteDraft,
+    },
     onCreateDraft: createDraft,
     onDeleteDraft: deleteDraft,
     onRefreshDrafts: refreshDrafts,
@@ -131,6 +140,7 @@ function useDraftList(storage: DraftStorage) {
 
   return {
     drafts: draftItems,
+    rawDrafts: drafts,
     error,
     loading,
     refreshDrafts,
