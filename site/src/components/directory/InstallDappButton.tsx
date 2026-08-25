@@ -18,6 +18,11 @@ const INSTALL_LABEL = 'Install';
 const STATUS_COPY: Partial<
   Record<InstallDappStatus, { label: string; tooltip?: string }>
 > = {
+  'no-assembly': {
+    label: INSTALL_LABEL,
+    tooltip:
+      'Open this dapp from a Smart Assembly in-game to install it onto that assembly',
+  },
   'wallet-not-connected': {
     label: INSTALL_LABEL,
     tooltip: 'Connect your wallet to install this dapp',
@@ -64,8 +69,6 @@ export function InstallDappButton({ entry }: { entry: DappIndexEntry }) {
     assemblyOwnerAddress,
     liveUrl: entry.liveUrl,
   });
-
-  if (status === 'no-assembly') return null;
 
   const disabled = status !== 'installable' || isPending;
   const copy = STATUS_COPY[status];

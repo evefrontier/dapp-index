@@ -27,6 +27,19 @@ describe('getInstallDappStatus', () => {
     expect(status).toBe('wallet-not-connected');
   });
 
+  test('wallet-not-connected takes precedence over no-assembly', () => {
+    // A disconnected visitor always has a null assembly, because
+    // SmartObjectProvider gates its fetch on the wallet connection. Reporting
+    // 'no-assembly' here would tell them to open the page from an assembly when
+    // connecting is what they actually need to do.
+    const status = getInstallDappStatus({
+      ...baseInput,
+      walletAddress: null,
+      assembly: null,
+    });
+    expect(status).toBe('wallet-not-connected');
+  });
+
   test('wallet-unsupported when the connected wallet lacks the sponsored-tx feature', () => {
     const status = getInstallDappStatus({
       ...baseInput,
