@@ -2,7 +2,11 @@ import { findOwnerByAddress, getDappUrl } from '@evefrontier/dapp-kit';
 import type { Assemblies, AssemblyType } from '@evefrontier/dapp-kit';
 
 export type InstallDappStatus =
-  /** Not opened from inside a Smart Assembly's embedded browser (plain URL open). */
+  /**
+   * Opened outside a Smart Assembly, so there is no object to install onto.
+   * Only reachable with a wallet connected — see the ordering note in
+   * {@link getInstallDappStatus}.
+   */
   | 'no-assembly'
   /** No wallet connected yet. */
   | 'wallet-not-connected'
@@ -49,8 +53,12 @@ export function getInstallDappStatus(input: {
     liveUrl,
   } = input;
 
-  if (!assembly) return 'no-assembly';
+  // Wallet first: SmartObjectProvider only fetches the assembly once a wallet
+  // is connected, so a disconnected visitor always has a null assembly. If
+  // 'no-assembly' were checked first it would mask every disconnected case and
+  // report "not opened from an assembly" to someone who simply hasn't connected.
   if (!walletAddress) return 'wallet-not-connected';
+  if (!assembly) return 'no-assembly';
   if (!walletSupportsSponsoredTx) return 'wallet-unsupported';
   if (assemblyOwnerAddress === null) return 'owner-unknown';
   if (!findOwnerByAddress(assemblyOwnerAddress, walletAddress)) {
