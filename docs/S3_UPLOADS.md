@@ -81,17 +81,25 @@ The bucket is **private and write-only from the client's perspective**:
 Keys are namespaced and deterministic:
 
 ```
-<network>/<wallet-address>/<slug>/<filename>
+<env>/<network>/<wallet-address>/<slug>/<filename>
 
-testnet/0xabc…/route-planner/thumbnail.png
-testnet/0xabc…/route-planner/metadata.json
+dev/testnet/0xabc…/route-planner/thumbnail-9f86d081884c7d65.png
+dev/testnet/0xabc…/route-planner/metadata-a3f5c0e19b8d4a21.json
 ```
+
+`<env>` (`dev` / `test` / `live`) is derived by the Lambda from the caller's
+`Origin` header, not sent by the client — it's what keeps the shared bucket
+from letting dev, test, and live builds collide on the same object. `<network>`
+is currently hardcoded to `testnet` on the Lambda regardless of what network
+the client is on; this is one of the reasons publish is blocked on `mainnet`
+client-side (`createRegistrationPublishReadiness()`) until both sides are
+mainnet-aware.
 
 Two properties matter:
 
 - **The prefix is authorization, not decoration.** The Lambda — not the client —
   decides the key, so a caller cannot write outside its own
-  `<network>/<address>/<slug>/` prefix even though it chose the filename.
+  `<env>/<network>/<address>/<slug>/` prefix even though it chose the filename.
 - **Filenames are content-addressed**, so the same bytes always resolve to the
   same key (retries dedupe) but two different versions of an asset never share
   a key. Media files are `<media-id>-<sha256[:16]>.<ext>`
