@@ -178,6 +178,46 @@ describe('presignUpload', () => {
     ).rejects.toMatchObject({ code: 'presign_invalid_response' });
   });
 
+  test('rejects a presign response with a missing or mismatched Content-Type header', async () => {
+    const request = {
+      address: '0x1234',
+      slug: 'demo',
+      purpose: 'media' as const,
+      filename: 'thumbnail.png',
+      contentType: 'image/png',
+      contentLength: 12,
+      sha256: 'a'.repeat(64),
+      apiBase: API_BASE,
+      mediaCdnBase: MEDIA_CDN_BASE,
+    };
+
+    await expect(
+      presignUpload({
+        ...request,
+        fetchImpl: async () =>
+          Response.json({
+            uploadUrl: 'https://s3.example/put',
+            headers: {},
+            objectKey: 'testnet/0x1234/demo/thumbnail.png',
+            publicUrl: 'https://cdn.example/thumbnail.png',
+          }),
+      }),
+    ).rejects.toMatchObject({ code: 'presign_invalid_response' });
+
+    await expect(
+      presignUpload({
+        ...request,
+        fetchImpl: async () =>
+          Response.json({
+            uploadUrl: 'https://s3.example/put',
+            headers: { 'Content-Type': 'application/octet-stream' },
+            objectKey: 'testnet/0x1234/demo/thumbnail.png',
+            publicUrl: 'https://cdn.example/thumbnail.png',
+          }),
+      }),
+    ).rejects.toMatchObject({ code: 'presign_invalid_response' });
+  });
+
   test('returns a valid presign payload', async () => {
     const result = await presignUpload({
       address: '0x1234',
@@ -281,13 +321,14 @@ describe('s3MetadataStorage', () => {
     expect(calls[1]).toContain('put-media');
   });
 
-  test('uploadManifestToS3 uses metadata.json', async () => {
+  test('uploadManifestToS3 uses a content-addressed metadata filename', async () => {
     let presignBody: unknown;
+    const sha256 = 'c'.repeat(64);
     await uploadManifestToS3({
       address: '0xabc',
       slug: 'route-planner',
       bytes: new TextEncoder().encode('{"id":"route-planner"}'),
-      sha256: 'c'.repeat(64),
+      sha256,
       apiBase: API_BASE,
       mediaCdnBase: MEDIA_CDN_BASE,
       fetchImpl: async (input, init) => {
@@ -298,9 +339,8 @@ describe('s3MetadataStorage', () => {
             JSON.stringify({
               uploadUrl: 'https://s3.example/put-meta',
               headers: { 'Content-Type': 'application/json' },
-              objectKey: 'testnet/0xabc/route-planner/metadata.json',
-              publicUrl:
-                'https://cdn.example/testnet/0xabc/route-planner/metadata.json',
+              objectKey: `testnet/0xabc/route-planner/metadata-${sha256.slice(0, 16)}.json`,
+              publicUrl: `https://cdn.example/testnet/0xabc/route-planner/metadata-${sha256.slice(0, 16)}.json`,
             }),
             { status: 200 },
           );
@@ -311,17 +351,27 @@ describe('s3MetadataStorage', () => {
 
     expect(presignBody).toMatchObject({
       purpose: 'manifest',
-      filename: 'metadata.json',
+      filename: `metadata-${sha256.slice(0, 16)}.json`,
       contentType: 'application/json',
     });
   });
 
-  test('stableMediaFilename maps mime types', () => {
-    expect(stableMediaFilename('thumbnail', 'image/webp')).toBe(
-      'thumbnail.webp',
+  test('stableMediaFilename is content-addressed by sha256', () => {
+    const sha256a = 'a'.repeat(64);
+    const sha256b = 'b'.repeat(64);
+    expect(stableMediaFilename('thumbnail', 'image/webp', sha256a)).toBe(
+      `thumbnail-${sha256a.slice(0, 16)}.webp`,
     );
-    expect(stableMediaFilename('gallery-1', 'image/png')).toBe('gallery-1.png');
-    expect(stableMediaFilename('demo', 'video/webm')).toBe('demo.webm');
+    expect(stableMediaFilename('gallery-1', 'image/png', sha256a)).toBe(
+      `gallery-1-${sha256a.slice(0, 16)}.png`,
+    );
+    expect(stableMediaFilename('demo', 'video/webm', sha256a)).toBe(
+      `demo-${sha256a.slice(0, 16)}.webm`,
+    );
+    // Different content for the same slot must never collide onto one key.
+    expect(stableMediaFilename('thumbnail', 'image/webp', sha256a)).not.toBe(
+      stableMediaFilename('thumbnail', 'image/webp', sha256b),
+    );
   });
 
   test('isUploadError recognizes UploadError', () => {

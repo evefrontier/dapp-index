@@ -63,6 +63,20 @@ export function viteMediaCdnBase(): string {
   return DAPP_MEDIA_CDN_ORIGIN;
 }
 
+/**
+ * Hostname of this project's own legacy CloudFront distribution (no
+ * scheme/path), if any media was ever published under it directly. Only this
+ * exact host is rewritten to `viteMediaCdnBase()` on read — an unset value
+ * means no rewrite happens, so a third-party `*.cloudfront.net` URL a builder
+ * legitimately references is never redirected to our CDN.
+ */
+export function viteLegacyCloudFrontHost(): string | undefined {
+  const raw = import.meta.env.VITE_LEGACY_CLOUDFRONT_HOST;
+  if (typeof raw !== 'string') return undefined;
+  const t = raw.trim().toLowerCase();
+  return t === '' ? undefined : t;
+}
+
 function defaultWalrusAggregatorBaseUrl(
   network: SuiNetworkName,
 ): string | undefined {

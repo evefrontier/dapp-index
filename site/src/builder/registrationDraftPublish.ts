@@ -174,6 +174,11 @@ export function createRegistrationPublishReadiness({
   if (suiNetwork !== 'testnet' && suiNetwork !== 'mainnet') {
     blockers.push('Publish supports testnet or mainnet.');
   }
+  if (suiNetwork === 'mainnet') {
+    blockers.push(
+      'Mainnet publish is disabled: the upload service does not yet verify wallet ownership of the address/slug prefix it writes to (see docs/S3_UPLOADS.md).',
+    );
+  }
   if (!uploadApiBase) {
     blockers.push('Configure VITE_UPLOAD_API_BASE for media uploads.');
   }

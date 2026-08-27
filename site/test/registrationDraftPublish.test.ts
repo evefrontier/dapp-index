@@ -260,6 +260,23 @@ describe('registration draft publish', () => {
     });
   });
 
+  test('blocks mainnet publish until the upload service authenticates callers', () => {
+    const readiness = createRegistrationPublishReadiness({
+      registryConfigured: true,
+      reviewReady: true,
+      suiNetwork: 'mainnet',
+      walletAddress:
+        '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      walletNetwork: 'mainnet',
+      uploadApiBase: 'https://uploads.example.com',
+    });
+
+    expect(readiness.ready).toBe(false);
+    expect(readiness.blockers).toContain(
+      'Mainnet publish is disabled: the upload service does not yet verify wallet ownership of the address/slug prefix it writes to (see docs/S3_UPLOADS.md).',
+    );
+  });
+
   test('includes wallet balance blockers in publish readiness', () => {
     expect(
       createRegistrationPublishReadiness({

@@ -92,16 +92,21 @@ Two properties matter:
 - **The prefix is authorization, not decoration.** The Lambda — not the client —
   decides the key, so a caller cannot write outside its own
   `<network>/<address>/<slug>/` prefix even though it chose the filename.
-- **Filenames are deterministic**, so republishing a listing overwrites in place
-  instead of accumulating orphaned objects. Media files are
-  `<media-id>.<ext>` (`stableMediaFilename()` maps MIME type → extension and
-  slugifies the id); the manifest is always `metadata.json`.
+- **Filenames are content-addressed**, so the same bytes always resolve to the
+  same key (retries dedupe) but two different versions of an asset never share
+  a key. Media files are `<media-id>-<sha256[:16]>.<ext>`
+  (`stableMediaFilename()` maps MIME type → extension, slugifies the id, and
+  appends a hash segment); the manifest is `metadata-<sha256[:16]>.json`.
 
-Determinism has one consequence worth stating explicitly: because our on-chain
-metadata pins a `sha256` per asset, overwriting a key with *different* bytes
-invalidates verification for anything still pointing at the old hash. Enable
-bucket versioning if you need to recover from that; treat published keys as
-append-only in practice.
+A fixed key per slot (e.g. always `thumbnail.png`) would let an in-flight
+republish overwrite the bytes a *currently live* on-chain `metadata_hash`
+still points at — including before the wallet transaction that adopts the new
+version is even signed. Content-addressing avoids that: uploading never
+mutates an object a published listing already references, only the on-chain
+pointer moves. The trade-off is that old versions become orphaned objects
+instead of being overwritten in place — add a lifecycle rule if you want to
+garbage-collect them once bucket versioning confirms nothing still points at
+them.
 
 ### Things To Decide Per Deployment
 
@@ -117,10 +122,14 @@ append-only in practice.
 
   The Lambda must return `publicUrl` values under that origin. A raw
   `*.cloudfront.net` host is infra-only (distribution / Lambda setup) and must
-  never be written into on-chain metadata — the SPA rejects it at presign time
-  and rewrites legacy CloudFront media URLs to `dapp-media.evefrontier.com` on
-  read. The frontend default is `DAPP_MEDIA_CDN_ORIGIN` /
-  `VITE_MEDIA_CDN_BASE`.
+  never be written into on-chain metadata — the SPA rejects it at presign
+  time. If media was ever published directly under the distribution host
+  before the CDN domain existed, set `VITE_LEGACY_CLOUDFRONT_HOST` to that
+  exact hostname and the read path rewrites it to `dapp-media.evefrontier.com`;
+  left unset, no `*.cloudfront.net` URL is rewritten, so a builder's
+  legitimate third-party CloudFront media reference is never redirected to a
+  path that won't exist on our CDN. The frontend default is
+  `DAPP_MEDIA_CDN_ORIGIN` / `VITE_MEDIA_CDN_BASE`.
 
 
 ## Part 2 — The Lambda, And Why It Exists
@@ -176,9 +185,18 @@ request, not an instruction.
 
 In the current MVP, `address` is an unverified claim in the request body. The
 endpoint is unauthenticated, so anyone who can reach it can obtain a presigned
-URL for a key under any address prefix. That is acceptable for a testnet MVP
-where the on-chain registry — not the bucket — is the source of truth about who
-owns a slug, and where a wallet signature is still required to publish anything.
+URL for a key under any address prefix — including one that collides with an
+already-published listing's key, letting them overwrite live media/manifest
+objects and invalidate the `sha256` already recorded on chain for that
+listing. That is acceptable for a testnet MVP where the on-chain registry —
+not the bucket — is the source of truth about who owns a slug, and where a
+wallet signature is still required to publish anything.
+
+Because of that, `createRegistrationPublishReadiness()` blocks publish on
+`mainnet` unconditionally (see
+[registrationDraftPublish.ts](../site/src/builder/registrationDraftPublish.ts)),
+regardless of whether `VITE_UPLOAD_API_BASE` is configured. Remove that
+blocker only once the Lambda authenticates callers.
 
 Before this pattern carries anything you care about, add:
 
@@ -376,5 +394,5 @@ bun run site:test
 
 Relevant files: `site/test/s3Upload.test.ts`,
 `site/test/resolveMediaUrl.test.ts`,
-`site/test/registrationDraftPublish.test.ts`. All 176 site tests pass on this
+`site/test/registrationDraftPublish.test.ts`. All 188 site tests pass on this
 branch.

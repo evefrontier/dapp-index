@@ -54,7 +54,7 @@ export async function uploadManifestToS3(
     address: input.address,
     slug: input.slug,
     purpose: 'manifest',
-    filename: 'metadata.json',
+    filename: contentAddressedManifestFilename(input.sha256),
     contentType: 'application/json',
     bytes: input.bytes,
     sha256: input.sha256,
@@ -111,11 +111,30 @@ function toRequestBody(bytes: Uint8Array): Blob {
   return new Blob([copy.buffer]);
 }
 
-/** Stable object filename for a media slot id + mime type. */
-export function stableMediaFilename(mediaId: string, mimeType: string): string {
+/**
+ * Content-addressed object filename for a media slot id + mime type.
+ *
+ * Embeds a hash segment so a changed asset never overwrites the bytes an
+ * already-published listing's on-chain `sha256` still points at — a canceled
+ * or failed republish would otherwise leave the live URL serving bytes that
+ * no longer match the pinned hash.
+ */
+export function stableMediaFilename(
+  mediaId: string,
+  mimeType: string,
+  sha256: string,
+): string {
   const extension = extensionForMimeType(mimeType);
   const safeId = mediaId.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-');
-  return `${safeId || 'media'}.${extension}`;
+  return `${safeId || 'media'}-${contentHashSegment(sha256)}.${extension}`;
+}
+
+function contentAddressedManifestFilename(sha256: string): string {
+  return `metadata-${contentHashSegment(sha256)}.json`;
+}
+
+function contentHashSegment(sha256: string): string {
+  return sha256.trim().toLowerCase().slice(0, 16);
 }
 
 function extensionForMimeType(mimeType: string): string {

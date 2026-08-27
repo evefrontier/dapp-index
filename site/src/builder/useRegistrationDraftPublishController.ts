@@ -521,6 +521,7 @@ async function createUploadedMediaAssets({
       filename: stableMediaFilename(
         descriptor.media.id,
         descriptor.media.mimeType,
+        descriptor.sha256,
       ),
       contentType: descriptor.media.mimeType,
       bytes,

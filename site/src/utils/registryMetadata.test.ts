@@ -9,6 +9,7 @@ import {
   DAPP_INDEX_METADATA_SCHEMA_VERSION,
   DAPP_INDEX_VIDEO_MIME_TYPE,
 } from '@/constants';
+import { isHttpsUrlValue } from '@/schemas/shared';
 import { validateRegistryMetadataJson } from './registryMetadata';
 
 const HEX_32 = '0'.repeat(64);
@@ -116,6 +117,23 @@ describe('registry metadata media schema', () => {
       'https://cdn.example/dashboard.webp';
 
     expect(validateRegistryMetadataJson(metadata).ok).toBe(true);
+  });
+
+  test('rejects malformed HTTPS media URLs that isHttpsUrlValue also rejects', () => {
+    // Drift guard: the JSON schema pattern is a regex approximation of
+    // isHttpsUrlValue() (used by resolveMediaUrl at read time). A value the
+    // schema accepts but the TS validator rejects would pass publish-time
+    // validation and then fail to resolve on read.
+    const malformedHttpsUrls = ['https://#fragment', 'https://?query'];
+
+    for (const uri of malformedHttpsUrls) {
+      expect(isHttpsUrlValue(uri)).toBe(false);
+
+      const metadata = validMetadata();
+      (metadata.media.items[0] as DappIndexImageMediaItem).uri =
+        uri as DappIndexImageMediaItem['uri'];
+      expect(validateRegistryMetadataJson(metadata).ok).toBe(false);
+    }
   });
 
   test('rejects unsupported video formats', () => {
