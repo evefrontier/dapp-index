@@ -2,6 +2,10 @@ import { Button } from '@evefrontier/ui';
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import type { HomeDraftItem } from './homeModel';
+import {
+  PublishedListingsSection,
+  type PublishedListingsSectionProps,
+} from './PublishedListingsSection';
 
 export type HomeViewProps = {
   drafts: HomeDraftItem[];
@@ -13,6 +17,7 @@ export type HomeViewProps = {
   onRefreshDrafts: () => Promise<void>;
   onShowTutorial: () => void;
   onSkipTutorial: () => void;
+  publishedListings: PublishedListingsSectionProps;
 };
 
 export function HomeView({
@@ -25,6 +30,7 @@ export function HomeView({
   onRefreshDrafts,
   onShowTutorial,
   onSkipTutorial,
+  publishedListings,
 }: HomeViewProps) {
   return (
     <div className="space-y-6">
@@ -41,6 +47,7 @@ export function HomeView({
         onRefresh={onRefreshDrafts}
         onDeleteDraft={onDeleteDraft}
       />
+      <PublishedListingsSection {...publishedListings} />
     </div>
   );
 }
@@ -238,7 +245,7 @@ function DraftListCard({
           className="text-sm font-bold uppercase text-(--color-neutral-60) hover:text-(--color-alert)"
           onClick={handleDeleteClick}
         >
-          Delete
+          {draft.deleteLabel}
         </button>
       </div>
     </article>

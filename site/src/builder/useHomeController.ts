@@ -1,5 +1,7 @@
 import { useNavigate } from '@tanstack/react-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { viteSuiNetwork } from '@/chain/env';
+import { usePublishedListingsController } from './usePublishedListingsController';
 import type { HomeViewProps } from './HomeView';
 import { getErrorMessage } from './errors';
 import { createHomeDraftItem } from './homeModel';
@@ -30,6 +32,7 @@ export function useHomeController(): HomeViewProps {
   const [storage] = useState<DraftStorage>(() => createDraftStorage());
   const {
     drafts,
+    rawDrafts,
     error,
     loading,
     refreshDrafts,
@@ -37,6 +40,7 @@ export function useHomeController(): HomeViewProps {
   } = useDraftList(storage);
   const { tutorialSkipped, showTutorial, skipTutorial } =
     useTutorialPreference();
+  const publishedListings = usePublishedListingsController(rawDrafts);
 
   const createDraft = useCallback(async () => {
     setDraftListError(null);
@@ -55,7 +59,13 @@ export function useHomeController(): HomeViewProps {
 
   const deleteDraft = useCallback(
     async (draftId: string) => {
-      const confirmed = window.confirm('Delete this draft?');
+      // The card the user clicked is the only source of the right wording, and
+      // its absence means the list moved under us — do nothing rather than
+      // guess a confirmation for a draft we can no longer describe.
+      const item = drafts.find((draft) => draft.id === draftId);
+      if (!item) return;
+
+      const confirmed = window.confirm(item.deleteConfirmMessage);
       if (!confirmed) return;
 
       setDraftListError(null);
@@ -68,7 +78,7 @@ export function useHomeController(): HomeViewProps {
         );
       }
     },
-    [refreshDrafts, setDraftListError, storage],
+    [drafts, refreshDrafts, setDraftListError, storage],
   );
 
   return {
@@ -76,6 +86,11 @@ export function useHomeController(): HomeViewProps {
     error,
     loading,
     tutorialSkipped,
+    publishedListings: {
+      ...publishedListings,
+      suiNetwork: viteSuiNetwork(),
+      onDeleteDraft: deleteDraft,
+    },
     onCreateDraft: createDraft,
     onDeleteDraft: deleteDraft,
     onRefreshDrafts: refreshDrafts,
@@ -125,6 +140,7 @@ function useDraftList(storage: DraftStorage) {
 
   return {
     drafts: draftItems,
+    rawDrafts: drafts,
     error,
     loading,
     refreshDrafts,

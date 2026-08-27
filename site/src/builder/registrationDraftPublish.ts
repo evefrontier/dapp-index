@@ -1,3 +1,4 @@
+import { isSameSuiAddress } from '@/chain/suiAddress';
 import type {
   DraftMedia,
   DraftPublishedMediaCheckpoint,
@@ -129,7 +130,7 @@ export function resolveRegistrationPublishAction({
   }
 
   if (slugCheck.status === 'taken') {
-    return normalizedAddress(slugCheck.owner) === normalizedAddress(walletAddress)
+    return isSameSuiAddress(slugCheck.owner, walletAddress)
       ? { ok: true, action: 'update' }
       : { ok: false, message: 'Slug is already owned by another wallet.' };
   }
@@ -335,10 +336,6 @@ function createSchemaPublishIssues(
   schemaValidation: Extract<RegistryMetadataValidation, { ok: false }>,
 ): RegistrationPublishIssue[] {
   return createSchemaValidationIssues(schemaValidation);
-}
-
-function normalizedAddress(address: string): string {
-  return address.trim().toLowerCase();
 }
 
 function isBlockingIssue(issue: RegistrationPublishIssue): boolean {
