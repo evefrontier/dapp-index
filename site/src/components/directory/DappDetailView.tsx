@@ -1,5 +1,6 @@
 import { Button } from '@evefrontier/ui';
 import { Link } from '@tanstack/react-router';
+import { useEffect } from 'react';
 import { DappDetailHero } from '@/components/directory/DappDetailHero';
 import { InstallDappButton } from '@/components/directory/InstallDappButton';
 import { getDappDetailViewModel } from '@/directory/dappDetailModel';
@@ -219,8 +220,32 @@ export function DappDetailNotFound() {
   );
 }
 
+/**
+ * Message type for {@link window.postMessage} to the parent frame, announcing
+ * the listing currently on screen. Consumed by the host app (e.g. `dapps`) so
+ * it can drive its own native install UI without embedding its own copy of
+ * the catalog/metadata-resolution logic this page already did.
+ *
+ * `targetOrigin: '*'` is deliberate — this page can be embedded by different
+ * host deployments (dev/test/prod) with no shared origin config, and the
+ * payload is public listing metadata, not sensitive data.
+ */
+const DAPP_INDEX_LISTING_SELECTED = 'dapp-index:listing-selected';
+
 export function DappDetailView({ entry }: { entry: DappIndexEntry }) {
   const model = getDappDetailViewModel(entry);
+
+  useEffect(() => {
+    window.parent.postMessage(
+      {
+        type: DAPP_INDEX_LISTING_SELECTED,
+        slug: entry.registrySlug ?? entry.id,
+        name: entry.name,
+        liveUrl: entry.liveUrl,
+      },
+      '*',
+    );
+  }, [entry]);
 
   return (
     <div className="directory-detail-page">
