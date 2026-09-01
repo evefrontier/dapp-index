@@ -1,4 +1,4 @@
-import { Button } from '@evefrontier/ui';
+import { Button } from '@evefrontier/component-library';
 import { DAPP_INDEX_CATEGORIES } from '@/constants';
 import type { DirectoryFilterState } from '@/directory/directoryFiltersStorage';
 import type { DirectoryControllerActions } from '@/directory/useDirectoryController';
@@ -21,7 +21,7 @@ export function DirectoryCategoryNav({
       <ul className="m-0 flex list-none flex-row flex-wrap gap-2 p-0">
         <li className="shrink-0">
           <Button
-            size="small"
+            size="sm"
             type="button"
             variant={categoryFilter === 'all' ? 'primary' : 'secondary'}
             onClick={() => onCategoryFilterChange('all')}
@@ -32,7 +32,7 @@ export function DirectoryCategoryNav({
         {DAPP_INDEX_CATEGORIES.map((category) => (
           <li key={category.id} className="shrink-0">
             <Button
-              size="small"
+              size="sm"
               type="button"
               variant={
                 categoryFilter === category.id ? 'primary' : 'secondary'

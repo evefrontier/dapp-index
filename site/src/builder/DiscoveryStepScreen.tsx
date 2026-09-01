@@ -235,6 +235,7 @@ function ServerTenantFilter({
         >
           {DAPP_INDEX_SERVER_TENANT_LABELS[SERVER_TENANT_ON]}
         </span>
+
       </div>
       <FieldError id="builder-server-tenant" message={error} />
     </fieldset>

@@ -1,4 +1,4 @@
-import { Button } from '@evefrontier/ui';
+import { Button } from '@evefrontier/component-library';
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import type {
@@ -220,7 +220,7 @@ function WizardSidebarActions({
       <WizardAutosaveTag autosaveStatus={autosaveStatus} />
       <Button
         variant="tertiary"
-        size="small"
+        size="sm"
         disabled={navigationPending}
         onClick={() => {
           void onExitWizard();
@@ -360,7 +360,7 @@ function WizardStepPanel({
     activeStep === 'packages' ? (
       <Button
         variant="secondary"
-        size="small"
+        size="sm"
         onClick={() =>
           onUpdateFields({
             suiPackages: addRegistrationDraftPackage(fields.suiPackages),
@@ -425,7 +425,7 @@ function WizardStepPanel({
             ) : null}
             <Button
               variant="secondary"
-              size="small"
+              size="sm"
               disabled={navigationPending || !previousStep}
               onClick={() => {
                 if (previousStep) void onNavigateStep(previousStep);
@@ -436,7 +436,7 @@ function WizardStepPanel({
             {nextStep ? (
               <Button
                 variant="primary"
-                size="small"
+                size="sm"
                 disabled={navigationPending || !canNavigateNext}
                 onClick={() => {
                   void onNavigateStep(nextStep);

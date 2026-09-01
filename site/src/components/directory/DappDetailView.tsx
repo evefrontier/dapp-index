@@ -1,4 +1,4 @@
-import { Button } from '@evefrontier/ui';
+import { Button } from '@evefrontier/component-library';
 import { Link } from '@tanstack/react-router';
 import { useEffect } from 'react';
 import { DappDetailHero } from '@/components/directory/DappDetailHero';
@@ -204,9 +204,11 @@ function DappDetailNotes({ notes }: { notes: string }) {
 function DappDetailConnect({ liveUrl }: { liveUrl: string }) {
   return (
     <div className="directory-detail-cta">
-      <Button external href={liveUrl} size="large" variant="primary">
-        Connect
-      </Button>
+      <a href={liveUrl} rel="noopener noreferrer" target="_blank">
+        <Button size="lg" variant="primary">
+          Connect
+        </Button>
+      </a>
     </div>
   );
 }
