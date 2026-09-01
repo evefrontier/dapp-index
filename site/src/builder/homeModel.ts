@@ -1,4 +1,5 @@
 import type { Draft, DraftStep } from '@/storage/draftStorage';
+import { isPublishedDraft } from './publishedDraft';
 import { getWizardStepLabel } from './wizardModel';
 
 export type HomeDraftItem = {
@@ -6,17 +7,25 @@ export type HomeDraftItem = {
   title: string;
   currentStep: DraftStep;
   currentStepLabel: string;
+  isPublished: boolean;
+  statusLabel: string;
   updatedAtLabel: string;
 };
 
 export function createHomeDraftItem(
   draft: Draft,
 ): HomeDraftItem {
+  const published = isPublishedDraft(draft);
+
   return {
     id: draft.id,
     title: getDraftTitle(draft),
     currentStep: draft.currentStep,
     currentStepLabel: getWizardStepLabel(draft.currentStep),
+    isPublished: published,
+    statusLabel: published
+      ? 'Published'
+      : `Step: ${getWizardStepLabel(draft.currentStep)}`,
     updatedAtLabel: formatDraftDate(draft.updatedAt),
   };
 }

@@ -1,4 +1,4 @@
-import type { DraftStep } from '@/storage/draftStorage';
+import type { DraftMedia, DraftStep } from '@/storage/draftStorage';
 import {
   type DappIndexCategoryId,
   type DappIndexServerTenant,
@@ -21,6 +21,7 @@ import {
   validateRegistrationDraftPackages,
   type RegistrationDraftPackage,
 } from './registrationDraftPackages';
+import { validateRegistrationDraftMediaStep } from './registrationDraftMedia';
 
 export type RegistrationDraftFields = {
   name: string;
@@ -177,7 +178,12 @@ export function isRegistrationDraftFieldStep(
 export function isRegistrationDraftStepValid(
   step: DraftStep,
   fields: RegistrationDraftFields,
+  media: readonly DraftMedia[] = [],
 ): boolean {
+  if (step === 'media') {
+    return validateRegistrationDraftMediaStep(media).ok;
+  }
+
   if (!isRegistrationDraftFieldStep(step)) return true;
 
   const errors = validateRegistrationDraftStepFields(step, fields);
