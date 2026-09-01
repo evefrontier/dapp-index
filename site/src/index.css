@@ -26,6 +26,14 @@ h4 {
   color: var(--color-neutral);
 }
 
+h3 {
+  margin: 0;
+  font-size: inherit;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  color: var(--color-neutral);
+}
+
 @layer components {
   .builder-field label,
   .builder-fieldset legend {
@@ -50,6 +58,23 @@ h4 {
 
   .builder-text-button-danger {
     @apply text-xs font-bold uppercase text-(--color-alert);
+  }
+
+  .builder-text-button {
+    @apply text-xs font-bold uppercase text-(--color-martian-red);
+  }
+
+  .builder-role-filter {
+    @apply flex flex-wrap items-center gap-1;
+  }
+
+  .builder-role-filter [data-size='small'] {
+    padding: 1px;
+  }
+
+  .builder-role-filter [data-size='small'] > span:first-child {
+    padding: 4px 0.5rem;
+    font-size: var(--font-size-sm);
   }
 
   .builder-wizard-step {
@@ -92,6 +117,58 @@ h4 {
     @apply font-bold uppercase;
   }
 
+  .builder-media-slots {
+    @apply grid gap-4;
+  }
+
+  .builder-media-slots-layout {
+    @apply grid gap-4 md:grid-cols-[16rem_minmax(0,1fr)];
+  }
+
+  .builder-media-slot-nav {
+    @apply grid min-w-0 gap-2;
+  }
+
+  .builder-media-slot-button {
+    @apply flex w-full min-w-0 items-center justify-between gap-3 border border-(--color-neutral-20) px-3 py-2 text-left text-xs font-bold uppercase text-(--color-neutral-60) transition-colors hover:border-(--color-neutral-50) disabled:cursor-default;
+  }
+
+  .builder-media-slot-button-label {
+    @apply min-w-0 truncate;
+  }
+
+  .builder-media-slot-button-status {
+    @apply shrink-0 text-xs;
+  }
+
+  .builder-media-slot-button[data-selected='true'] {
+    @apply border-(--color-martian-red) text-(--color-neutral);
+  }
+
+  .builder-media-slot-button[data-status='filled'] {
+    @apply text-(--color-martian-red);
+  }
+
+  .builder-media-slot-button[data-status='required-missing'] {
+    @apply border-(--color-alert);
+  }
+
+  .builder-media-slot-panel {
+    @apply grid gap-4 border border-(--color-neutral-20) p-4;
+  }
+
+  .builder-media-slot-guide {
+    @apply space-y-1 text-xs text-(--color-neutral-60);
+  }
+
+  .builder-media-slot-empty {
+    @apply grid gap-3 border border-dashed border-(--color-neutral-20) p-4;
+  }
+
+  .builder-media-preview {
+    @apply relative flex aspect-video h-32 w-full items-center justify-center overflow-hidden border border-(--color-neutral-20) bg-(--color-crude-60) text-left transition-colors hover:border-(--color-martian-red) disabled:cursor-default disabled:hover:border-(--color-neutral-20) md:h-32;
+  }
+
   .builder-review-label {
     @apply text-xs font-bold uppercase text-(--color-neutral-60);
   }
@@ -126,6 +203,50 @@ h4 {
 
   .builder-review-issue[data-severity='error'] {
     @apply text-(--color-alert);
+  }
+
+  .builder-review-code {
+    @apply max-h-80 overflow-auto border border-(--color-neutral-20) bg-(--color-crude-60) p-3 text-xs leading-relaxed text-(--color-neutral-70);
+  }
+
+  .builder-review-advanced {
+    @apply grid gap-3 border-t border-(--color-neutral-20) pt-4;
+  }
+
+  .builder-review-advanced-summary {
+    @apply cursor-pointer text-xs font-bold uppercase text-(--color-martian-red);
+  }
+
+  .builder-review-advanced-hint {
+    @apply text-sm text-(--color-neutral-60);
+  }
+
+  .builder-review-modal-backdrop {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4;
+  }
+
+  .builder-review-modal-panel {
+    @apply grid max-h-full w-full max-w-2xl gap-4 border border-(--color-neutral-30) bg-(--color-crude) p-4;
+  }
+
+  .builder-review-modal-header {
+    @apply flex items-center justify-between gap-3;
+  }
+
+  .builder-review-modal-list {
+    @apply grid max-h-[60vh] overflow-auto border-y border-(--color-neutral-20);
+  }
+
+  .builder-review-modal-item {
+    @apply grid gap-1 border-t border-(--color-neutral-20) py-3 first:border-t-0 sm:grid-cols-[10rem_minmax(0,1fr)];
+  }
+
+  .builder-wizard-nav-actions {
+    @apply flex flex-wrap items-center justify-end gap-3;
+  }
+
+  .builder-wizard-next-blocker {
+    @apply shrink-0 text-sm whitespace-nowrap text-(--color-neutral-60);
   }
 
   .builder-publish-actions {
