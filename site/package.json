@@ -16,6 +16,7 @@
     "router:generate": "tsr generate"
   },
   "dependencies": {
+    "@evefrontier/component-library": "^1.2.3",
     "@evefrontier/dapp-kit": "^0.1.9",
     "@evefrontier/ui": "file:./vendor/@evefrontier/ui",
     "@mysten/dapp-kit-react": "^2.0.1",
@@ -27,6 +28,9 @@
     "@tanstack/react-query-devtools": "^5.95.2",
     "@tanstack/react-router": "^1.169.2",
     "ajv": "^8.20.0",
+    "clsx": "^2.1.1",
+    "embla-carousel": "^8.6.0",
+    "embla-carousel-react": "^8.6.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "zod": "^4.4.3"
