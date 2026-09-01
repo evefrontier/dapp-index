@@ -1,4 +1,4 @@
-import { Button } from '@evefrontier/ui';
+import { Button } from '@evefrontier/component-library';
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import type {
@@ -333,7 +333,7 @@ function WizardStepPanel({
     activeStep === 'packages' ? (
       <Button
         variant="secondary"
-        size="small"
+        size="sm"
         onClick={() =>
           onUpdateFields({
             suiPackages: addRegistrationDraftPackage(fields.suiPackages),
@@ -395,7 +395,7 @@ function WizardStepPanel({
           ) : null}
           <Button
             variant="secondary"
-            size="small"
+            size="sm"
             disabled={navigationPending || !previousStep}
             onClick={() => {
               if (previousStep) void onNavigateStep(previousStep);
@@ -405,7 +405,7 @@ function WizardStepPanel({
           </Button>
           <Button
             variant="primary"
-            size="small"
+            size="sm"
             disabled={navigationPending || !nextStep || !canNavigateNext}
             onClick={() => {
               if (nextStep) void onNavigateStep(nextStep);

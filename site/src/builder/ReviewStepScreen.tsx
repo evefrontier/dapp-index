@@ -1,4 +1,4 @@
-import { Button } from '@evefrontier/ui';
+import { Button } from '@evefrontier/component-library';
 import { useEffect, useState, type ReactNode } from 'react';
 import { ReviewIssueList } from './ReviewIssueList';
 import { ReviewWarningsModal } from './ReviewWarningsModal';
@@ -65,7 +65,7 @@ function ReviewStatusRows({
         action={
           statusRows.issueCounts.warnings > 0 ? (
             <Button
-              size="small"
+              size="sm"
               type="button"
               variant="secondary"
               onClick={onViewWarnings}
@@ -89,7 +89,7 @@ function ReviewStatusRows({
         action={
           <Button
             disabled={slugCheck.status === 'checking'}
-            size="small"
+            size="sm"
             type="button"
             variant="secondary"
             onClick={() => {

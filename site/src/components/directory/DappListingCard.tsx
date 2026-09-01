@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Tag } from '@evefrontier/ui';
+import { TagPill } from '@evefrontier/component-library';
 import { getListingCardModel } from '@/directory/listingCardModel';
 import type { ListingCardModel } from '@/directory/listingCardModel';
 import type { DappIndexEntry } from '@/types/dapp-index';
@@ -41,7 +41,7 @@ function ListingCardBody({ model }: { model: ListingCardModel }) {
     <div className="directory-card-body">
       <div className="directory-card-heading">
         <h2 className="directory-card-title">{model.name}</h2>
-        <Tag size="small" text={model.categoryLabel} variant="secondary" />
+        <TagPill size="small" text={model.categoryLabel} variation="secondary" />
       </div>
       <p className="directory-card-summary">{model.summary}</p>
     </div>

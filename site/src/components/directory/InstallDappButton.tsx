@@ -1,4 +1,4 @@
-import { Button } from '@evefrontier/ui';
+import { Button } from '@evefrontier/component-library';
 import { useCurrentWallet } from '@mysten/dapp-kit-react';
 import {
   EVEFRONTIER_SPONSORED_TRANSACTION,
@@ -93,7 +93,7 @@ export function InstallDappButton({ entry }: { entry: DappIndexEntry }) {
       <Button
         disabled={disabled}
         onClick={handleClick}
-        tooltip={copy?.tooltip}
+        title={copy?.tooltip}
         variant="primary"
       >
         {label}

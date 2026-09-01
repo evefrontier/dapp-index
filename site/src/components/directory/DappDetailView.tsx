@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Tag } from '@evefrontier/ui';
+import { TagPill } from '@evefrontier/component-library';
 import { DappDetailGallery } from '@/components/directory/DappDetailGallery';
 import { InstallDappButton } from '@/components/directory/InstallDappButton';
 import { getDappDetailViewModel } from '@/directory/dappDetailModel';
@@ -37,19 +37,19 @@ function DappDetailIdentity({ model }: { model: DappDetailViewModel }) {
 
           <div className="directory-detail-tag-row">
             {model.categories.map((category) => (
-              <Tag
+              <TagPill
                 key={category.id}
                 size="small"
                 text={category.label}
-                variant="secondary"
+                variation="secondary"
               />
             ))}
             {model.smartAssemblyTypes.map((assembly) => (
-              <Tag
+              <TagPill
                 key={assembly.id}
                 size="small"
                 text={assembly.label}
-                variant="secondary"
+                variation="secondary"
               />
             ))}
           </div>

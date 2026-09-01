@@ -1,4 +1,4 @@
-import { Button } from '@evefrontier/ui';
+import { Button } from '@evefrontier/component-library';
 import { getPublishNextBlockerMessage } from './registrationDraftPublish';
 import type { PublishStepControllerState } from './publishStepPresentation';
 import {
@@ -54,7 +54,7 @@ export function PublishStepScreen({
             {!walletAddress ? (
               <Button
                 disabled={isPublishing}
-                size="small"
+                size="sm"
                 type="button"
                 variant="primary"
                 onClick={onConnectWallet}
@@ -64,7 +64,7 @@ export function PublishStepScreen({
             ) : (
               <Button
                 disabled={isPublishing || !publishReadiness.ready}
-                size="small"
+                size="sm"
                 type="button"
                 variant="primary"
                 onClick={() => {

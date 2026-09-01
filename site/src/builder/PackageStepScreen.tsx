@@ -1,4 +1,4 @@
-import { Button } from '@evefrontier/ui';
+import { Button } from '@evefrontier/component-library';
 import {
   DAPP_INDEX_SUI_NETWORKS,
   DAPP_INDEX_SUI_PACKAGE_ROLES,
@@ -86,7 +86,7 @@ export function PackageStepScreen({
         />
         <Button
           variant="primary"
-          size="small"
+          size="sm"
           disabled={!canVerify}
           onClick={() => {
             void onVerifyPackages();

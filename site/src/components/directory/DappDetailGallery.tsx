@@ -1,4 +1,4 @@
-import { Button } from '@evefrontier/ui';
+import { Button } from '@evefrontier/component-library';
 import { useState } from 'react';
 import type { DappDetailGallerySlide } from '@/directory/resolveDetailMedia';
 
@@ -77,7 +77,7 @@ export function DappDetailGallery({
           <div className="directory-detail-gallery-controls">
             <Button
               aria-label="Previous slide"
-              size="small"
+              size="sm"
               type="button"
               variant="secondary"
               onClick={showPrevious}
@@ -86,7 +86,7 @@ export function DappDetailGallery({
             </Button>
             <Button
               aria-label="Next slide"
-              size="small"
+              size="sm"
               type="button"
               variant="secondary"
               onClick={showNext}

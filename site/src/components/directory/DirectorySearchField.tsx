@@ -1,4 +1,4 @@
-import { TextField } from '@evefrontier/ui';
+import { Input } from '@evefrontier/component-library';
 import type { ChangeEvent } from 'react';
 
 type DirectorySearchFieldProps = {
@@ -12,7 +12,7 @@ export function DirectorySearchField({
 }: DirectorySearchFieldProps) {
   return (
     <section aria-label="Search catalog" className="directory-toolbar-search">
-      <TextField
+      <Input
         autoComplete="off"
         fullWidth
         id="dapp-index-search"

@@ -1,4 +1,4 @@
-import { Button } from '@evefrontier/ui';
+import { Button } from '@evefrontier/component-library';
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import type { HomeDraftItem } from './homeModel';
@@ -66,7 +66,7 @@ function PageHeader({
       </div>
       <Button
         variant="primary"
-        size="medium"
+        size="md"
         onClick={() => {
           void onCreateDraft();
         }}
@@ -111,7 +111,7 @@ function Tutorial({
             <li>Wallet connection is only required for publish.</li>
           </ol>
         </div>
-        <Button variant="secondary" size="small" onClick={onSkip}>
+        <Button variant="secondary" size="sm" onClick={onSkip}>
           Skip
         </Button>
       </div>

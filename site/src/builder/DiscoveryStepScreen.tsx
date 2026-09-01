@@ -1,4 +1,4 @@
-import { Button } from '@evefrontier/ui';
+import { Button } from '@evefrontier/component-library';
 import {
   DAPP_INDEX_CATEGORIES,
   DAPP_INDEX_SERVER_TENANTS,
@@ -159,7 +159,7 @@ function ServerTenantFilter({
           return (
             <Button
               key={tenant}
-              size="small"
+              size="sm"
               type="button"
               variant={selected ? 'primary' : 'secondary'}
               onClick={() => onChange(tenant)}

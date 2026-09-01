@@ -1,4 +1,4 @@
-import { Button } from '@evefrontier/ui';
+import { Button } from '@evefrontier/component-library';
 import { useRef, useState } from 'react';
 import type {
   DraftMedia,
@@ -210,7 +210,7 @@ function MediaSlotPanel({
             <div className="flex flex-wrap gap-3">
               <Button
                 disabled={pending}
-                size="small"
+                size="sm"
                 type="button"
                 variant="secondary"
                 onClick={() => inputRef.current?.click()}
@@ -239,7 +239,7 @@ function MediaSlotPanel({
           </p>
           <Button
             disabled={pending}
-            size="small"
+            size="sm"
             type="button"
             variant="secondary"
             onClick={() => inputRef.current?.click()}
