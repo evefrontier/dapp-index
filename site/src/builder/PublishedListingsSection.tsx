@@ -31,13 +31,13 @@ export function PublishedListingsSection({
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-bold uppercase text-(--color-neutral)">
+        <h2 className="text-lg font-bold uppercase text-(--colors-neutral-base)">
           Published listings
         </h2>
         {state.kind === 'ready' || state.kind === 'empty' ? (
           <button
             type="button"
-            className="text-sm font-bold uppercase text-(--color-martian-red)"
+            className="text-sm font-bold uppercase text-(--colors-border-accent)"
             onClick={onRefresh}
           >
             Refresh
@@ -89,8 +89,8 @@ function StateBody({
       );
     case 'wallet-disconnected':
       return (
-        <div className="grid gap-3 border border-dashed border-(--color-neutral-30) p-4">
-          <p className="text-sm text-(--color-neutral-60)">
+        <div className="grid gap-3 border border-dashed border-(--colors-neutral-30) p-4">
+          <p className="text-sm text-(--colors-neutral-60)">
             Connect the wallet that published your listings to see them here and
             remove any you no longer maintain.
           </p>
@@ -108,13 +108,13 @@ function StateBody({
     case 'error':
       return (
         <div
-          className="grid gap-3 border border-(--color-alert) p-3"
+          className="grid gap-3 border border-(--app-alert) p-3"
           role="alert"
         >
-          <p className="text-sm text-(--color-alert)">{state.message}</p>
+          <p className="text-sm text-(--app-alert)">{state.message}</p>
           <button
             type="button"
-            className="justify-self-start text-sm font-bold uppercase text-(--color-martian-red)"
+            className="justify-self-start text-sm font-bold uppercase text-(--colors-border-accent)"
             onClick={onRefresh}
           >
             Retry
@@ -123,15 +123,15 @@ function StateBody({
       );
     case 'empty':
       return (
-        <div className="grid gap-2 border border-dashed border-(--color-neutral-30) p-4">
-          <p className="text-sm text-(--color-neutral-60)">
+        <div className="grid gap-2 border border-dashed border-(--colors-neutral-30) p-4">
+          <p className="text-sm text-(--colors-neutral-60)">
             No published listings for this wallet.
           </p>
-          <p className="text-xs text-(--color-neutral-60)">
+          <p className="text-xs text-(--colors-neutral-60)">
             If you expected listings here, the registry may be unreachable.
             <button
               type="button"
-              className="ml-2 font-bold uppercase text-(--color-martian-red)"
+              className="ml-2 font-bold uppercase text-(--colors-border-accent)"
               onClick={onRefresh}
             >
               Retry
@@ -172,16 +172,16 @@ function PublishedListingCard({
   const anyRemovalInFlight = removeAction.status === 'removing';
 
   return (
-    <article className="grid gap-3 border border-(--color-neutral-20) p-4 md:grid-cols-[minmax(0,1fr)_auto]">
+    <article className="grid gap-3 border border-(--app-neutral-20) p-4 md:grid-cols-[minmax(0,1fr)_auto]">
       <div className="min-w-0 space-y-1">
-        <h3 className="truncate text-base font-bold text-(--color-neutral)">
+        <h3 className="truncate text-base font-bold text-(--colors-neutral-base)">
           {listing.name}
         </h3>
-        <p className="break-all text-sm text-(--color-neutral-60)">
+        <p className="break-all text-sm text-(--colors-neutral-60)">
           {listing.slug}
         </p>
         {listing.localDraftId ? (
-          <p className="text-xs text-(--color-neutral-60)">
+          <p className="text-xs text-(--colors-neutral-60)">
             Local draft in this browser.
           </p>
         ) : null}
@@ -190,12 +190,12 @@ function PublishedListingCard({
         <Link
           to="/dapps/$slug"
           params={{ slug: listing.slug }}
-          className="text-sm font-bold uppercase text-(--color-martian-red)"
+          className="text-sm font-bold uppercase text-(--colors-border-accent)"
         >
           View
         </Link>
         {removeBlockedReason ? (
-          <span className="text-xs text-(--color-neutral-60)">
+          <span className="text-xs text-(--colors-neutral-60)">
             {removeBlockedReason}
           </span>
         ) : (
@@ -223,15 +223,15 @@ function RemoveOutcome({
   if (action.status === 'success') {
     return (
       <div
-        className="grid gap-2 border border-(--color-neutral-20) bg-(--color-crude-20) p-3"
+        className="grid gap-2 border border-(--app-neutral-20) bg-(--app-crude-20) p-3"
         role="status"
       >
-        <p className="text-sm text-(--color-neutral-60)">
+        <p className="text-sm text-(--colors-neutral-60)">
           Removed {action.name} from the index.
         </p>
         {action.localDraftId ? (
           <>
-            <p className="text-xs text-(--color-neutral-60)">
+            <p className="text-xs text-(--colors-neutral-60)">
               A local copy of this listing is still in your drafts.
             </p>
             <button
@@ -251,8 +251,8 @@ function RemoveOutcome({
 
   if (action.status === 'error') {
     return (
-      <div className="border border-(--color-alert) p-3" role="alert">
-        <p className="text-sm text-(--color-alert)">{action.message}</p>
+      <div className="border border-(--app-alert) p-3" role="alert">
+        <p className="text-sm text-(--app-alert)">{action.message}</p>
       </div>
     );
   }
@@ -262,7 +262,7 @@ function RemoveOutcome({
 
 function Note({ children }: { children: ReactNode }) {
   return (
-    <div className="border border-dashed border-(--color-neutral-30) p-4 text-sm text-(--color-neutral-60)">
+    <div className="border border-dashed border-(--colors-neutral-30) p-4 text-sm text-(--colors-neutral-60)">
       {children}
     </div>
   );

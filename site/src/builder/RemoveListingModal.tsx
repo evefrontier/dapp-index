@@ -27,10 +27,10 @@ export function RemoveListingModal({
       title={`Remove ${action.name} from the index`}
       onClose={onCancel}
     >
-      <div className="grid gap-3 text-sm text-(--color-neutral-60)">
+      <div className="grid gap-3 text-sm text-(--colors-neutral-60)">
         <p>
           Removing{' '}
-          <code className="text-(--color-neutral)">{action.slug}</code>{' '}
+          <code className="text-(--colors-neutral-base)">{action.slug}</code>{' '}
           permanently deletes the listing from the on-chain index. It cannot be
           undone.
         </p>

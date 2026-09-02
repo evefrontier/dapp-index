@@ -1,19 +1,77 @@
 /**
- * App shell overrides on top of @evefrontier/ui/styles.css (Tailwind + DS tokens + typography).
- * The DS entry already sets :root tokens and @import "tailwindcss".
- * This file adds Tailwind source scanning for utilities used only in this app.
+ * App shell overrides on top of @evefrontier/component-library's style.css (Tailwind +
+ * DS component styles) and its ThemeProvider, which injects the design system's CSS
+ * variables (--colors-neutral-base, --typography-font-family-body, etc.) at runtime
+ * (see AppProviders.tsx). This file adds Tailwind source scanning for utilities used
+ * only in this app.
  */
 @import "tailwindcss";
+
+/*
+ * Bridges gaps in the design system's exposed token surface — remove each line once
+ * component-library exposes the equivalent directly:
+ * - Its neutral/crude alpha scales skip several steps this app needs (neutral: 5, 20;
+ *   crude: 20, 50, 60); color-mix() reproduces them exactly from the exposed base color
+ *   (same math the library itself uses internally to generate every other alpha step).
+ * - It has no general-purpose accent/alert color — only role-specific ones
+ *   (--colors-border-accent, --colors-text-status-alert). Aliased here under a neutral
+ *   name since these are also used for backgrounds/borders, not just text/borders.
+ */
+:root {
+  --app-neutral-5: color-mix(in srgb, var(--colors-neutral-base) 5%, transparent);
+  --app-neutral-20: color-mix(in srgb, var(--colors-neutral-base) 20%, transparent);
+  --app-crude-20: color-mix(in srgb, var(--colors-crude-base) 20%, transparent);
+  --app-crude-50: color-mix(in srgb, var(--colors-crude-base) 50%, transparent);
+  --app-crude-60: color-mix(in srgb, var(--colors-crude-base) 60%, transparent);
+  --app-alert: var(--colors-text-status-alert);
+}
+
+/*
+ * Faithful replacements for the old @evefrontier/ui utility classes of the same name —
+ * it shipped these as global classes, component-library ships CSS Modules only, so
+ * there's nothing to import. Kept under the original class names so call sites don't
+ * need to change. --letter-spacing-label has no equivalent system token (the label
+ * typography scale doesn't define one); 0.05em matches the old value exactly.
+ * `.ds-type-caption`'s color is a deliberate visual change, not a rename: the old
+ * `--color-muted` was a fixed muted gray (#6b6b5e) with no equivalent in the new
+ * system; `--colors-text-muted` (70%-opacity neutral) is its nearest intentional
+ * counterpart there.
+ */
+.ds-type-label {
+  font-family: var(--typography-font-family-body);
+  font-size: var(--typography-text-sm-font-size);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--typography-text-md-line-height);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--colors-neutral-base);
+}
+
+.ds-type-caption {
+  font-family: var(--typography-font-family-body);
+  font-size: var(--typography-text-xs-font-size);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--typography-text-md-line-height);
+  color: var(--colors-text-muted);
+}
+
+.ds-type-caption-error {
+  font-family: var(--typography-font-family-body);
+  font-size: var(--typography-text-xs-font-size);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--typography-text-md-line-height);
+  color: var(--app-alert);
+}
 
 body {
   margin: 0;
   min-height: 100dvh;
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-normal);
+  font-family: var(--typography-font-family-body);
+  font-size: var(--typography-text-md-font-size);
+  line-height: var(--typography-text-md-line-height);
   font-weight: var(--font-weight-normal);
-  color: var(--color-neutral);
-  background-color: var(--color-crude);
+  color: var(--colors-neutral-base);
+  background-color: var(--colors-crude-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -23,7 +81,7 @@ h4 {
   font-size: inherit;
   font-weight: var(--font-weight-bold);
   text-transform: uppercase;
-  color: var(--color-neutral);
+  color: var(--colors-neutral-base);
 }
 
 h3 {
@@ -31,13 +89,13 @@ h3 {
   font-size: inherit;
   font-weight: var(--font-weight-bold);
   text-transform: uppercase;
-  color: var(--color-neutral);
+  color: var(--colors-neutral-base);
 }
 
 @layer components {
   .builder-field label,
   .builder-fieldset legend {
-    @apply text-xs font-bold uppercase text-(--color-neutral-60);
+    @apply text-xs font-bold uppercase text-(--colors-neutral-60);
   }
 
   .builder-fieldset legend {
@@ -45,28 +103,32 @@ h3 {
   }
 
   .builder-field :is(input, textarea, select) {
-    @apply w-full border-0 bg-(--color-crude-60) px-3 py-2 text-sm text-(--color-neutral) outline-none;
+    @apply w-full border border-(--colors-neutral-30) bg-(--app-crude-60) px-3 py-2 text-sm text-(--colors-neutral-base) outline-none transition-colors focus:border-(--colors-border-accent);
+  }
+
+  .builder-field :is(input, textarea, select)[aria-invalid='true'] {
+    @apply border-(--app-alert) focus:border-(--app-alert);
   }
 
   .builder-bracket-frame {
-    @apply relative box-border w-full border border-(--color-neutral-20);
-    --builder-bracket-corner: var(--color-neutral);
+    @apply relative box-border w-full border border-(--app-neutral-20);
+    --builder-bracket-corner: var(--colors-neutral-base);
   }
 
   .builder-bracket-frame[data-tone='active'],
   .group:hover .builder-bracket-frame[data-tone='default'],
   .builder-bracket-frame:focus-within {
-    @apply border-(--color-neutral-5);
+    @apply border-(--app-neutral-5);
   }
 
   .builder-bracket-frame[data-tone='disabled'],
   .group:has(:disabled) .builder-bracket-frame {
-    @apply border-(--color-neutral-5);
-    --builder-bracket-corner: var(--color-neutral-30);
+    @apply border-(--app-neutral-5);
+    --builder-bracket-corner: var(--colors-neutral-30);
   }
 
   .builder-bracket-frame[data-tone='error'] {
-    @apply border-(--color-neutral-5);
+    @apply border-(--app-neutral-5);
   }
 
   .builder-bracket-corner {
@@ -91,39 +153,39 @@ h3 {
   }
 
   .builder-checkbox-box {
-    @apply mt-0.5 flex h-6 w-6 shrink-0 border border-(--color-martian-red) bg-(--color-crude) p-1 transition-colors;
+    @apply mt-0.5 flex h-6 w-6 shrink-0 border border-(--colors-border-accent) bg-(--colors-crude-base) p-1 transition-colors;
   }
 
   .group:hover .builder-checkbox-box:not([data-checked]):not([data-error]) {
-    @apply border-(--color-neutral);
+    @apply border-(--colors-neutral-base);
   }
 
   .group:hover .builder-checkbox-box[data-checked]:not([data-error]) {
-    @apply border-(--color-neutral);
+    @apply border-(--colors-neutral-base);
   }
 
   .group:has(:focus-visible) .builder-checkbox-box:not([data-error]) {
-    @apply border-2 border-(--color-martian-red);
+    @apply border-2 border-(--colors-border-accent);
   }
 
   .group:has(:disabled) .builder-checkbox-box {
-    @apply border-2 border-(--color-crude-50) bg-(--color-neutral-5);
+    @apply border-2 border-(--app-crude-50) bg-(--app-neutral-5);
   }
 
   .group:has(:disabled) .builder-checkbox-option-content {
-    @apply text-(--color-neutral-30);
+    @apply text-(--colors-neutral-30);
   }
 
   .builder-checkbox-box[data-error] {
-    @apply border-2 border-(--color-alert);
+    @apply border-2 border-(--app-alert);
   }
 
   .builder-checkbox-box[data-error] .builder-checkbox-fill[data-checked] {
-    @apply bg-(--color-alert) opacity-100;
+    @apply bg-(--app-alert) opacity-100;
   }
 
   .builder-checkbox-fill {
-    @apply min-h-0 min-w-0 flex-1 self-stretch bg-(--color-martian-red) opacity-0 transition-colors;
+    @apply min-h-0 min-w-0 flex-1 self-stretch bg-(--colors-border-accent) opacity-0 transition-colors;
   }
 
   .builder-checkbox-fill[data-checked] {
@@ -132,7 +194,7 @@ h3 {
 
   .group:hover .builder-checkbox-box[data-checked]:not([data-error])
     .builder-checkbox-fill {
-    @apply bg-(--color-neutral);
+    @apply bg-(--colors-neutral-base);
   }
 
   .builder-checkbox-option strong {
@@ -140,7 +202,7 @@ h3 {
   }
 
   .builder-toggle-track {
-    @apply flex h-6 w-8 shrink-0 justify-start overflow-hidden border border-(--color-martian-red) bg-(--color-crude) p-1 transition-colors;
+    @apply flex h-6 w-8 shrink-0 justify-start overflow-hidden border border-(--colors-border-accent) bg-(--colors-crude-base) p-1 transition-colors;
   }
 
   .builder-toggle-track[data-checked] {
@@ -148,39 +210,39 @@ h3 {
   }
 
   .builder-toggle-thumb {
-    @apply h-full w-3.5 shrink-0 bg-(--color-martian-red) transition-colors;
+    @apply h-full w-3.5 shrink-0 bg-(--colors-border-accent) transition-colors;
   }
 
   .group:hover .builder-toggle-track:not([data-error]) {
-    @apply border-(--color-neutral);
+    @apply border-(--colors-neutral-base);
   }
 
   .group:hover .builder-toggle-thumb {
-    @apply bg-(--color-neutral);
+    @apply bg-(--colors-neutral-base);
   }
 
   .group:has(:focus-visible) .builder-toggle-track:not([data-error]) {
-    @apply border-2 border-(--color-martian-red);
+    @apply border-2 border-(--colors-border-accent);
   }
 
   .group:has(:disabled) .builder-toggle-track {
-    @apply border-2 border-(--color-crude-50) bg-(--color-neutral-5);
+    @apply border-2 border-(--app-crude-50) bg-(--app-neutral-5);
   }
 
   .group:has(:disabled) .builder-toggle-thumb {
-    @apply bg-(--color-neutral-30);
+    @apply bg-(--colors-neutral-30);
   }
 
   .builder-toggle-track[data-error] {
-    @apply border-2 border-(--color-alert);
+    @apply border-2 border-(--app-alert);
   }
 
   .builder-toggle-track[data-error] .builder-toggle-thumb {
-    @apply bg-(--color-alert);
+    @apply bg-(--app-alert);
   }
 
   .builder-toggle-label {
-    @apply text-base leading-normal text-(--color-neutral-80);
+    @apply text-base leading-normal text-(--colors-neutral-80);
   }
 
   .builder-toggle-endpoint {
@@ -188,23 +250,23 @@ h3 {
   }
 
   .builder-toggle-endpoint[data-active] {
-    @apply text-(--color-neutral);
+    @apply text-(--colors-neutral-base);
   }
 
   .builder-toggle-endpoint:not([data-active]) {
-    @apply text-(--color-neutral-60);
+    @apply text-(--colors-neutral-60);
   }
 
   .builder-status-badge {
-    @apply border border-(--color-neutral-20) px-2 py-1 text-xs font-bold uppercase text-(--color-neutral-60);
+    @apply border border-(--app-neutral-20) px-2 py-1 text-xs font-bold uppercase text-(--colors-neutral-60);
   }
 
   .builder-text-button-danger {
-    @apply text-xs font-bold uppercase text-(--color-alert);
+    @apply text-xs font-bold uppercase text-(--app-alert);
   }
 
   .builder-text-button {
-    @apply text-xs font-bold uppercase text-(--color-neutral-60) transition-colors hover:text-(--color-martian-red);
+    @apply text-xs font-bold uppercase text-(--colors-neutral-60) transition-colors hover:text-(--colors-border-accent);
   }
 
   .builder-role-filter {
@@ -217,7 +279,7 @@ h3 {
 
   .builder-role-filter [data-size='small'] > span:first-child {
     padding: 4px 0.5rem;
-    font-size: var(--font-size-sm);
+    font-size: var(--typography-text-sm-font-size);
   }
 
   .builder-tag-pill {
@@ -225,66 +287,66 @@ h3 {
   }
 
   .builder-tag-pill[data-tone='secondary'] {
-    @apply bg-(--color-neutral) text-(--color-crude);
+    @apply bg-(--colors-neutral-base) text-(--colors-crude-base);
   }
 
   .builder-tag-pill[data-tone='tertiary'] {
-    @apply bg-(--color-crude-50) text-(--color-martian-red) backdrop-blur-[2px];
+    @apply bg-(--app-crude-50) text-(--colors-border-accent) backdrop-blur-[2px];
   }
 
   .builder-tag-pill[data-tone='primary'] {
-    @apply bg-(--color-martian-red) text-(--color-crude);
+    @apply bg-(--colors-border-accent) text-(--colors-crude-base);
   }
 
   .builder-tag-pill[data-tone='error'] {
-    @apply bg-(--color-alert) text-(--color-crude);
+    @apply bg-(--app-alert) text-(--colors-crude-base);
   }
 
   .builder-wizard-sidebar-divider {
-    @apply border-0 border-t border-(--color-neutral-20);
+    @apply border-0 border-t border-(--app-neutral-20);
   }
 
   .builder-field-action-button {
-    @apply shrink-0 whitespace-nowrap border border-(--color-neutral-30) px-3 py-2 text-xs font-bold uppercase text-(--color-neutral-60) transition-colors hover:border-(--color-martian-red) hover:text-(--color-neutral) disabled:cursor-default disabled:opacity-40 disabled:hover:border-(--color-neutral-30) disabled:hover:text-(--color-neutral-60);
+    @apply shrink-0 whitespace-nowrap border border-(--colors-neutral-30) px-3 py-2 text-xs font-bold uppercase text-(--colors-neutral-60) transition-colors hover:border-(--colors-border-accent) hover:text-(--colors-neutral-base) disabled:cursor-default disabled:opacity-40 disabled:hover:border-(--colors-neutral-30) disabled:hover:text-(--colors-neutral-60);
   }
 
   .builder-wizard-step {
-    @apply flex w-full items-center px-0 py-1.5 text-left text-base leading-[1.1] font-bold uppercase text-(--color-neutral-60) transition-colors hover:text-(--color-neutral) disabled:cursor-default;
+    @apply flex w-full items-center px-0 py-1.5 text-left text-base leading-[1.1] font-bold uppercase text-(--colors-neutral-60) transition-colors hover:text-(--colors-neutral-base) disabled:cursor-default;
   }
 
   .builder-wizard-step[data-state='active'] {
-    @apply text-(--color-martian-red);
+    @apply text-(--colors-border-accent);
   }
 
   .builder-wizard-step[data-state='complete'] {
-    @apply text-(--color-neutral-60) hover:text-(--color-neutral);
+    @apply text-(--colors-neutral-60) hover:text-(--colors-neutral-base);
   }
 
   .builder-bracket-frame {
-    @apply relative box-border w-full border border-(--color-neutral-20);
-    --builder-bracket-corner: var(--color-neutral);
+    @apply relative box-border w-full border border-(--app-neutral-20);
+    --builder-bracket-corner: var(--colors-neutral-base);
   }
 
   .builder-bracket-frame[data-tone='active'] {
-    @apply border-(--color-neutral-5);
-    --builder-bracket-corner: var(--color-martian-red);
+    @apply border-(--app-neutral-5);
+    --builder-bracket-corner: var(--colors-border-accent);
   }
 
   .group:hover .builder-bracket-frame[data-tone='default'],
   .group:focus-visible .builder-bracket-frame[data-tone='default'],
   .builder-bracket-frame:focus-within {
-    @apply border-(--color-neutral-5);
+    @apply border-(--app-neutral-5);
   }
 
   .builder-bracket-frame[data-tone='disabled'],
   .group:has(:disabled) .builder-bracket-frame {
-    @apply border-(--color-neutral-5);
-    --builder-bracket-corner: var(--color-neutral-30);
+    @apply border-(--app-neutral-5);
+    --builder-bracket-corner: var(--colors-neutral-30);
   }
 
   .builder-bracket-frame[data-tone='error'] {
-    @apply border-(--color-neutral-5);
-    --builder-bracket-corner: var(--color-alert);
+    @apply border-(--app-neutral-5);
+    --builder-bracket-corner: var(--app-alert);
   }
 
   .builder-bracket-corner {
@@ -337,19 +399,19 @@ h3 {
   }
 
   .builder-media-gallery-filter {
-    @apply cursor-pointer px-0 py-1.5 text-left text-base leading-[1.1] font-bold uppercase text-(--color-neutral-60) transition-colors hover:text-(--color-neutral) disabled:cursor-default;
+    @apply cursor-pointer px-0 py-1.5 text-left text-base leading-[1.1] font-bold uppercase text-(--colors-neutral-60) transition-colors hover:text-(--colors-neutral-base) disabled:cursor-default;
   }
 
   .builder-media-gallery-filter[data-selected='true'] {
-    @apply text-(--color-martian-red);
+    @apply text-(--colors-border-accent);
   }
 
   .builder-media-gallery-filter[data-status='filled']:not([data-selected='true']) {
-    @apply text-(--color-neutral);
+    @apply text-(--colors-neutral-base);
   }
 
   .builder-media-gallery-filter[data-status='required-missing'] {
-    @apply text-(--color-alert);
+    @apply text-(--app-alert);
   }
 
   .builder-media-slot-nav-item {
@@ -361,24 +423,24 @@ h3 {
   }
 
   .builder-media-slot-step-content {
-    @apply block min-w-0 truncate px-3 py-2 text-base leading-[1.1] font-bold uppercase text-(--color-neutral-60) transition-colors;
+    @apply block min-w-0 truncate px-3 py-2 text-base leading-[1.1] font-bold uppercase text-(--colors-neutral-60) transition-colors;
   }
 
   .group:hover .builder-media-slot-step:not(:disabled) .builder-media-slot-step-content {
-    @apply text-(--color-neutral);
+    @apply text-(--colors-neutral-base);
   }
 
   .builder-media-slot-step[data-selected='true'] .builder-media-slot-step-content {
-    @apply text-(--color-martian-red);
+    @apply text-(--colors-border-accent);
   }
 
   .builder-media-slot-step[data-status='filled']:not([data-selected='true'])
     .builder-media-slot-step-content {
-    @apply text-(--color-neutral);
+    @apply text-(--colors-neutral-base);
   }
 
   .builder-media-slot-step[data-status='required-missing'] .builder-media-slot-step-content {
-    @apply text-(--color-alert);
+    @apply text-(--app-alert);
   }
 
   .builder-media-slot-panel {
@@ -386,7 +448,7 @@ h3 {
   }
 
   .builder-media-guide-list {
-    @apply grid gap-1.5 text-xs text-(--color-neutral-60);
+    @apply grid gap-1.5 text-xs text-(--colors-neutral-60);
     list-style: disc;
     padding-left: 1.25rem;
   }
@@ -400,7 +462,7 @@ h3 {
   }
 
   .builder-media-preview-shell {
-    @apply relative aspect-video w-full overflow-hidden bg-(--color-crude-60);
+    @apply relative aspect-video w-full overflow-hidden bg-(--app-crude-60);
   }
 
   .builder-media-preview {
@@ -412,7 +474,7 @@ h3 {
   }
 
   .builder-media-preview-placeholder {
-    @apply flex h-full min-h-32 items-center justify-center p-3 text-center text-xs text-(--color-neutral-60);
+    @apply flex h-full min-h-32 items-center justify-center p-3 text-center text-xs text-(--colors-neutral-60);
   }
 
   .builder-info-dialog:not([open]) {
@@ -428,15 +490,15 @@ h3 {
   }
 
   .builder-info-dialog-panel {
-    @apply mx-auto max-w-lg border border-(--color-neutral-20) bg-(--color-crude) p-4;
+    @apply mx-auto max-w-lg border border-(--app-neutral-20) bg-(--colors-crude-base) p-4;
   }
 
   .builder-info-dialog-close {
-    @apply border border-(--color-neutral-20) px-3 py-2 text-xs font-bold uppercase text-(--color-neutral-60) transition-colors hover:border-(--color-neutral-50) hover:text-(--color-neutral);
+    @apply border border-(--app-neutral-20) px-3 py-2 text-xs font-bold uppercase text-(--colors-neutral-60) transition-colors hover:border-(--colors-neutral-50) hover:text-(--colors-neutral-base);
   }
 
   .builder-review-label {
-    @apply text-xs font-bold uppercase text-(--color-neutral-60);
+    @apply text-xs font-bold uppercase text-(--colors-neutral-60);
   }
 
   .builder-review-status {
@@ -444,19 +506,19 @@ h3 {
   }
 
   .builder-review-status[data-tone='ready'] {
-    @apply text-(--color-martian-red);
+    @apply text-(--colors-border-accent);
   }
 
   .builder-review-status[data-tone='warning'] {
-    @apply text-(--color-neutral);
+    @apply text-(--colors-neutral-base);
   }
 
   .builder-review-status[data-tone='error'] {
-    @apply text-(--color-alert);
+    @apply text-(--app-alert);
   }
 
   .builder-review-status[data-tone='muted'] {
-    @apply text-(--color-neutral-60);
+    @apply text-(--colors-neutral-60);
   }
 
   .builder-review-issue {
@@ -464,11 +526,11 @@ h3 {
   }
 
   .builder-review-issue[data-severity='warning'] {
-    @apply text-(--color-neutral);
+    @apply text-(--colors-neutral-base);
   }
 
   .builder-review-issue[data-severity='error'] {
-    @apply text-(--color-alert);
+    @apply text-(--app-alert);
   }
 
   .builder-publish-actions {
@@ -476,7 +538,7 @@ h3 {
   }
 
   .builder-publish-blocker {
-    @apply text-sm text-(--color-neutral);
+    @apply text-sm text-(--colors-neutral-base);
   }
 
   .directory-grid {
@@ -484,7 +546,7 @@ h3 {
   }
 
   .directory-toolbar {
-    @apply flex min-w-0 flex-col gap-6 border-b border-(--color-neutral-20) pb-6 lg:flex-row lg:items-end lg:gap-8;
+    @apply flex min-w-0 flex-col gap-6 border-b border-(--app-neutral-20) pb-6 lg:flex-row lg:items-end lg:gap-8;
   }
 
   .directory-toolbar-search {
@@ -496,15 +558,15 @@ h3 {
   }
 
   .directory-card {
-    @apply min-w-0 flex flex-col border border-(--color-neutral-20) bg-(--color-crude) shadow-sm transition-shadow duration-200 hover:shadow-md hover:border-(--color-neutral-30);
+    @apply min-w-0 flex flex-col border border-(--app-neutral-20) bg-(--colors-crude-base) shadow-sm transition-shadow duration-200 hover:shadow-md hover:border-(--colors-neutral-30);
   }
 
   .directory-card-link {
-    @apply relative flex flex-col h-full no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--color-martian-red);
+    @apply relative flex flex-col h-full no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--colors-border-accent);
   }
 
   .directory-card-media {
-    @apply relative aspect-[16/10] overflow-hidden bg-(--color-crude-60);
+    @apply relative aspect-[16/10] overflow-hidden bg-(--app-crude-60);
   }
 
   .directory-card-thumbnail {
@@ -512,15 +574,15 @@ h3 {
   }
 
   .directory-card-thumbnail-fallback {
-    @apply flex h-full w-full items-center justify-center bg-gradient-to-br from-(--color-crude-30) to-(--color-crude-60) text-4xl font-bold uppercase text-(--color-neutral-30);
+    @apply flex h-full w-full items-center justify-center bg-gradient-to-br from-(--colors-crude-30) to-(--app-crude-60) text-4xl font-bold uppercase text-(--colors-neutral-30);
   }
 
   .directory-card-logo {
-    @apply absolute bottom-4 left-4 h-14 w-14 border border-(--color-neutral-20) bg-(--color-crude) object-contain p-1.5 shadow-md;
+    @apply absolute bottom-4 left-4 h-14 w-14 border border-(--app-neutral-20) bg-(--colors-crude-base) object-contain p-1.5 shadow-md;
   }
 
   .directory-card-logo-fallback {
-    @apply absolute bottom-4 left-4 flex h-14 w-14 items-center justify-center border border-(--color-neutral-20) bg-(--color-crude) text-sm font-bold uppercase text-(--color-neutral) shadow-md;
+    @apply absolute bottom-4 left-4 flex h-14 w-14 items-center justify-center border border-(--app-neutral-20) bg-(--colors-crude-base) text-sm font-bold uppercase text-(--colors-neutral-base) shadow-md;
   }
 
   .directory-card-body {
@@ -532,11 +594,11 @@ h3 {
   }
 
   .directory-card-title {
-    @apply min-w-0 text-base font-bold leading-tight text-(--color-neutral);
+    @apply min-w-0 text-base font-bold leading-tight text-(--colors-neutral-base);
   }
 
   .directory-card-summary {
-    @apply line-clamp-2 text-sm text-(--color-neutral-60);
+    @apply line-clamp-2 text-sm text-(--colors-neutral-60);
   }
 
   .directory-card-hover {
@@ -544,15 +606,15 @@ h3 {
   }
 
   .directory-card-hover-label {
-    @apply text-xs font-bold uppercase text-(--color-neutral-60);
+    @apply text-xs font-bold uppercase text-(--colors-neutral-60);
   }
 
   .directory-card-hover-copy {
-    @apply line-clamp-3 text-sm leading-snug text-(--color-neutral);
+    @apply line-clamp-3 text-sm leading-snug text-(--colors-neutral-base);
   }
 
   .directory-card-hover-cta {
-    @apply text-xs font-bold uppercase text-(--color-martian-red);
+    @apply text-xs font-bold uppercase text-(--colors-border-accent);
   }
 
   /*
@@ -577,11 +639,11 @@ h3 {
   }
 
   .directory-detail-back {
-    @apply block text-2xl font-bold uppercase leading-none text-(--color-neutral) hover:text-(--color-martian-red);
+    @apply block text-2xl font-bold uppercase leading-none text-(--colors-neutral-base) hover:text-(--colors-border-accent);
   }
 
   .directory-detail-breadcrumb {
-    @apply text-lg uppercase text-(--color-neutral-60);
+    @apply text-lg uppercase text-(--colors-neutral-60);
   }
 
   .directory-detail-meta-row {
@@ -594,15 +656,15 @@ h3 {
    * system defines only regular and bold — 500 and 600 are not available weights.
    */
   .directory-detail-section-title {
-    @apply text-xl font-bold uppercase leading-[1.1] text-(--color-neutral);
+    @apply text-xl font-bold uppercase leading-[1.1] text-(--colors-neutral-base);
   }
 
   .directory-detail-field-label {
-    @apply text-sm font-bold uppercase leading-none text-(--color-neutral-60);
+    @apply text-sm font-bold uppercase leading-none text-(--colors-neutral-60);
   }
 
   .directory-detail-meta-value {
-    @apply break-all text-base uppercase text-(--color-neutral);
+    @apply break-all text-base uppercase text-(--colors-neutral-base);
   }
 
   .directory-detail-tag-row {
@@ -611,7 +673,7 @@ h3 {
 
   /* Dimmer and smaller than the summary so categories stop competing with it. */
   .directory-detail-tag-text {
-    @apply text-sm uppercase tracking-wider text-(--color-neutral-60);
+    @apply text-sm uppercase tracking-wider text-(--colors-neutral-60);
   }
 
   .directory-detail-copy {
@@ -619,11 +681,11 @@ h3 {
   }
 
   .directory-detail-summary {
-    @apply max-w-3xl text-base font-bold text-(--color-neutral);
+    @apply max-w-3xl text-base font-bold text-(--colors-neutral-base);
   }
 
   .directory-detail-description {
-    @apply max-w-3xl text-sm leading-relaxed text-(--color-neutral-60);
+    @apply max-w-3xl text-sm leading-relaxed text-(--colors-neutral-60);
   }
 
   .directory-detail-section {
@@ -639,7 +701,7 @@ h3 {
   }
 
   .directory-detail-external-link {
-    @apply truncate text-(--color-neutral) underline-offset-2 transition-colors hover:text-(--color-martian-red) hover:underline;
+    @apply truncate text-(--colors-neutral-base) underline-offset-2 transition-colors hover:text-(--colors-border-accent) hover:underline;
   }
 
   .directory-detail-package-list {
@@ -647,7 +709,7 @@ h3 {
   }
 
   .directory-detail-package-row {
-    @apply grid gap-3 border border-(--color-neutral-20) bg-(--color-crude) p-5 sm:grid-cols-[1fr_auto] sm:items-center hover:shadow-sm transition-shadow duration-200;
+    @apply grid gap-3 border border-(--app-neutral-20) bg-(--colors-crude-base) p-5 sm:grid-cols-[1fr_auto] sm:items-center hover:shadow-sm transition-shadow duration-200;
   }
 
   .directory-detail-package-meta {
@@ -655,11 +717,11 @@ h3 {
   }
 
   .directory-detail-package-name {
-    @apply text-sm text-(--color-neutral);
+    @apply text-sm text-(--colors-neutral-base);
   }
 
   .directory-detail-package-id {
-    @apply break-all font-mono text-xs text-(--color-neutral-60);
+    @apply break-all font-mono text-xs text-(--colors-neutral-60);
   }
 
   .directory-detail-hero {
@@ -667,11 +729,11 @@ h3 {
   }
 
   .directory-detail-hero-frame {
-    @apply relative min-w-0 w-full overflow-hidden border border-(--color-neutral-20) bg-(--color-crude);
+    @apply relative min-w-0 w-full overflow-hidden border border-(--app-neutral-20) bg-(--colors-crude-base);
   }
 
   .directory-detail-hero-media {
-    @apply aspect-[16/9] max-h-[480px] w-full bg-(--color-crude) object-cover;
+    @apply aspect-[16/9] max-h-[480px] w-full bg-(--colors-crude-base) object-cover;
   }
 
   /* Scrim keeps the title legible over artwork; clicks fall through to video controls. */
@@ -680,11 +742,11 @@ h3 {
   }
 
   .directory-detail-hero-title {
-    @apply text-3xl font-bold uppercase leading-tight text-(--color-neutral) sm:text-4xl;
+    @apply text-3xl font-bold uppercase leading-tight text-(--colors-neutral-base) sm:text-4xl;
   }
 
   .directory-detail-hero-counter {
-    @apply absolute right-4 top-4 bg-black/60 px-2 py-1 text-xs font-bold uppercase text-(--color-neutral);
+    @apply absolute right-4 top-4 bg-black/60 px-2 py-1 text-xs font-bold uppercase text-(--colors-neutral-base);
   }
 
   /* Caption grows on the left; the indicator + Prev/Next stay grouped, flush right. */
@@ -693,7 +755,7 @@ h3 {
   }
 
   .directory-detail-hero-caption {
-    @apply min-w-0 flex-1 text-sm leading-relaxed text-(--color-neutral-60);
+    @apply min-w-0 flex-1 text-sm leading-relaxed text-(--colors-neutral-60);
   }
 
   .directory-detail-hero-nav {
@@ -710,17 +772,17 @@ h3 {
   }
 
   .directory-detail-hero-step {
-    @apply h-1 w-6 shrink-0 rounded-full bg-(--color-martian-red) transition-all duration-200;
+    @apply h-1 w-6 shrink-0 rounded-full bg-(--colors-border-accent) transition-all duration-200;
   }
 
   .directory-detail-hero-step[data-state='current'] {
     @apply h-3.5 w-3.5 rounded-sm;
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-martian-red) 30%, transparent),
-      0 0 16px 2px color-mix(in srgb, var(--color-martian-red) 70%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--colors-border-accent) 30%, transparent),
+      0 0 16px 2px color-mix(in srgb, var(--colors-border-accent) 70%, transparent);
   }
 
   .builder-review-label {
-    @apply text-xs font-bold uppercase text-(--color-neutral-60);
+    @apply text-xs font-bold uppercase text-(--colors-neutral-60);
   }
 
   .builder-review-status {
@@ -728,19 +790,19 @@ h3 {
   }
 
   .builder-review-status[data-tone='ready'] {
-    @apply text-(--color-martian-red);
+    @apply text-(--colors-border-accent);
   }
 
   .builder-review-status[data-tone='warning'] {
-    @apply text-(--color-neutral);
+    @apply text-(--colors-neutral-base);
   }
 
   .builder-review-status[data-tone='error'] {
-    @apply text-(--color-alert);
+    @apply text-(--app-alert);
   }
 
   .builder-review-status[data-tone='muted'] {
-    @apply text-(--color-neutral-60);
+    @apply text-(--colors-neutral-60);
   }
 
   .builder-review-issue {
@@ -748,27 +810,27 @@ h3 {
   }
 
   .builder-review-issue[data-severity='warning'] {
-    @apply text-(--color-neutral);
+    @apply text-(--colors-neutral-base);
   }
 
   .builder-review-issue[data-severity='error'] {
-    @apply text-(--color-alert);
+    @apply text-(--app-alert);
   }
 
   .builder-review-code {
-    @apply max-h-80 overflow-auto border border-(--color-neutral-20) bg-(--color-crude-60) p-3 text-xs leading-relaxed text-(--color-neutral-70);
+    @apply max-h-80 overflow-auto border border-(--app-neutral-20) bg-(--app-crude-60) p-3 text-xs leading-relaxed text-(--colors-neutral-70);
   }
 
   .builder-review-advanced {
-    @apply grid gap-3 border-t border-(--color-neutral-20) pt-4;
+    @apply grid gap-3 border-t border-(--app-neutral-20) pt-4;
   }
 
   .builder-review-advanced-summary {
-    @apply cursor-pointer text-xs font-bold uppercase text-(--color-martian-red);
+    @apply cursor-pointer text-xs font-bold uppercase text-(--colors-border-accent);
   }
 
   .builder-review-advanced-hint {
-    @apply text-sm text-(--color-neutral-60);
+    @apply text-sm text-(--colors-neutral-60);
   }
 
   .builder-review-modal-backdrop {
@@ -776,7 +838,7 @@ h3 {
   }
 
   .builder-review-modal-panel {
-    @apply grid max-h-full w-full max-w-2xl gap-4 border border-(--color-neutral-30) bg-(--color-crude) p-4;
+    @apply grid max-h-full w-full max-w-2xl gap-4 border border-(--colors-neutral-30) bg-(--colors-crude-base) p-4;
   }
 
   .builder-review-modal-header {
@@ -784,11 +846,11 @@ h3 {
   }
 
   .builder-review-modal-list {
-    @apply grid max-h-[60vh] overflow-auto border-y border-(--color-neutral-20);
+    @apply grid max-h-[60vh] overflow-auto border-y border-(--app-neutral-20);
   }
 
   .builder-review-modal-item {
-    @apply grid gap-1 border-t border-(--color-neutral-20) py-3 first:border-t-0 sm:grid-cols-[10rem_minmax(0,1fr)];
+    @apply grid gap-1 border-t border-(--app-neutral-20) py-3 first:border-t-0 sm:grid-cols-[10rem_minmax(0,1fr)];
   }
 
   .builder-wizard-nav-actions {
@@ -796,7 +858,7 @@ h3 {
   }
 
   .builder-wizard-next-blocker {
-    @apply shrink-0 text-sm whitespace-nowrap text-(--color-neutral-60);
+    @apply shrink-0 text-sm whitespace-nowrap text-(--colors-neutral-60);
   }
 
   .directory-detail-cta {
@@ -816,19 +878,19 @@ h3 {
   }
 
   .builder-info-dialog-panel {
-    @apply mx-auto max-w-lg border border-(--color-neutral-20) bg-(--color-crude) p-4;
+    @apply mx-auto max-w-lg border border-(--app-neutral-20) bg-(--colors-crude-base) p-4;
   }
 
   .builder-info-dialog-close {
-    @apply border border-(--color-neutral-20) px-3 py-2 text-xs font-bold uppercase text-(--color-neutral-60) transition-colors hover:border-(--color-neutral-50) hover:text-(--color-neutral);
+    @apply border border-(--app-neutral-20) px-3 py-2 text-xs font-bold uppercase text-(--colors-neutral-60) transition-colors hover:border-(--colors-neutral-50) hover:text-(--colors-neutral-base);
   }
 
   .builder-hint-trigger {
-    @apply grid h-4 w-4 shrink-0 place-items-center rounded-full border border-(--color-neutral-30) text-[10px] font-bold normal-case leading-none text-(--color-neutral-60) transition-colors hover:border-(--color-neutral-50) hover:text-(--color-neutral);
+    @apply grid h-4 w-4 shrink-0 place-items-center rounded-full border border-(--colors-neutral-30) text-[10px] font-bold normal-case leading-none text-(--colors-neutral-60) transition-colors hover:border-(--colors-neutral-50) hover:text-(--colors-neutral-base);
   }
 
   .builder-hint-tooltip {
-    @apply invisible absolute bottom-full left-1/2 z-10 mb-1.5 w-56 -translate-x-1/2 border border-(--color-neutral-30) bg-(--color-crude) p-2 text-xs font-normal normal-case text-(--color-neutral) opacity-0 shadow-lg transition-opacity;
+    @apply invisible absolute bottom-full left-1/2 z-10 mb-1.5 w-56 -translate-x-1/2 border border-(--colors-neutral-30) bg-(--colors-crude-base) p-2 text-xs font-normal normal-case text-(--colors-neutral-base) opacity-0 shadow-lg transition-opacity;
   }
 
   .builder-hint-tooltip[data-open] {

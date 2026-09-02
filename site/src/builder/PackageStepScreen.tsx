@@ -54,7 +54,7 @@ export function PackageStepScreen({
       {packages.length === 0 ? (
         <EmptyPackageList />
       ) : (
-        <div className="grid border-t border-(--color-neutral-20)">
+        <div className="grid border-t border-(--app-neutral-20)">
           {packages.map((draftPackage, index) => (
             <PackageCard
               key={draftPackage.draftPackageId}
@@ -78,7 +78,7 @@ export function PackageStepScreen({
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-(--color-neutral-20) pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-(--app-neutral-20) pt-4">
         <PackageVerificationSummary
           packageCount={packages.length}
           verificationBlocker={verificationBlocker}
@@ -101,9 +101,9 @@ export function PackageStepScreen({
 
 function EmptyPackageList() {
   return (
-    <div className="space-y-1 border-y border-(--color-neutral-20) py-4 text-sm text-(--color-neutral-60)">
+    <div className="space-y-1 border-y border-(--app-neutral-20) py-4 text-sm text-(--colors-neutral-60)">
       <p>No packages added.</p>
-      <p className="text-xs text-(--color-neutral-60)">
+      <p className="text-xs text-(--colors-neutral-60)">
         Add one only if this dapp publishes Move code.
       </p>
     </div>
@@ -128,7 +128,7 @@ function PackageCard({
   const packageNumber = index + 1;
 
   return (
-    <section className="grid gap-4 border-b border-(--color-neutral-20) py-4">
+    <section className="grid gap-4 border-b border-(--app-neutral-20) py-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <h4 className="text-sm">Package {packageNumber}</h4>

@@ -171,7 +171,7 @@ export function WizardShell({
 function WizardPublishedBanner() {
   return (
     <div
-      className="border border-(--color-neutral-20) bg-(--color-crude-20) p-3 text-sm text-(--color-neutral-60)"
+      className="border border-(--app-neutral-20) bg-(--app-crude-20) p-3 text-sm text-(--colors-neutral-60)"
       role="status"
     >
       Published on Sui. This local draft is kept as a read-only record. Removing
@@ -191,14 +191,14 @@ export function WizardMessage({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <h1 className="text-2xl font-bold uppercase tracking-wider text-(--color-neutral)">
+        <h1 className="text-2xl font-bold uppercase tracking-wider text-(--colors-neutral-base)">
           {title}
         </h1>
-        <p className="text-sm text-(--color-neutral-60)">{body}</p>
+        <p className="text-sm text-(--colors-neutral-60)">{body}</p>
       </div>
       <Link
         to="/builder"
-        className="text-sm font-bold uppercase text-(--color-martian-red)"
+        className="text-sm font-bold uppercase text-(--colors-border-accent)"
       >
         Back to drafts
       </Link>
@@ -253,7 +253,7 @@ function WizardErrorMessage({ message }: { message: string | null }) {
 
   return (
     <div
-      className="border border-(--color-alert) p-3 text-sm text-(--color-alert)"
+      className="border border-(--app-alert) p-3 text-sm text-(--app-alert)"
       role="alert"
     >
       {message}
@@ -466,17 +466,17 @@ function WizardStepPanelHeader({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-bold uppercase text-(--color-neutral)">
+        <h2 className="text-lg font-bold uppercase text-(--colors-neutral-base)">
           {title}
         </h2>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>
       {showDraftMeta ? (
         <dl className="grid gap-3 text-sm sm:grid-cols-[8rem_minmax(0,1fr)]">
-          <dt className="font-bold uppercase text-(--color-neutral-60)">
+          <dt className="font-bold uppercase text-(--colors-neutral-60)">
             Draft
           </dt>
-          <dd className="break-all text-(--color-neutral)">{draftId}</dd>
+          <dd className="break-all text-(--colors-neutral-base)">{draftId}</dd>
         </dl>
       ) : null}
     </div>

@@ -34,15 +34,15 @@ export function PublishStepGuide({ mediaItemCount }: PublishStepGuideProps) {
         }}
       >
         <div className="builder-info-dialog-panel">
-          <div className="space-y-4 text-sm text-(--color-neutral-60)">
+          <div className="space-y-4 text-sm text-(--colors-neutral-60)">
             <h3
-              className="text-base font-bold uppercase text-(--color-neutral)"
+              className="text-base font-bold uppercase text-(--colors-neutral-base)"
               id="builder-publish-guide-title"
             >
               Publish listing
             </h3>
             {guidance.map((paragraph, index) => (
-              <p key={index} className={index === 0 ? 'text-(--color-neutral)' : 'text-xs'}>
+              <p key={index} className={index === 0 ? 'text-(--colors-neutral-base)' : 'text-xs'}>
                 {paragraph}
               </p>
             ))}

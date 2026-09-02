@@ -99,7 +99,7 @@ export function InstallDappButton({ entry }: { entry: DappIndexEntry }) {
         {label}
       </Button>
       {error ? (
-        <p className="text-xs text-(--color-martian-red)">{error.message}</p>
+        <p className="text-xs text-(--colors-border-accent)">{error.message}</p>
       ) : null}
     </div>
   );

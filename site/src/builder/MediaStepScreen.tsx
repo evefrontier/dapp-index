@@ -295,7 +295,7 @@ function MediaSlotPanel({
   return (
     <section className="builder-media-slot-panel">
       <div className="space-y-2">
-        <p className="text-sm text-(--color-neutral-60)">{slot.purpose}</p>
+        <p className="text-sm text-(--colors-neutral-60)">{slot.purpose}</p>
         <MediaGuideBulletList items={formatBullets} />
       </div>
 

@@ -217,7 +217,7 @@ export function DappDetailNotFound() {
   return (
     <div className="space-y-4">
       <DirectoryBackLink />
-      <p className="text-sm text-(--color-neutral-60)">Listing not found.</p>
+      <p className="text-sm text-(--colors-neutral-60)">Listing not found.</p>
     </div>
   );
 }

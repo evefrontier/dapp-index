@@ -84,7 +84,7 @@ export function DappListingGrid({
   if (entries.length === 0) {
     return (
       <div className="col-span-full py-12 text-center">
-        <p className="text-sm text-(--color-neutral-60)">
+        <p className="text-sm text-(--colors-neutral-60)">
           No listings match the current filters. Try adjusting your search or filters.
         </p>
       </div>

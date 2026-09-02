@@ -16,12 +16,12 @@ export function DirectoryResultsSection({
     <section aria-labelledby="dapp-index-results-heading">
       <div className="mb-6 flex min-w-0 flex-wrap items-baseline justify-between gap-3">
         <h2
-          className="ds-type-label text-(--color-neutral)"
+          className="ds-type-label text-(--colors-neutral-base)"
           id="dapp-index-results-heading"
         >
           {entries.length === 0 ? 'No results' : 'Results'}
         </h2>
-        <p className="ds-type-caption shrink-0 text-(--color-neutral-60)">
+        <p className="ds-type-caption shrink-0 text-(--colors-neutral-60)">
           Showing {entries.length} of {totalCount}
           {isFiltered ? ' (filtered)' : ''}
         </p>

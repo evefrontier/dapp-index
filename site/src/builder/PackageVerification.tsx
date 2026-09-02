@@ -33,7 +33,7 @@ export function PackageVerificationDetails({
   });
   if (!presentation.body) return null;
 
-  return <p className="text-xs text-(--color-neutral-60)">{presentation.body}</p>;
+  return <p className="text-xs text-(--colors-neutral-60)">{presentation.body}</p>;
 }
 
 export function PackageVerificationSummary({
@@ -55,7 +55,7 @@ export function PackageVerificationSummary({
   return (
     <div className="space-y-1 text-sm">
       <h4>{presentation.title}</h4>
-      <p className="text-xs text-(--color-neutral-60)">{presentation.body}</p>
+      <p className="text-xs text-(--colors-neutral-60)">{presentation.body}</p>
     </div>
   );
 }

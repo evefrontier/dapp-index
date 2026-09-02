@@ -3,8 +3,8 @@ import type { RegistrationDraftReviewIssue } from './registrationDraftReview';
 export function ReviewIssueList({
   heading,
   issues,
-  listClassName = 'grid border-y border-(--color-neutral-20)',
-  itemClassName = 'grid gap-1 border-t border-(--color-neutral-20) py-3 first:border-t-0 sm:grid-cols-[10rem_minmax(0,1fr)]',
+  listClassName = 'grid border-y border-(--app-neutral-20)',
+  itemClassName = 'grid gap-1 border-t border-(--app-neutral-20) py-3 first:border-t-0 sm:grid-cols-[10rem_minmax(0,1fr)]',
 }: {
   heading?: string;
   issues: readonly RegistrationDraftReviewIssue[];
@@ -22,7 +22,7 @@ export function ReviewIssueList({
             <p className="builder-review-issue" data-severity={issue.severity}>
               {issue.label}
             </p>
-            <p className="text-sm text-(--color-neutral)">{issue.message}</p>
+            <p className="text-sm text-(--colors-neutral-base)">{issue.message}</p>
           </li>
         ))}
       </ul>

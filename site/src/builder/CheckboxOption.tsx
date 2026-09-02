@@ -35,7 +35,7 @@ export function CheckboxOption({
         onChange={onChange}
       />
       <BuilderBracketFrame tone={bracketTone}>
-        <div className="builder-checkbox-option-content grid grid-cols-[auto_minmax(0,1fr)] gap-3 p-3 text-base text-(--color-neutral)">
+        <div className="builder-checkbox-option-content grid grid-cols-[auto_minmax(0,1fr)] gap-3 p-3 text-base text-(--colors-neutral-base)">
           <span
             aria-hidden="true"
             className="builder-checkbox-box"
@@ -50,7 +50,7 @@ export function CheckboxOption({
           <span className="grid gap-1">
             <strong>{label}</strong>
             {subLabel ? (
-              <span className="text-xs text-(--color-neutral-60)">
+              <span className="text-xs text-(--colors-neutral-60)">
                 {subLabel}
               </span>
             ) : null}

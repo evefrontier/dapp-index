@@ -35,17 +35,17 @@ export function MediaStepGuide({ mediaItemCount }: MediaStepGuideProps) {
         }}
       >
         <div className="builder-info-dialog-panel">
-          <div className="space-y-4 text-sm text-(--color-neutral-60)">
+          <div className="space-y-4 text-sm text-(--colors-neutral-60)">
             <h3
-              className="text-base font-bold uppercase text-(--color-neutral)"
+              className="text-base font-bold uppercase text-(--colors-neutral-base)"
               id="builder-media-guide-title"
             >
               Local media
             </h3>
-            <p className="text-(--color-neutral)">{intro}</p>
+            <p className="text-(--colors-neutral-base)">{intro}</p>
             {sections.map((section) => (
               <section className="grid gap-2" key={section.title}>
-                <h4 className="text-xs font-bold uppercase text-(--color-neutral)">
+                <h4 className="text-xs font-bold uppercase text-(--colors-neutral-base)">
                   {section.title}
                 </h4>
                 <MediaGuideBulletList items={section.bullets} />

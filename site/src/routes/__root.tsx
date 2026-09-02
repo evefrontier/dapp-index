@@ -8,17 +8,17 @@ export const Route = createRootRoute({
 function RootLayout() {
   return (
     <div className="flex min-h-dvh min-w-0 flex-col">
-      <header className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-(--color-neutral-20) px-3 py-3 sm:px-4 lg:px-6">
+      <header className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-(--app-neutral-20) px-3 py-3 sm:px-4 lg:px-6">
         <Link
           to="/"
-          className="text-lg font-bold uppercase tracking-wider text-(--color-neutral)"
+          className="text-lg font-bold uppercase tracking-wider text-(--colors-neutral-base)"
         >
           EVE Frontier Dapps Index
         </Link>
         <nav className="flex flex-wrap items-center gap-3" aria-label="Main">
           <Link
             to="/builder"
-            className="text-sm font-bold uppercase text-(--color-neutral) hover:text-(--color-martian-red)"
+            className="text-sm font-bold uppercase text-(--colors-neutral-base) hover:text-(--colors-border-accent)"
           >
             Builder
           </Link>
