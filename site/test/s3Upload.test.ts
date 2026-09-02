@@ -321,6 +321,59 @@ describe('s3MetadataStorage', () => {
     expect(calls[1]).toContain('put-media');
   });
 
+  test('uploadMediaToS3 presigns then PUTs a video/webm source', async () => {
+    let presignBody: unknown;
+    let putHeaders: HeadersInit | undefined;
+    let putBody: unknown;
+    const bytes = new Uint8Array(4_200_000).fill(9);
+
+    const result = await uploadMediaToS3({
+      address: '0xabc',
+      slug: 'route-planner',
+      filename: 'demo.webm',
+      contentType: 'video/webm',
+      bytes,
+      sha256: 'd'.repeat(64),
+      apiBase: API_BASE,
+      mediaCdnBase: MEDIA_CDN_BASE,
+      fetchImpl: async (input, init) => {
+        const url = String(input);
+        if (url.endsWith('/uploads/presign')) {
+          presignBody = JSON.parse(String(init?.body));
+          return new Response(
+            JSON.stringify({
+              uploadUrl: 'https://s3.example/put-video',
+              headers: { 'Content-Type': 'video/webm' },
+              objectKey: 'testnet/0xabc/route-planner/demo.webm',
+              publicUrl:
+                'https://cdn.example/testnet/0xabc/route-planner/demo.webm',
+            }),
+            { status: 200 },
+          );
+        }
+        expect(url).toBe('https://s3.example/put-video');
+        expect(init?.method).toBe('PUT');
+        putHeaders = init?.headers;
+        putBody = init?.body;
+        return new Response(null, { status: 200 });
+      },
+    });
+
+    expect(presignBody).toMatchObject({
+      purpose: 'media',
+      filename: 'demo.webm',
+      contentType: 'video/webm',
+      contentLength: bytes.byteLength,
+    });
+    expect(putHeaders).toMatchObject({ 'Content-Type': 'video/webm' });
+    expect(putBody).toBeInstanceOf(Blob);
+    expect((putBody as Blob).size).toBe(bytes.byteLength);
+    expect(result.uri).toBe(
+      'https://cdn.example/testnet/0xabc/route-planner/demo.webm',
+    );
+    expect(result.sizeBytes).toBe(bytes.byteLength);
+  });
+
   test('uploadManifestToS3 uses a content-addressed metadata filename', async () => {
     let presignBody: unknown;
     const sha256 = 'c'.repeat(64);
