@@ -1,6 +1,7 @@
 /** Sui / registry env read at runtime (Vite `import.meta.env`). */
 
 import {
+  DAPP_MEDIA_CDN_ORIGIN,
   WALRUS_AGGREGATOR_MAINNET_URL,
   WALRUS_AGGREGATOR_TESTNET_URL,
   WALRUS_UPLOAD_RELAY_MAINNET_URL,
@@ -38,6 +39,20 @@ export function viteRegistryId(): string | undefined {
 
 export function registryConfigured(): boolean {
   return Boolean(vitePackageId() && viteRegistryId());
+}
+
+/**
+ * Public media CDN origin (no trailing slash).
+ * Override with `VITE_MEDIA_CDN_BASE` only for non-prod/test; default is
+ * terraform `public_url` (`https://dapp-media.evefrontier.com`).
+ */
+export function viteMediaCdnBase(): string {
+  const raw = import.meta.env.VITE_MEDIA_CDN_BASE;
+  if (typeof raw === 'string') {
+    const t = raw.trim().replace(/\/+$/, '');
+    if (t !== '') return t;
+  }
+  return DAPP_MEDIA_CDN_ORIGIN;
 }
 
 function defaultWalrusAggregatorBaseUrl(
