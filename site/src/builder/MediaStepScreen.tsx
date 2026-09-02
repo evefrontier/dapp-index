@@ -1,4 +1,4 @@
-import { Button } from '@evefrontier/ui';
+import { Button } from '@evefrontier/component-library';
 import { useRef, useState } from 'react';
 import type {
   DraftMedia,
@@ -165,7 +165,7 @@ function MediaSlotPanel({
     <section className="builder-media-slot-panel">
       <div className="space-y-2">
         <h3>{slot.label}</h3>
-        <p className="text-sm text-(--color-neutral-60)">{slot.purpose}</p>
+        <p className="text-sm text-(--colors-neutral-60)">{slot.purpose}</p>
       </div>
 
       <div className="builder-media-slot-guide">
@@ -210,7 +210,7 @@ function MediaSlotPanel({
             <div className="flex flex-wrap gap-3">
               <Button
                 disabled={pending}
-                size="small"
+                size="sm"
                 type="button"
                 variant="secondary"
                 onClick={() => inputRef.current?.click()}
@@ -234,12 +234,12 @@ function MediaSlotPanel({
         </div>
       ) : (
         <div className="builder-media-slot-empty">
-          <p className="text-sm text-(--color-neutral-60)">
+          <p className="text-sm text-(--colors-neutral-60)">
             No {slot.label.toLowerCase()} added yet.
           </p>
           <Button
             disabled={pending}
-            size="small"
+            size="sm"
             type="button"
             variant="secondary"
             onClick={() => inputRef.current?.click()}
@@ -299,7 +299,7 @@ function MediaPreviewButton({
           />
         )
       ) : (
-        <p className="text-xs text-(--color-neutral-60)">Preview unavailable</p>
+        <p className="text-xs text-(--colors-neutral-60)">Preview unavailable</p>
       )}
       <MediaIdentity media={media} />
     </button>
@@ -315,7 +315,7 @@ function MediaIdentity({ media }: { media: DraftMedia }) {
           {media.kind === 'video' ? 'Video' : 'Image'}
         </span>
       </div>
-      <p className="truncate text-xs text-(--color-neutral-60)">{media.id}</p>
+      <p className="truncate text-xs text-(--colors-neutral-60)">{media.id}</p>
     </div>
   );
 }

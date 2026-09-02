@@ -1,4 +1,4 @@
-import { Button } from '@evefrontier/ui';
+import { Button } from '@evefrontier/component-library';
 import { useState } from 'react';
 import type { DappDetailGallerySlide } from '@/directory/resolveDetailMedia';
 
@@ -52,13 +52,13 @@ export function DappDetailGallery({
     <section aria-labelledby="dapp-detail-gallery-heading" className="directory-detail-gallery">
       <div className="directory-detail-gallery-header">
         <h2
-          className="ds-type-label text-(--color-neutral-60)"
+          className="ds-type-label text-(--colors-neutral-60)"
           id="dapp-detail-gallery-heading"
         >
           Gallery
         </h2>
         {hasMultipleSlides ? (
-          <p className="text-xs font-bold uppercase text-(--color-neutral-60)">
+          <p className="text-xs font-bold uppercase text-(--colors-neutral-60)">
             {activeIndex + 1} / {slides.length}
           </p>
         ) : null}
@@ -77,7 +77,7 @@ export function DappDetailGallery({
           <div className="directory-detail-gallery-controls">
             <Button
               aria-label="Previous slide"
-              size="small"
+              size="sm"
               type="button"
               variant="secondary"
               onClick={showPrevious}
@@ -86,7 +86,7 @@ export function DappDetailGallery({
             </Button>
             <Button
               aria-label="Next slide"
-              size="small"
+              size="sm"
               type="button"
               variant="secondary"
               onClick={showNext}

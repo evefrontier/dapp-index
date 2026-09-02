@@ -1,4 +1,4 @@
-import { Button } from '@evefrontier/ui';
+import { Button } from '@evefrontier/component-library';
 import { getPublishNextBlockerMessage } from './registrationDraftPublish';
 import type { PublishStepControllerState } from './publishStepPresentation';
 import {
@@ -39,7 +39,7 @@ export function PublishStepScreen({
 
   return (
     <div className="grid gap-5">
-      <div className="grid border-y border-(--color-neutral-20)">
+      <div className="grid border-y border-(--app-neutral-20)">
         <PublishStatusRow {...statusRows.wallet} />
         <PublishStatusRow {...statusRows.network} />
         <PublishStatusRow {...statusRows.suiBalance} />
@@ -54,7 +54,7 @@ export function PublishStepScreen({
             {!walletAddress ? (
               <Button
                 disabled={isPublishing}
-                size="small"
+                size="sm"
                 type="button"
                 variant="primary"
                 onClick={onConnectWallet}
@@ -64,7 +64,7 @@ export function PublishStepScreen({
             ) : (
               <Button
                 disabled={isPublishing || !publishReadiness.ready}
-                size="small"
+                size="sm"
                 type="button"
                 variant="primary"
                 onClick={() => {
@@ -74,7 +74,7 @@ export function PublishStepScreen({
                 {isPublishing ? 'Publishing' : 'Publish listing'}
               </Button>
             )}
-            <p className="text-xs text-(--color-neutral-60)">
+            <p className="text-xs text-(--colors-neutral-60)">
               Uploads local media, metadata, then Sui.
             </p>
           </div>
@@ -96,12 +96,12 @@ function PublishStatusRow({
   tone,
 }: PublishStatusRowModel) {
   return (
-    <div className="grid gap-3 border-t border-(--color-neutral-20) py-3 first:border-t-0 md:grid-cols-[8rem_8rem_minmax(0,1fr)] md:items-center">
+    <div className="grid gap-3 border-t border-(--app-neutral-20) py-3 first:border-t-0 md:grid-cols-[8rem_8rem_minmax(0,1fr)] md:items-center">
       <p className="builder-review-label">{label}</p>
       <p className="builder-review-status" data-tone={tone}>
         {status}
       </p>
-      <p className="min-w-0 break-words text-sm text-(--color-neutral)">
+      <p className="min-w-0 break-words text-sm text-(--colors-neutral-base)">
         {detail}
       </p>
     </div>
@@ -120,7 +120,7 @@ function PublishResult({
   if (publishState.status === 'error') {
     return (
       <div
-        className="border border-(--color-alert) p-3 text-sm text-(--color-alert)"
+        className="border border-(--app-alert) p-3 text-sm text-(--app-alert)"
         role="alert"
       >
         {publishState.errorMessage}
@@ -129,25 +129,25 @@ function PublishResult({
   }
 
   return (
-    <div className="grid gap-3 border border-(--color-martian-red) p-3">
+    <div className="grid gap-3 border border-(--colors-border-accent) p-3">
       <h3 className="text-sm">Published</h3>
       <dl className="grid gap-3 text-sm sm:grid-cols-[9rem_minmax(0,1fr)]">
         <dt className="builder-review-label">Action</dt>
-        <dd className="text-(--color-neutral)">{publishState.action}</dd>
+        <dd className="text-(--colors-neutral-base)">{publishState.action}</dd>
         <dt className="builder-review-label">Metadata URI</dt>
-        <dd className="break-all text-(--color-neutral)">
+        <dd className="break-all text-(--colors-neutral-base)">
           {publishState.metadataUri}
         </dd>
         <dt className="builder-review-label">Read URL</dt>
-        <dd className="break-all text-(--color-neutral)">
+        <dd className="break-all text-(--colors-neutral-base)">
           {publishState.metadataWalrusUrl}
         </dd>
         <dt className="builder-review-label">Digest</dt>
-        <dd className="break-all text-(--color-neutral)">
+        <dd className="break-all text-(--colors-neutral-base)">
           {publishState.suiTransactionDigest}
         </dd>
       </dl>
-      <p className="text-xs text-(--color-neutral-60)">
+      <p className="text-xs text-(--colors-neutral-60)">
         This local draft is kept as a record. Delete it from the drafts list
         when you no longer need it.
       </p>

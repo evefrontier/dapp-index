@@ -18,7 +18,7 @@ export function CheckboxOption({
   onChange,
 }: CheckboxOptionProps) {
   return (
-    <label className="builder-checkbox-option group grid cursor-pointer grid-cols-[auto_minmax(0,1fr)] gap-3 border border-(--color-neutral-20) p-3 text-sm text-(--color-neutral) hover:border-(--color-neutral-50)">
+    <label className="builder-checkbox-option group grid cursor-pointer grid-cols-[auto_minmax(0,1fr)] gap-3 border border-(--app-neutral-20) p-3 text-sm text-(--colors-neutral-base) hover:border-(--colors-neutral-50)">
       <input
         checked={checked}
         className="peer sr-only"
@@ -41,7 +41,7 @@ export function CheckboxOption({
       <span className="grid gap-1">
         <strong>{label}</strong>
         {subLabel ? (
-          <span className="text-xs text-(--color-neutral-60)">{subLabel}</span>
+          <span className="text-xs text-(--colors-neutral-60)">{subLabel}</span>
         ) : null}
       </span>
     </label>

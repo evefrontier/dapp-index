@@ -1,3 +1,4 @@
+import { defaultTheme, ThemeProvider } from '@evefrontier/component-library';
 import { EveFrontierProvider } from '@evefrontier/dapp-kit';
 import { QueryClient } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -19,11 +20,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
   const [queryClient] = useState(makeQueryClient);
 
   return (
-    <EveFrontierProvider queryClient={queryClient}>
-      {children}
-      {import.meta.env.DEV ? (
-        <ReactQueryDevtools buttonPosition="bottom-left" />
-      ) : null}
-    </EveFrontierProvider>
+    <ThemeProvider theme={defaultTheme}>
+      <EveFrontierProvider queryClient={queryClient}>
+        {children}
+        {import.meta.env.DEV ? (
+          <ReactQueryDevtools buttonPosition="bottom-left" />
+        ) : null}
+      </EveFrontierProvider>
+    </ThemeProvider>
   );
 }

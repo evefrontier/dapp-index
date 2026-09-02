@@ -120,7 +120,7 @@ export function FieldError({
   if (!message) return null;
 
   return (
-    <p className="text-xs text-(--color-alert)" id={`${id}-error`}>
+    <p className="text-xs text-(--app-alert)" id={`${id}-error`}>
       {message}
     </p>
   );

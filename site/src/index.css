@@ -1,19 +1,75 @@
 /**
- * App shell overrides on top of @evefrontier/ui/styles.css (Tailwind + DS tokens + typography).
- * The DS entry already sets :root tokens and @import "tailwindcss".
- * This file adds Tailwind source scanning for utilities used only in this app.
+ * App shell overrides on top of @evefrontier/component-library's style.css (Tailwind +
+ * DS component styles) and its ThemeProvider, which injects the design system's CSS
+ * variables (--colors-neutral-base, --typography-font-family-body, etc.) at runtime
+ * (see AppProviders.tsx). This file adds Tailwind source scanning for utilities used
+ * only in this app.
  */
 @import "tailwindcss";
+
+/*
+ * Bridges gaps in the design system's exposed token surface — remove each line once
+ * component-library exposes the equivalent directly:
+ * - Its neutral/crude alpha scales skip several steps this app needs (neutral: 20;
+ *   crude: 20, 60); color-mix() reproduces them exactly from the exposed base color
+ *   (same math the library itself uses internally to generate every other alpha step).
+ * - It has no general-purpose accent/alert color — only role-specific ones
+ *   (--colors-border-accent, --colors-text-status-alert). Aliased here under a neutral
+ *   name since these are also used for backgrounds/borders, not just text/borders.
+ */
+:root {
+  --app-neutral-20: color-mix(in srgb, var(--colors-neutral-base) 20%, transparent);
+  --app-crude-20: color-mix(in srgb, var(--colors-crude-base) 20%, transparent);
+  --app-crude-60: color-mix(in srgb, var(--colors-crude-base) 60%, transparent);
+  --app-alert: var(--colors-text-status-alert);
+}
+
+/*
+ * Faithful replacements for the old @evefrontier/ui utility classes of the same name —
+ * it shipped these as global classes, component-library ships CSS Modules only, so
+ * there's nothing to import. Kept under the original class names so call sites don't
+ * need to change. --letter-spacing-label has no equivalent system token (the label
+ * typography scale doesn't define one); 0.05em matches the old value exactly.
+ * `.ds-type-caption`'s color is a deliberate visual change, not a rename: the old
+ * `--color-muted` was a fixed muted gray (#6b6b5e) with no equivalent in the new
+ * system; `--colors-text-muted` (70%-opacity neutral) is its nearest intentional
+ * counterpart there.
+ */
+.ds-type-label {
+  font-family: var(--typography-font-family-body);
+  font-size: var(--typography-text-sm-font-size);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--typography-text-md-line-height);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--colors-neutral-base);
+}
+
+.ds-type-caption {
+  font-family: var(--typography-font-family-body);
+  font-size: var(--typography-text-xs-font-size);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--typography-text-md-line-height);
+  color: var(--colors-text-muted);
+}
+
+.ds-type-caption-error {
+  font-family: var(--typography-font-family-body);
+  font-size: var(--typography-text-xs-font-size);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--typography-text-md-line-height);
+  color: var(--app-alert);
+}
 
 body {
   margin: 0;
   min-height: 100dvh;
-  font-family: var(--font-family-mono);
-  font-size: var(--font-size-base);
-  line-height: var(--line-height-normal);
+  font-family: var(--typography-font-family-body);
+  font-size: var(--typography-text-md-font-size);
+  line-height: var(--typography-text-md-line-height);
   font-weight: var(--font-weight-normal);
-  color: var(--color-neutral);
-  background-color: var(--color-crude);
+  color: var(--colors-neutral-base);
+  background-color: var(--colors-crude-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -23,7 +79,7 @@ h4 {
   font-size: inherit;
   font-weight: var(--font-weight-bold);
   text-transform: uppercase;
-  color: var(--color-neutral);
+  color: var(--colors-neutral-base);
 }
 
 h3 {
@@ -31,13 +87,13 @@ h3 {
   font-size: inherit;
   font-weight: var(--font-weight-bold);
   text-transform: uppercase;
-  color: var(--color-neutral);
+  color: var(--colors-neutral-base);
 }
 
 @layer components {
   .builder-field label,
   .builder-fieldset legend {
-    @apply text-xs font-bold uppercase text-(--color-neutral-60);
+    @apply text-xs font-bold uppercase text-(--colors-neutral-60);
   }
 
   .builder-fieldset legend {
@@ -45,23 +101,23 @@ h3 {
   }
 
   .builder-field :is(input, textarea, select) {
-    @apply w-full border border-(--color-neutral-30) bg-(--color-crude-60) px-3 py-2 text-sm text-(--color-neutral) outline-none transition-colors focus:border-(--color-martian-red);
+    @apply w-full border border-(--colors-neutral-30) bg-(--app-crude-60) px-3 py-2 text-sm text-(--colors-neutral-base) outline-none transition-colors focus:border-(--colors-border-accent);
   }
 
   .builder-field :is(input, textarea, select)[aria-invalid='true'] {
-    @apply border-(--color-alert) focus:border-(--color-alert);
+    @apply border-(--app-alert) focus:border-(--app-alert);
   }
 
   .builder-status-badge {
-    @apply border border-(--color-neutral-20) px-2 py-1 text-xs font-bold uppercase text-(--color-neutral-60);
+    @apply border border-(--app-neutral-20) px-2 py-1 text-xs font-bold uppercase text-(--colors-neutral-60);
   }
 
   .builder-text-button-danger {
-    @apply text-xs font-bold uppercase text-(--color-alert);
+    @apply text-xs font-bold uppercase text-(--app-alert);
   }
 
   .builder-text-button {
-    @apply text-xs font-bold uppercase text-(--color-martian-red);
+    @apply text-xs font-bold uppercase text-(--colors-border-accent);
   }
 
   .builder-role-filter {
@@ -74,39 +130,39 @@ h3 {
 
   .builder-role-filter [data-size='small'] > span:first-child {
     padding: 4px 0.5rem;
-    font-size: var(--font-size-sm);
+    font-size: var(--typography-text-sm-font-size);
   }
 
   .builder-wizard-step {
-    @apply flex w-full items-center justify-between gap-3 border border-(--color-neutral-20) px-3 py-2 text-left text-sm font-bold uppercase text-(--color-neutral-60) transition-colors hover:border-(--color-neutral-50) disabled:cursor-default;
+    @apply flex w-full items-center justify-between gap-3 border border-(--app-neutral-20) px-3 py-2 text-left text-sm font-bold uppercase text-(--colors-neutral-60) transition-colors hover:border-(--colors-neutral-50) disabled:cursor-default;
   }
 
   .builder-wizard-step[data-state='active'] {
-    @apply border-(--color-martian-red) text-(--color-neutral);
+    @apply border-(--colors-border-accent) text-(--colors-neutral-base);
   }
 
   .builder-wizard-step[data-state='complete'] {
-    @apply text-(--color-martian-red) hover:border-(--color-martian-red);
+    @apply text-(--colors-border-accent) hover:border-(--colors-border-accent);
   }
 
   .builder-checkbox-box {
-    @apply mt-0.5 grid h-6 w-6 shrink-0 place-items-center border-2 border-(--color-martian-red) bg-transparent transition-colors hover:border-(--color-neutral) group-hover:border-(--color-neutral) peer-focus-visible:border-(--color-martian-red) peer-disabled:border-(--color-neutral-20) peer-disabled:bg-(--color-neutral-20);
+    @apply mt-0.5 grid h-6 w-6 shrink-0 place-items-center border-2 border-(--colors-border-accent) bg-transparent transition-colors hover:border-(--colors-neutral-base) group-hover:border-(--colors-neutral-base) peer-focus-visible:border-(--colors-border-accent) peer-disabled:border-(--app-neutral-20) peer-disabled:bg-(--app-neutral-20);
   }
 
   .builder-checkbox-box[data-checked] {
-    @apply border-(--color-martian-red) bg-(--color-martian-red) group-hover:border-(--color-neutral) group-hover:bg-(--color-neutral);
+    @apply border-(--colors-border-accent) bg-(--colors-border-accent) group-hover:border-(--colors-neutral-base) group-hover:bg-(--colors-neutral-base);
   }
 
   .builder-checkbox-box[data-error] {
-    @apply border-(--color-alert);
+    @apply border-(--app-alert);
   }
 
   .builder-checkbox-box[data-error][data-checked] {
-    @apply bg-(--color-alert);
+    @apply bg-(--app-alert);
   }
 
   .builder-checkbox-mark {
-    @apply h-3 w-2 bg-(--color-crude) opacity-0 transition-colors group-hover:bg-(--color-crude) peer-disabled:bg-(--color-neutral-40);
+    @apply h-3 w-2 bg-(--colors-crude-base) opacity-0 transition-colors group-hover:bg-(--colors-crude-base) peer-disabled:bg-(--colors-neutral-40);
   }
 
   .builder-checkbox-mark[data-checked] {
@@ -130,7 +186,7 @@ h3 {
   }
 
   .builder-media-slot-button {
-    @apply flex w-full min-w-0 items-center justify-between gap-3 border border-(--color-neutral-20) px-3 py-2 text-left text-xs font-bold uppercase text-(--color-neutral-60) transition-colors hover:border-(--color-neutral-50) disabled:cursor-default;
+    @apply flex w-full min-w-0 items-center justify-between gap-3 border border-(--app-neutral-20) px-3 py-2 text-left text-xs font-bold uppercase text-(--colors-neutral-60) transition-colors hover:border-(--colors-neutral-50) disabled:cursor-default;
   }
 
   .builder-media-slot-button-label {
@@ -142,35 +198,35 @@ h3 {
   }
 
   .builder-media-slot-button[data-selected='true'] {
-    @apply border-(--color-martian-red) text-(--color-neutral);
+    @apply border-(--colors-border-accent) text-(--colors-neutral-base);
   }
 
   .builder-media-slot-button[data-status='filled'] {
-    @apply text-(--color-martian-red);
+    @apply text-(--colors-border-accent);
   }
 
   .builder-media-slot-button[data-status='required-missing'] {
-    @apply border-(--color-alert);
+    @apply border-(--app-alert);
   }
 
   .builder-media-slot-panel {
-    @apply grid gap-4 border border-(--color-neutral-20) p-4;
+    @apply grid gap-4 border border-(--app-neutral-20) p-4;
   }
 
   .builder-media-slot-guide {
-    @apply space-y-1 text-xs text-(--color-neutral-60);
+    @apply space-y-1 text-xs text-(--colors-neutral-60);
   }
 
   .builder-media-slot-empty {
-    @apply grid gap-3 border border-dashed border-(--color-neutral-20) p-4;
+    @apply grid gap-3 border border-dashed border-(--app-neutral-20) p-4;
   }
 
   .builder-media-preview {
-    @apply relative flex aspect-video h-32 w-full items-center justify-center overflow-hidden border border-(--color-neutral-20) bg-(--color-crude-60) text-left transition-colors hover:border-(--color-martian-red) disabled:cursor-default disabled:hover:border-(--color-neutral-20) md:h-32;
+    @apply relative flex aspect-video h-32 w-full items-center justify-center overflow-hidden border border-(--app-neutral-20) bg-(--app-crude-60) text-left transition-colors hover:border-(--colors-border-accent) disabled:cursor-default disabled:hover:border-(--app-neutral-20) md:h-32;
   }
 
   .builder-review-label {
-    @apply text-xs font-bold uppercase text-(--color-neutral-60);
+    @apply text-xs font-bold uppercase text-(--colors-neutral-60);
   }
 
   .builder-review-status {
@@ -178,19 +234,19 @@ h3 {
   }
 
   .builder-review-status[data-tone='ready'] {
-    @apply text-(--color-martian-red);
+    @apply text-(--colors-border-accent);
   }
 
   .builder-review-status[data-tone='warning'] {
-    @apply text-(--color-neutral);
+    @apply text-(--colors-neutral-base);
   }
 
   .builder-review-status[data-tone='error'] {
-    @apply text-(--color-alert);
+    @apply text-(--app-alert);
   }
 
   .builder-review-status[data-tone='muted'] {
-    @apply text-(--color-neutral-60);
+    @apply text-(--colors-neutral-60);
   }
 
   .builder-review-issue {
@@ -198,27 +254,27 @@ h3 {
   }
 
   .builder-review-issue[data-severity='warning'] {
-    @apply text-(--color-neutral);
+    @apply text-(--colors-neutral-base);
   }
 
   .builder-review-issue[data-severity='error'] {
-    @apply text-(--color-alert);
+    @apply text-(--app-alert);
   }
 
   .builder-review-code {
-    @apply max-h-80 overflow-auto border border-(--color-neutral-20) bg-(--color-crude-60) p-3 text-xs leading-relaxed text-(--color-neutral-70);
+    @apply max-h-80 overflow-auto border border-(--app-neutral-20) bg-(--app-crude-60) p-3 text-xs leading-relaxed text-(--colors-neutral-70);
   }
 
   .builder-review-advanced {
-    @apply grid gap-3 border-t border-(--color-neutral-20) pt-4;
+    @apply grid gap-3 border-t border-(--app-neutral-20) pt-4;
   }
 
   .builder-review-advanced-summary {
-    @apply cursor-pointer text-xs font-bold uppercase text-(--color-martian-red);
+    @apply cursor-pointer text-xs font-bold uppercase text-(--colors-border-accent);
   }
 
   .builder-review-advanced-hint {
-    @apply text-sm text-(--color-neutral-60);
+    @apply text-sm text-(--colors-neutral-60);
   }
 
   .builder-review-modal-backdrop {
@@ -226,7 +282,7 @@ h3 {
   }
 
   .builder-review-modal-panel {
-    @apply grid max-h-full w-full max-w-2xl gap-4 border border-(--color-neutral-30) bg-(--color-crude) p-4;
+    @apply grid max-h-full w-full max-w-2xl gap-4 border border-(--colors-neutral-30) bg-(--colors-crude-base) p-4;
   }
 
   .builder-review-modal-header {
@@ -234,11 +290,11 @@ h3 {
   }
 
   .builder-review-modal-list {
-    @apply grid max-h-[60vh] overflow-auto border-y border-(--color-neutral-20);
+    @apply grid max-h-[60vh] overflow-auto border-y border-(--app-neutral-20);
   }
 
   .builder-review-modal-item {
-    @apply grid gap-1 border-t border-(--color-neutral-20) py-3 first:border-t-0 sm:grid-cols-[10rem_minmax(0,1fr)];
+    @apply grid gap-1 border-t border-(--app-neutral-20) py-3 first:border-t-0 sm:grid-cols-[10rem_minmax(0,1fr)];
   }
 
   .builder-wizard-nav-actions {
@@ -246,7 +302,7 @@ h3 {
   }
 
   .builder-wizard-next-blocker {
-    @apply shrink-0 text-sm whitespace-nowrap text-(--color-neutral-60);
+    @apply shrink-0 text-sm whitespace-nowrap text-(--colors-neutral-60);
   }
 
   .builder-publish-actions {
@@ -254,7 +310,7 @@ h3 {
   }
 
   .builder-publish-blocker {
-    @apply text-sm text-(--color-neutral);
+    @apply text-sm text-(--colors-neutral-base);
   }
 
   .directory-grid {
@@ -274,7 +330,7 @@ h3 {
   }
 
   .directory-card {
-    @apply min-w-0 border border-(--color-neutral-20) bg-(--color-crude-60);
+    @apply min-w-0 border border-(--app-neutral-20) bg-(--app-crude-60);
   }
 
   .directory-card-link {
@@ -282,7 +338,7 @@ h3 {
   }
 
   .directory-card-media {
-    @apply relative aspect-[16/10] overflow-hidden border-b border-(--color-neutral-20) bg-(--color-crude);
+    @apply relative aspect-[16/10] overflow-hidden border-b border-(--app-neutral-20) bg-(--colors-crude-base);
   }
 
   .directory-card-thumbnail {
@@ -290,15 +346,15 @@ h3 {
   }
 
   .directory-card-thumbnail-fallback {
-    @apply flex h-full w-full items-center justify-center bg-(--color-crude-60) text-4xl font-bold uppercase text-(--color-neutral-30);
+    @apply flex h-full w-full items-center justify-center bg-(--app-crude-60) text-4xl font-bold uppercase text-(--colors-neutral-30);
   }
 
   .directory-card-logo {
-    @apply absolute bottom-3 left-3 h-12 w-12 border border-(--color-neutral-20) bg-(--color-crude) object-contain p-1;
+    @apply absolute bottom-3 left-3 h-12 w-12 border border-(--app-neutral-20) bg-(--colors-crude-base) object-contain p-1;
   }
 
   .directory-card-logo-fallback {
-    @apply absolute bottom-3 left-3 flex h-12 w-12 items-center justify-center border border-(--color-neutral-20) bg-(--color-crude) text-sm font-bold uppercase text-(--color-neutral);
+    @apply absolute bottom-3 left-3 flex h-12 w-12 items-center justify-center border border-(--app-neutral-20) bg-(--colors-crude-base) text-sm font-bold uppercase text-(--colors-neutral-base);
   }
 
   .directory-card-body {
@@ -310,11 +366,11 @@ h3 {
   }
 
   .directory-card-title {
-    @apply min-w-0 text-base font-bold uppercase tracking-wide text-(--color-neutral);
+    @apply min-w-0 text-base font-bold uppercase tracking-wide text-(--colors-neutral-base);
   }
 
   .directory-card-summary {
-    @apply line-clamp-2 text-sm text-(--color-neutral-60);
+    @apply line-clamp-2 text-sm text-(--colors-neutral-60);
   }
 
   .directory-card-hover {
@@ -322,15 +378,15 @@ h3 {
   }
 
   .directory-card-hover-label {
-    @apply text-xs font-bold uppercase text-(--color-neutral-60);
+    @apply text-xs font-bold uppercase text-(--colors-neutral-60);
   }
 
   .directory-card-hover-copy {
-    @apply line-clamp-4 text-sm text-(--color-neutral);
+    @apply line-clamp-4 text-sm text-(--colors-neutral-base);
   }
 
   .directory-card-hover-cta {
-    @apply text-xs font-bold uppercase text-(--color-martian-red);
+    @apply text-xs font-bold uppercase text-(--colors-border-accent);
   }
 
   .directory-detail-page {
@@ -346,11 +402,11 @@ h3 {
   }
 
   .directory-detail-logo {
-    @apply h-16 w-16 shrink-0 border border-(--color-neutral-20) bg-(--color-crude-60) object-contain p-1;
+    @apply h-16 w-16 shrink-0 border border-(--app-neutral-20) bg-(--app-crude-60) object-contain p-1;
   }
 
   .directory-detail-title {
-    @apply text-2xl font-bold uppercase tracking-wider text-(--color-neutral);
+    @apply text-2xl font-bold uppercase tracking-wider text-(--colors-neutral-base);
   }
 
   .directory-detail-tag-row {
@@ -358,15 +414,15 @@ h3 {
   }
 
   .directory-detail-summary {
-    @apply max-w-3xl text-sm font-bold uppercase text-(--color-neutral);
+    @apply max-w-3xl text-sm font-bold uppercase text-(--colors-neutral-base);
   }
 
   .directory-detail-description {
-    @apply max-w-3xl text-sm text-(--color-neutral-60);
+    @apply max-w-3xl text-sm text-(--colors-neutral-60);
   }
 
   .directory-detail-section {
-    @apply border border-(--color-neutral-20) p-4;
+    @apply border border-(--app-neutral-20) p-4;
   }
 
   .directory-detail-link-grid {
@@ -374,7 +430,7 @@ h3 {
   }
 
   .directory-detail-external-link {
-    @apply break-all font-bold uppercase text-(--color-martian-red) underline-offset-2 hover:underline;
+    @apply break-all font-bold uppercase text-(--colors-border-accent) underline-offset-2 hover:underline;
   }
 
   .directory-detail-package-list {
@@ -382,7 +438,7 @@ h3 {
   }
 
   .directory-detail-package-row {
-    @apply grid gap-2 border border-(--color-neutral-20) p-3 sm:grid-cols-[1fr_auto] sm:items-center;
+    @apply grid gap-2 border border-(--app-neutral-20) p-3 sm:grid-cols-[1fr_auto] sm:items-center;
   }
 
   .directory-detail-package-meta {
@@ -390,7 +446,7 @@ h3 {
   }
 
   .directory-detail-gallery {
-    @apply space-y-3 border border-(--color-neutral-20) p-4;
+    @apply space-y-3 border border-(--app-neutral-20) p-4;
   }
 
   .directory-detail-gallery-header {
@@ -406,11 +462,11 @@ h3 {
   }
 
   .directory-detail-gallery-media {
-    @apply aspect-[16/9] max-h-[480px] w-full bg-(--color-crude-60) object-contain;
+    @apply aspect-[16/9] max-h-[480px] w-full bg-(--app-crude-60) object-contain;
   }
 
   .directory-detail-gallery-caption {
-    @apply text-center text-sm text-(--color-neutral-60);
+    @apply text-center text-sm text-(--colors-neutral-60);
   }
 
   .directory-detail-gallery-controls {
@@ -422,10 +478,10 @@ h3 {
   }
 
   .directory-detail-gallery-dot {
-    @apply h-2.5 w-2.5 border border-(--color-neutral-30) bg-transparent transition-colors;
+    @apply h-2.5 w-2.5 border border-(--colors-neutral-30) bg-transparent transition-colors;
   }
 
   .directory-detail-gallery-dot[data-active='true'] {
-    @apply border-(--color-martian-red) bg-(--color-martian-red);
+    @apply border-(--colors-border-accent) bg-(--colors-border-accent);
   }
 }

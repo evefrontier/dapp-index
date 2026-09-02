@@ -14,14 +14,14 @@ export function DirectoryResultsSection({
 }: DirectoryResultsSectionProps) {
   return (
     <section aria-labelledby="dapp-index-results-heading">
-      <div className="mb-4 flex min-w-0 flex-wrap items-baseline justify-between gap-2 border-b border-(--color-neutral-20) pb-3">
+      <div className="mb-4 flex min-w-0 flex-wrap items-baseline justify-between gap-2 border-b border-(--app-neutral-20) pb-3">
         <h2
-          className="ds-type-label text-(--color-neutral)"
+          className="ds-type-label text-(--colors-neutral-base)"
           id="dapp-index-results-heading"
         >
           Results
         </h2>
-        <p className="ds-type-caption shrink-0 text-(--color-neutral-60)">
+        <p className="ds-type-caption shrink-0 text-(--colors-neutral-60)">
           Showing {entries.length} of {totalCount}
           {isFiltered ? ' (filtered)' : ''}
         </p>

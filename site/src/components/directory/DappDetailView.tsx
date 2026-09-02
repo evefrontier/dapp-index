@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router';
-import { Tag } from '@evefrontier/ui';
+import { TagPill } from '@evefrontier/component-library';
 import { DappDetailGallery } from '@/components/directory/DappDetailGallery';
 import { InstallDappButton } from '@/components/directory/InstallDappButton';
 import { getDappDetailViewModel } from '@/directory/dappDetailModel';
@@ -13,7 +13,7 @@ function DirectoryBackLink() {
   return (
     <Link
       to="/"
-      className="text-sm font-bold uppercase text-(--color-martian-red)"
+      className="text-sm font-bold uppercase text-(--colors-border-accent)"
     >
       ← Directory
     </Link>
@@ -37,19 +37,19 @@ function DappDetailIdentity({ model }: { model: DappDetailViewModel }) {
 
           <div className="directory-detail-tag-row">
             {model.categories.map((category) => (
-              <Tag
+              <TagPill
                 key={category.id}
                 size="small"
                 text={category.label}
-                variant="secondary"
+                variation="secondary"
               />
             ))}
             {model.smartAssemblyTypes.map((assembly) => (
-              <Tag
+              <TagPill
                 key={assembly.id}
                 size="small"
                 text={assembly.label}
-                variant="secondary"
+                variation="secondary"
               />
             ))}
           </div>
@@ -73,7 +73,7 @@ function ExternalLinkRow({
 }) {
   return (
     <div>
-      <h3 className="ds-type-label mb-1 text-(--color-neutral-60)">{label}</h3>
+      <h3 className="ds-type-label mb-1 text-(--colors-neutral-60)">{label}</h3>
       <a
         className="directory-detail-external-link"
         href={href}
@@ -103,7 +103,7 @@ function DappDetailLinks({
 
   return (
     <section className="directory-detail-section">
-      <h2 className="ds-type-label mb-3 text-(--color-neutral-60)">Links</h2>
+      <h2 className="ds-type-label mb-3 text-(--colors-neutral-60)">Links</h2>
       <div className="directory-detail-link-grid">
         <ExternalLinkRow href={model.liveUrl} label="Live" />
         {model.repositoryUrl ? (
@@ -133,7 +133,7 @@ function DappDetailPackages({
 
   return (
     <section className="directory-detail-section">
-      <h2 className="ds-type-label mb-3 text-(--color-neutral-60)">Packages</h2>
+      <h2 className="ds-type-label mb-3 text-(--colors-neutral-60)">Packages</h2>
       <div className="directory-detail-package-list">
         {packages.map((pkg) => (
           <article
@@ -141,17 +141,17 @@ function DappDetailPackages({
             className="directory-detail-package-row"
           >
             <div className="directory-detail-package-meta">
-              <p className="text-xs font-bold uppercase text-(--color-neutral)">
+              <p className="text-xs font-bold uppercase text-(--colors-neutral-base)">
                 {pkg.network} · {pkg.role}
               </p>
               {pkg.mvrName ? (
-                <p className="text-sm text-(--color-neutral-60)">{pkg.mvrName}</p>
+                <p className="text-sm text-(--colors-neutral-60)">{pkg.mvrName}</p>
               ) : null}
-              <p className="break-all text-xs text-(--color-neutral-60)">
+              <p className="break-all text-xs text-(--colors-neutral-60)">
                 {pkg.packageId}
               </p>
               {pkg.packageInfoId ? (
-                <p className="break-all text-xs text-(--color-neutral-60)">
+                <p className="break-all text-xs text-(--colors-neutral-60)">
                   Package info: {pkg.packageInfoId}
                 </p>
               ) : null}
@@ -177,8 +177,8 @@ function DappDetailPackages({
 function DappDetailNotes({ notes }: { notes: string }) {
   return (
     <section className="directory-detail-section">
-      <h2 className="ds-type-label mb-3 text-(--color-neutral-60)">Notes</h2>
-      <p className="text-sm text-(--color-neutral)">{notes}</p>
+      <h2 className="ds-type-label mb-3 text-(--colors-neutral-60)">Notes</h2>
+      <p className="text-sm text-(--colors-neutral-base)">{notes}</p>
     </section>
   );
 }
@@ -187,7 +187,7 @@ export function DappDetailNotFound() {
   return (
     <div className="space-y-4">
       <DirectoryBackLink />
-      <p className="text-sm text-(--color-neutral-60)">Listing not found.</p>
+      <p className="text-sm text-(--colors-neutral-60)">Listing not found.</p>
     </div>
   );
 }
