@@ -118,7 +118,7 @@ export function RegistrationStepScreen({
       return <PublishStepScreen {...publishStep} readOnly={readOnly} />;
     default:
       return (
-        <p className="text-sm text-(--color-neutral-60)">
+        <p className="text-sm text-(--colors-neutral-60)">
           Screen content lands in a later builder PR.
         </p>
       );

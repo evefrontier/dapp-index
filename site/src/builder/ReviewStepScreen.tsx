@@ -60,7 +60,7 @@ function ReviewStatusRows({
   const statusRows = getReviewStatusRows(review, slugCheck, metadataHashPreview);
 
   return (
-    <div className="grid border-y border-(--color-neutral-20)">
+    <div className="grid border-y border-(--app-neutral-20)">
       <ReviewStatusRow
         action={
           statusRows.issueCounts.warnings > 0 ? (
@@ -128,12 +128,12 @@ function ReviewStatusRow({
   tone: ReviewTone;
 }) {
   return (
-    <div className="grid gap-3 border-t border-(--color-neutral-20) py-3 first:border-t-0 md:grid-cols-[8rem_8rem_minmax(0,1fr)_auto] md:items-center">
+    <div className="grid gap-3 border-t border-(--app-neutral-20) py-3 first:border-t-0 md:grid-cols-[8rem_8rem_minmax(0,1fr)_auto] md:items-center">
       <p className="builder-review-label">{label}</p>
       <p className="builder-review-status" data-tone={tone}>
         {status}
       </p>
-      <p className="min-w-0 break-words text-sm text-(--color-neutral)">
+      <p className="min-w-0 break-words text-sm text-(--colors-neutral-base)">
         {detail}
       </p>
       {action ? <div className="justify-self-start">{action}</div> : null}
