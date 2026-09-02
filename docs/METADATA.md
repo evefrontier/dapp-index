@@ -151,7 +151,8 @@ package object ID.
 
 ## Public Media Rules
 
-- Public media source URIs must use `walrus://blob/<blobId>`.
+- Public media source URIs must use `walrus://blob/<blobId>` or an `https://`
+  CDN URL (temporary S3/CloudFront MVP until Walrus is the default provider).
 - Images allow `image/webp`, `image/png`, and `image/jpeg`.
 - Videos allow only `video/webm`.
 - WebM videos should use `vp9,opus` or `vp8,opus`.

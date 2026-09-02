@@ -1,6 +1,7 @@
 /** Sui / registry env read at runtime (Vite `import.meta.env`). */
 
 import {
+  DAPP_MEDIA_CDN_ORIGIN,
   WALRUS_AGGREGATOR_MAINNET_URL,
   WALRUS_AGGREGATOR_TESTNET_URL,
   WALRUS_UPLOAD_RELAY_MAINNET_URL,
@@ -38,6 +39,42 @@ export function viteRegistryId(): string | undefined {
 
 export function registryConfigured(): boolean {
   return Boolean(vitePackageId() && viteRegistryId());
+}
+
+/** Lambda Function URL / upload API base (no trailing slash). */
+export function viteUploadApiBase(): string | undefined {
+  const raw = import.meta.env.VITE_UPLOAD_API_BASE;
+  if (typeof raw !== 'string') return undefined;
+  const t = raw.trim().replace(/\/+$/, '');
+  return t === '' ? undefined : t;
+}
+
+/**
+ * Public media CDN origin (no trailing slash).
+ * Override with `VITE_MEDIA_CDN_BASE` only for non-prod/test; default is
+ * terraform `public_url` (`https://dapp-media.evefrontier.com`).
+ */
+export function viteMediaCdnBase(): string {
+  const raw = import.meta.env.VITE_MEDIA_CDN_BASE;
+  if (typeof raw === 'string') {
+    const t = raw.trim().replace(/\/+$/, '');
+    if (t !== '') return t;
+  }
+  return DAPP_MEDIA_CDN_ORIGIN;
+}
+
+/**
+ * Hostname of this project's own legacy CloudFront distribution (no
+ * scheme/path), if any media was ever published under it directly. Only this
+ * exact host is rewritten to `viteMediaCdnBase()` on read — an unset value
+ * means no rewrite happens, so a third-party `*.cloudfront.net` URL a builder
+ * legitimately references is never redirected to our CDN.
+ */
+export function viteLegacyCloudFrontHost(): string | undefined {
+  const raw = import.meta.env.VITE_LEGACY_CLOUDFRONT_HOST;
+  if (typeof raw !== 'string') return undefined;
+  const t = raw.trim().toLowerCase();
+  return t === '' ? undefined : t;
 }
 
 function defaultWalrusAggregatorBaseUrl(

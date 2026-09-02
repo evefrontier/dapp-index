@@ -44,7 +44,6 @@ export function PublishStepScreen({
         <PublishStatusRow {...statusRows.walletNetwork} />
         <PublishStatusRow {...statusRows.targetNetwork} />
         <PublishStatusRow {...statusRows.suiBalance} />
-        <PublishStatusRow {...statusRows.walBalance} />
         <PublishStatusRow {...statusRows.publishSetup} />
         <PublishStatusRow {...statusRows.publishJob} />
       </div>
@@ -76,7 +75,7 @@ export function PublishStepScreen({
               </Button>
             )}
             <p className="text-xs text-(--color-neutral-60)">
-              Uploads local media, metadata, then Sui.
+              Uploads media and metadata to storage, then registers on Sui.
             </p>
           </div>
           {publishBlocker ? (
@@ -139,9 +138,9 @@ function PublishResult({
         <dd className="break-all text-(--color-neutral)">
           {publishState.metadataUri}
         </dd>
-        <dt className="builder-review-label">Read URL</dt>
+        <dt className="builder-review-label">CDN URL</dt>
         <dd className="break-all text-(--color-neutral)">
-          {publishState.metadataWalrusUrl}
+          {publishState.metadataPublicUrl}
         </dd>
         <dt className="builder-review-label">Digest</dt>
         <dd className="break-all text-(--color-neutral)">

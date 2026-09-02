@@ -6,20 +6,19 @@ import {
   useDAppKit,
 } from '@mysten/dapp-kit-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { hexToBytes } from '@/chain/bytes';
 import { normalizeRegistrySlug } from '@/chain/normalizeRegistrySlug';
 import {
   getPublishWalletBalanceBlockers,
   type PublishWalletBalanceUiState,
 } from '@/chain/publishWalletBalances';
-import type { Dispatch, SetStateAction } from 'react';
 import {
   registryConfigured,
   vitePackageId,
   viteRegistryId,
   viteSuiNetwork,
-  viteWalrusAggregatorUrl,
-  viteWalrusUploadRelayHost,
+  viteUploadApiBase,
 } from '@/chain/env';
 import {
   buildRegisterAppTransaction,
@@ -27,18 +26,18 @@ import {
 } from '@/chain/registerTransactions';
 import { lookupRegistrySlug } from '@/chain/slugLookup';
 import { requireSuccessfulTxDigest } from '@/chain/txDigest';
-import {
-  createWalrusSuiClient,
-  isWalrusChainNetwork,
-  walrusBlobReadUrl,
-  walrusBlobUri,
-} from '@/chain/walrusClient';
 import type {
   Draft,
   DraftPublishedMediaCheckpoint,
   DraftStorage,
 } from '@/storage/draftStorage';
 import { readLocalMediaDescriptor } from '@/storage/localMediaProbe';
+import {
+  stableMediaFilename,
+  uploadManifestToS3,
+  uploadMediaToS3,
+} from '@/storage/s3MetadataStorage';
+import { UploadError } from '@/storage/uploadErrors';
 import { canonicalStringify } from '@/utils/canonicalJson';
 import { useCancellableAsync } from './cancellableAsync';
 import { getErrorMessage } from './errors';
@@ -46,6 +45,8 @@ import {
   buildRegistrationPublishMetadata,
   createRegistrationPublishReadiness,
   getDraftVideoPosterBlockers,
+  getReusableS3StorageUri,
+  resolvePublishedMetadataPublicUrl,
   resolveRegistrationPublishAction,
   type RegistrationPublishAction,
   type RegistrationPublishMediaAsset,
@@ -64,16 +65,14 @@ import {
 } from './registrationDraftSlugCheck';
 import { usePublishWalletBalances } from './usePublishWalletBalances';
 
-const WALRUS_STORAGE_EPOCHS = 5;
-
 export type RegistrationDraftPublishState =
   | {
       status: 'idle';
       action: null;
       errorMessage: null;
       metadataHash: string | null;
-      metadataUri: `walrus://blob/${string}` | null;
-      metadataWalrusUrl: string | null;
+      metadataUri: string | null;
+      metadataPublicUrl: string | null;
       stage: string;
       suiTransactionDigest: string | null;
     }
@@ -82,8 +81,8 @@ export type RegistrationDraftPublishState =
       action: RegistrationPublishAction | null;
       errorMessage: null;
       metadataHash: string | null;
-      metadataUri: `walrus://blob/${string}` | null;
-      metadataWalrusUrl: string | null;
+      metadataUri: string | null;
+      metadataPublicUrl: string | null;
       stage: string;
       suiTransactionDigest: string | null;
     }
@@ -92,8 +91,8 @@ export type RegistrationDraftPublishState =
       action: RegistrationPublishAction;
       errorMessage: null;
       metadataHash: string;
-      metadataUri: `walrus://blob/${string}`;
-      metadataWalrusUrl: string;
+      metadataUri: string;
+      metadataPublicUrl: string;
       stage: string;
       suiTransactionDigest: string;
     }
@@ -102,8 +101,8 @@ export type RegistrationDraftPublishState =
       action: RegistrationPublishAction | null;
       errorMessage: string;
       metadataHash: string | null;
-      metadataUri: `walrus://blob/${string}` | null;
-      metadataWalrusUrl: string | null;
+      metadataUri: string | null;
+      metadataPublicUrl: string | null;
       stage: string;
       suiTransactionDigest: string | null;
     };
@@ -132,22 +131,13 @@ type PublishStageSetter = (stage: string) => void;
 
 type LocalMediaDescriptor = Awaited<ReturnType<typeof readLocalMediaDescriptor>>;
 
-type WalrusUploader = (input: {
-  bytes: Uint8Array;
-  contentType: string;
-  name: string;
-}) => Promise<{
-  walrusBlobId: string;
-  walrusUrl: string;
-}>;
-
 const INITIAL_PUBLISH_STATE: RegistrationDraftPublishState = {
   status: 'idle',
   action: null,
   errorMessage: null,
   metadataHash: null,
   metadataUri: null,
-  metadataWalrusUrl: null,
+  metadataPublicUrl: null,
   stage: 'Not started.',
   suiTransactionDigest: null,
 };
@@ -168,7 +158,7 @@ export function useRegistrationDraftPublishController({
   const [publishState, setPublishState] =
     useState<RegistrationDraftPublishState>(INITIAL_PUBLISH_STATE);
   const suiNetwork = viteSuiNetwork();
-  const walrusAggregatorUrl = viteWalrusAggregatorUrl() ?? null;
+  const uploadApiBase = viteUploadApiBase() ?? null;
   const walletAddress = currentAccount?.address ?? null;
   const walletBalanceStatus = usePublishWalletBalances({
     targetNetwork: suiNetwork,
@@ -186,7 +176,7 @@ export function useRegistrationDraftPublishController({
       suiNetwork,
       walletAddress,
       walletNetwork: walletAddress ? currentWalletNetwork : null,
-      walrusAggregatorUrl,
+      uploadApiBase,
       walletBalanceBlockers,
     });
     const mediaBlockers = getDraftVideoPosterBlockers(draft?.media ?? []);
@@ -200,9 +190,9 @@ export function useRegistrationDraftPublishController({
     draft?.media,
     review.ready,
     suiNetwork,
+    uploadApiBase,
     walletAddress,
     walletBalanceBlockers,
-    walrusAggregatorUrl,
   ]);
 
   const setPublishingStage = useCallback((stage: string) => {
@@ -212,7 +202,7 @@ export function useRegistrationDraftPublishController({
       errorMessage: null,
       metadataHash: current.metadataHash,
       metadataUri: current.metadataUri,
-      metadataWalrusUrl: current.metadataWalrusUrl,
+      metadataPublicUrl: current.metadataPublicUrl,
       stage,
       suiTransactionDigest: current.suiTransactionDigest,
     }));
@@ -223,11 +213,14 @@ export function useRegistrationDraftPublishController({
   useEffect(() => {
     if (!draft || draft.status !== 'published') return;
     const publish = draft.publish;
+    const metadataPublicUrl = publish
+      ? resolvePublishedMetadataPublicUrl(publish)
+      : null;
     if (
       !publish?.suiTransactionDigest ||
       !publish.metadataUri ||
       !publish.metadataHash ||
-      !publish.walrusUrl
+      !metadataPublicUrl
     ) {
       return;
     }
@@ -238,7 +231,7 @@ export function useRegistrationDraftPublishController({
       errorMessage: null,
       metadataHash: publish.metadataHash,
       metadataUri: publish.metadataUri,
-      metadataWalrusUrl: publish.walrusUrl,
+      metadataPublicUrl,
       stage: 'Published.',
       suiTransactionDigest: publish.suiTransactionDigest,
     });
@@ -256,7 +249,7 @@ export function useRegistrationDraftPublishController({
         errorMessage: publishReadiness.blockers.join(' '),
         metadataHash: null,
         metadataUri: null,
-        metadataWalrusUrl: null,
+        metadataPublicUrl: null,
         stage: 'Blocked.',
         suiTransactionDigest: null,
       });
@@ -265,8 +258,7 @@ export function useRegistrationDraftPublishController({
 
     const packageId = vitePackageId();
     const registryId = viteRegistryId();
-    if (!packageId || !registryId || !walletAddress) return;
-    if (!isWalrusChainNetwork(suiNetwork) || !walrusAggregatorUrl) return;
+    if (!packageId || !registryId || !walletAddress || !uploadApiBase) return;
 
     setPublishState({
       status: 'publishing',
@@ -274,7 +266,7 @@ export function useRegistrationDraftPublishController({
       errorMessage: null,
       metadataHash: null,
       metadataUri: null,
-      metadataWalrusUrl: null,
+      metadataPublicUrl: null,
       stage: 'Saving draft.',
       suiTransactionDigest: null,
     });
@@ -282,30 +274,6 @@ export function useRegistrationDraftPublishController({
     try {
       const savedDraft = await autosave.flush();
       if (!savedDraft) throw new Error('Draft not found.');
-
-      const signer = new CurrentAccountSigner(dAppKit);
-      const walrusClient = createWalrusSuiClient({
-        network: suiNetwork,
-        uploadRelayHost: viteWalrusUploadRelayHost(),
-      });
-      const uploadBlob: WalrusUploader = async ({ bytes, contentType, name }) => {
-        const result = await walrusClient.walrus.writeBlob({
-          blob: bytes,
-          deletable: false,
-          epochs: WALRUS_STORAGE_EPOCHS,
-          owner: walletAddress,
-          signer,
-          attributes: {
-            contentType,
-            name,
-          },
-        });
-
-        return {
-          walrusBlobId: result.blobId,
-          walrusUrl: walrusBlobReadUrl(walrusAggregatorUrl, result.blobId),
-        };
-      };
 
       const slugCheck = await checkPublishSlug(fields.slug, setPublishingStage);
       if (!publishTracker.isCurrent(requestId)) return;
@@ -321,19 +289,21 @@ export function useRegistrationDraftPublishController({
         errorMessage: null,
         metadataHash: current.metadataHash,
         metadataUri: current.metadataUri,
-        metadataWalrusUrl: current.metadataWalrusUrl,
+        metadataPublicUrl: current.metadataPublicUrl,
         stage: current.stage,
         suiTransactionDigest: current.suiTransactionDigest,
       }));
 
       const baseMetadata = buildRegistrationDraftMetadata(fields);
       const mediaAssets = await createUploadedMediaAssets({
+        address: walletAddress,
+        apiBase: uploadApiBase,
         baseMetadata,
         draft: savedDraft,
         isCurrent: () => publishTracker.isCurrent(requestId),
         setStage: setPublishingStage,
+        slug: fields.slug,
         storage,
-        uploadBlob,
       });
       if (!publishTracker.isCurrent(requestId)) return;
       const publishMetadata = buildRegistrationPublishMetadata({
@@ -349,16 +319,18 @@ export function useRegistrationDraftPublishController({
         publishMetadata.metadata,
       );
       const metadataUpload = await uploadMetadataJson({
+        address: walletAddress,
+        apiBase: uploadApiBase,
         draft: savedDraft,
         metadata: publishMetadata.metadata,
         metadataHash,
         isCurrent: () => publishTracker.isCurrent(requestId),
         setStage: setPublishingStage,
+        slug: fields.slug,
         storage,
-        uploadBlob,
       });
       if (!publishTracker.isCurrent(requestId)) return;
-      const metadataUri = walrusBlobUri(metadataUpload.walrusBlobId);
+      const metadataUri = metadataUpload.uri;
 
       setPublishState((current) => ({
         status: 'publishing',
@@ -366,7 +338,7 @@ export function useRegistrationDraftPublishController({
         errorMessage: null,
         metadataHash,
         metadataUri,
-        metadataWalrusUrl: metadataUpload.walrusUrl,
+        metadataPublicUrl: metadataUpload.uri,
         stage: current.stage,
         suiTransactionDigest: current.suiTransactionDigest,
       }));
@@ -379,28 +351,29 @@ export function useRegistrationDraftPublishController({
       const txInput = {
         packageId,
         registryId,
-        slug: normalizeRegistrySlug(fields.slug),
+        slug: fields.slug,
         metadataUri,
         metadataHash: hexToBytes(metadataHash),
-        categories: [...fields.categories],
+        categories: fields.categories,
       };
       const tx =
         publishAction.action === 'register'
           ? buildRegisterAppTransaction(txInput)
           : buildUpdateAppTransaction(txInput);
-      const txResult = await dAppKit.signAndExecuteTransaction({
+
+      const signer = new CurrentAccountSigner(dAppKit);
+      const executed = await signer.signAndExecuteTransaction({
         transaction: tx,
       });
-      const suiTransactionDigest = requireSuccessfulTxDigest(txResult);
+      const suiTransactionDigest = requireSuccessfulTxDigest(executed);
 
       const publishedDraft = await storage.finalizePublishedDraft(
         savedDraft.id,
         {
           metadataHash,
           metadataUri,
+          storageUri: metadataUpload.uri,
           suiTransactionDigest,
-          walrusBlobId: metadataUpload.walrusBlobId,
-          walrusUrl: metadataUpload.walrusUrl,
           publishAction: publishAction.action,
         },
       );
@@ -414,12 +387,19 @@ export function useRegistrationDraftPublishController({
         errorMessage: null,
         metadataHash,
         metadataUri,
-        metadataWalrusUrl: metadataUpload.walrusUrl,
+        metadataPublicUrl: metadataUpload.uri,
         stage: 'Published.',
         suiTransactionDigest,
       });
     } catch (caughtError) {
       if (!publishTracker.isCurrent(requestId)) return;
+      if (
+        (caughtError instanceof UploadError && caughtError.code === 'cancelled') ||
+        (caughtError instanceof Error &&
+          caughtError.message === 'Publish canceled.')
+      ) {
+        return;
+      }
       setPublishState((current) => ({
         status: 'error',
         action: current.action,
@@ -429,7 +409,7 @@ export function useRegistrationDraftPublishController({
         ),
         metadataHash: current.metadataHash,
         metadataUri: current.metadataUri,
-        metadataWalrusUrl: current.metadataWalrusUrl,
+        metadataPublicUrl: current.metadataPublicUrl,
         stage: 'Failed.',
         suiTransactionDigest: current.suiTransactionDigest,
       }));
@@ -445,9 +425,8 @@ export function useRegistrationDraftPublishController({
     setDraft,
     setPublishingStage,
     storage,
-    suiNetwork,
+    uploadApiBase,
     walletAddress,
-    walrusAggregatorUrl,
   ]);
 
   return {
@@ -473,19 +452,23 @@ async function checkPublishSlug(
 }
 
 async function createUploadedMediaAssets({
+  address,
+  apiBase,
   baseMetadata,
   draft,
   isCurrent,
   setStage,
+  slug,
   storage,
-  uploadBlob,
 }: {
+  address: string;
+  apiBase: string;
   baseMetadata: RegistrationDraftMetadataJson;
   draft: Draft;
   isCurrent: () => boolean;
   setStage: PublishStageSetter;
+  slug: string;
   storage: DraftStorage;
-  uploadBlob: WalrusUploader;
 }): Promise<RegistrationPublishMediaAsset[]> {
   if (draft.media.length === 0) return [];
 
@@ -494,14 +477,13 @@ async function createUploadedMediaAssets({
     draft.media.map((media) => readLocalMediaDescriptor(draft.id, media, storage)),
   );
   if (!isCurrent()) {
-    throw new Error('Publish canceled.');
+    throw new UploadError('cancelled', 'Publish canceled.');
   }
   const preflight = buildRegistrationPublishMetadata({
     baseMetadata,
     mediaAssets: descriptors.map((descriptor) => ({
       ...descriptor,
-      walrusBlobId: `preview-${descriptor.media.id}`,
-      walrusUrl: `preview://${descriptor.media.id}`,
+      storageUri: `https://preview.local/${descriptor.media.id}`,
     })),
   });
   if (!preflight.ready) {
@@ -510,16 +492,18 @@ async function createUploadedMediaAssets({
 
   const checkpoints = [...(draft.publish?.media ?? [])];
   const assets: RegistrationPublishMediaAsset[] = [];
-  for (const descriptor of descriptors) {
+  for (const [index, descriptor] of descriptors.entries()) {
     if (!isCurrent()) {
-      throw new Error('Publish canceled.');
+      throw new UploadError('cancelled', 'Publish canceled.');
     }
     const checkpoint = findMatchingMediaCheckpoint(checkpoints, descriptor);
-    if (checkpoint) {
+    const checkpointStorageUri = checkpoint
+      ? getReusableS3StorageUri(checkpoint)
+      : null;
+    if (checkpointStorageUri) {
       assets.push({
         media: descriptor.media,
-        walrusBlobId: checkpoint.walrusBlobId,
-        walrusUrl: checkpoint.walrusUrl,
+        storageUri: checkpointStorageUri,
         sha256: descriptor.sha256,
         sizeBytes: descriptor.sizeBytes,
         width: descriptor.width,
@@ -529,17 +513,26 @@ async function createUploadedMediaAssets({
       continue;
     }
 
-    setStage(`Uploading ${descriptor.media.name}.`);
+    setStage(
+      `Uploading media ${index + 1}/${descriptors.length}: ${descriptor.media.name}.`,
+    );
     const bytes = new Uint8Array(await descriptor.content.arrayBuffer());
-    const upload = await uploadBlob({
-      bytes,
+    const upload = await uploadMediaToS3({
+      address,
+      slug,
+      filename: stableMediaFilename(
+        descriptor.media.id,
+        descriptor.media.mimeType,
+        descriptor.sha256,
+      ),
       contentType: descriptor.media.mimeType,
-      name: descriptor.media.name,
+      bytes,
+      sha256: descriptor.sha256,
+      apiBase,
     });
     const nextCheckpoint: DraftPublishedMediaCheckpoint = {
       mediaId: descriptor.media.id,
-      walrusBlobId: upload.walrusBlobId,
-      walrusUrl: upload.walrusUrl,
+      storageUri: upload.uri,
       sha256: descriptor.sha256,
       sizeBytes: descriptor.sizeBytes,
       width: descriptor.width,
@@ -550,8 +543,7 @@ async function createUploadedMediaAssets({
     await storage.savePublishCheckpoint(draft.id, { media: checkpoints });
     assets.push({
       media: descriptor.media,
-      walrusBlobId: upload.walrusBlobId,
-      walrusUrl: upload.walrusUrl,
+      storageUri: upload.uri,
       sha256: descriptor.sha256,
       sizeBytes: descriptor.sizeBytes,
       width: descriptor.width,
@@ -564,54 +556,60 @@ async function createUploadedMediaAssets({
 }
 
 async function uploadMetadataJson({
+  address,
+  apiBase,
   draft,
   metadata,
   metadataHash,
   isCurrent,
   setStage,
+  slug,
   storage,
-  uploadBlob,
 }: {
+  address: string;
+  apiBase: string;
   draft: Draft;
   metadata: RegistrationDraftMetadataJson;
   metadataHash: string;
   isCurrent: () => boolean;
   setStage: PublishStageSetter;
+  slug: string;
   storage: DraftStorage;
-  uploadBlob: WalrusUploader;
 }): Promise<{
-  walrusBlobId: string;
-  walrusUrl: string;
+  uri: string;
 }> {
+  const checkpointStorageUri = draft.publish
+    ? getReusableS3StorageUri(draft.publish)
+    : null;
   if (
     draft.publish?.metadataHash === metadataHash &&
-    draft.publish.walrusBlobId &&
-    draft.publish.walrusUrl
+    draft.publish.metadataUri &&
+    checkpointStorageUri
   ) {
     return {
-      walrusBlobId: draft.publish.walrusBlobId,
-      walrusUrl: draft.publish.walrusUrl,
+      uri: checkpointStorageUri,
     };
   }
 
   setStage('Uploading metadata.');
   const bytes = new TextEncoder().encode(canonicalStringify(metadata));
-  const upload = await uploadBlob({
+  const upload = await uploadManifestToS3({
+    address,
+    slug,
     bytes,
-    contentType: 'application/json',
-    name: `${String(metadata.id ?? 'listing')}.json`,
+    sha256: metadataHash,
+    apiBase,
   });
   if (!isCurrent()) {
-    throw new Error('Publish canceled.');
+    throw new UploadError('cancelled', 'Publish canceled.');
   }
   await storage.savePublishCheckpoint(draft.id, {
     metadataHash,
-    metadataUri: walrusBlobUri(upload.walrusBlobId),
-    walrusBlobId: upload.walrusBlobId,
-    walrusUrl: upload.walrusUrl,
+    metadataUri: upload.uri,
+    storageUri: upload.uri,
   });
 
-  return upload;
+  return { uri: upload.uri };
 }
 
 function findMatchingMediaCheckpoint(
@@ -621,6 +619,7 @@ function findMatchingMediaCheckpoint(
   return (
     checkpoints.find(
       (checkpoint) =>
+        getReusableS3StorageUri(checkpoint) !== null &&
         checkpoint.mediaId === descriptor.media.id &&
         checkpoint.sha256 === descriptor.sha256 &&
         checkpoint.sizeBytes === descriptor.sizeBytes &&

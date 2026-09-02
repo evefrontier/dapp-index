@@ -94,11 +94,12 @@
     },
     "httpsUrl": {
       "type": "string",
-      "pattern": "^https://\\S+"
+      "pattern": "^https://[^\\s/?#]+(?:[/?#]\\S*)?$"
     },
     "walrusBlobUri": {
       "type": "string",
-      "pattern": "^walrus://blob/[A-Za-z0-9_-]+$"
+      "description": "Public media URI: Walrus blob or HTTPS CDN URL (temporary S3 MVP).",
+      "pattern": "^(walrus://blob/[A-Za-z0-9_-]+|https://[^\\s/?#]+(?:[/?#]\\S*)?)$"
     },
     "sha256Hex": {
       "type": "string",

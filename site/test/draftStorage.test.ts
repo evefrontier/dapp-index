@@ -107,6 +107,45 @@ describe('draft storage', () => {
     });
   });
 
+  test('retains legacy Walrus publish checkpoints for compatibility', async () => {
+    const { localStorage, storage } = createTestDraftStorage();
+    localStorage.setItem(
+      DRAFT_STORAGE_KEY,
+      JSON.stringify({
+        'draft-1': {
+          ...draft,
+          status: 'published',
+          publish: {
+            metadataUri: 'walrus://blob/metadata-blob',
+            metadataHash: 'abc123',
+            walrusBlobId: 'metadata-blob',
+            walrusUrl: 'https://aggregator.example/v1/blobs/metadata-blob',
+            suiTransactionDigest: 'tx-1',
+            media: [
+              {
+                mediaId: 'dashboard',
+                walrusBlobId: 'media-blob',
+                walrusUrl: 'https://aggregator.example/v1/blobs/media-blob',
+                sha256: '0'.repeat(64),
+                sizeBytes: 824_512,
+                width: 1600,
+                height: 900,
+              },
+            ],
+          },
+        },
+      }),
+    );
+
+    const restoredDraft = await storage.getDraft('draft-1');
+
+    expect(restoredDraft?.publish?.walrusUrl).toBe(
+      'https://aggregator.example/v1/blobs/metadata-blob',
+    );
+    expect(restoredDraft?.publish?.media?.[0]?.storageUri).toBeUndefined();
+    expect(restoredDraft?.publish?.media?.[0]?.walrusBlobId).toBe('media-blob');
+  });
+
   test('normalizes invalid persisted workflow state', async () => {
     const { localStorage, storage } = createTestDraftStorage();
     localStorage.setItem(
@@ -202,17 +241,15 @@ describe('draft storage', () => {
       media: [
         {
           mediaId: 'dashboard',
-          walrusBlobId: 'media-blob-1',
-          walrusUrl: 'https://aggregator.test/v1/blobs/media-blob-1',
+          storageUri: 'https://cdn.example/testnet/0x/demo/dashboard.webp',
           sha256: '0'.repeat(64),
           sizeBytes: 824_512,
           width: 1600,
           height: 900,
         },
       ],
-      metadataUri: 'walrus://blob/blob-1',
-      walrusBlobId: 'blob-1',
-      walrusUrl: 'https://aggregator.test/v1/blobs/blob-1',
+      metadataUri: 'https://cdn.example/testnet/0x/demo/metadata.json',
+      storageUri: 'https://cdn.example/testnet/0x/demo/metadata.json',
       metadataHash: 'abc123',
     });
     const updatedDraft = await storage.savePublishCheckpoint('draft-1', {
@@ -223,17 +260,15 @@ describe('draft storage', () => {
       media: [
         {
           mediaId: 'dashboard',
-          walrusBlobId: 'media-blob-1',
-          walrusUrl: 'https://aggregator.test/v1/blobs/media-blob-1',
+          storageUri: 'https://cdn.example/testnet/0x/demo/dashboard.webp',
           sha256: '0'.repeat(64),
           sizeBytes: 824_512,
           width: 1600,
           height: 900,
         },
       ],
-      metadataUri: 'walrus://blob/blob-1',
-      walrusBlobId: 'blob-1',
-      walrusUrl: 'https://aggregator.test/v1/blobs/blob-1',
+      metadataUri: 'https://cdn.example/testnet/0x/demo/metadata.json',
+      storageUri: 'https://cdn.example/testnet/0x/demo/metadata.json',
       metadataHash: 'abc123',
       suiTransactionDigest: 'tx-1',
     });
@@ -497,9 +532,8 @@ describe('draft storage', () => {
     const publishedDraft = await storage.finalizePublishedDraft('draft-1', {
       suiTransactionDigest: 'digest-1',
       metadataHash: 'hash-1',
-      metadataUri: 'walrus://blob/blob-1',
-      walrusBlobId: 'blob-1',
-      walrusUrl: 'https://aggregator.example/v1/blob-1',
+      metadataUri: 'https://cdn.example/testnet/0x/demo/metadata.json',
+      storageUri: 'https://cdn.example/testnet/0x/demo/metadata.json',
     });
 
     expect(publishedDraft.status).toBe('published');
@@ -507,7 +541,7 @@ describe('draft storage', () => {
     expect(publishedDraft.completedSteps).toContain('publish');
     expect(publishedDraft.publish).toMatchObject({
       suiTransactionDigest: 'digest-1',
-      metadataUri: 'walrus://blob/blob-1',
+      metadataUri: 'https://cdn.example/testnet/0x/demo/metadata.json',
     });
 
     const reloaded = await storage.getDraft('draft-1');

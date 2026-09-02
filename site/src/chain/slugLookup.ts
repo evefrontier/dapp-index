@@ -1,20 +1,16 @@
-import {
-  type DynamicFieldPage,
-  getJsonRpcFullnodeUrl,
-  SuiJsonRpcClient,
-  type SuiObjectResponse,
-} from '@mysten/sui/jsonRpc';
 import { registryConfigured, viteRegistryId, viteSuiNetwork } from '@/chain/env';
 import {
   type OnChainListing,
-  parseRegistryListingObject,
-} from '@/chain/registryListingObject';
-import { normalizeRegistrySlug } from '@/chain/normalizeRegistrySlug';
-import { withRpcTimeout } from '@/chain/rpcTimeout';
+  parseRegistryListingFieldBcs,
+  registrySlugFieldId,
+} from '@/chain/registryListingBcs';
 import {
-  REGISTRY_SLUG_LOOKUP_MAX_PAGES,
-  REGISTRY_SLUG_LOOKUP_RPC_TIMEOUT_MS,
-} from '@/constants';
+  createRegistryObjectReader,
+  type RegistryObjectRead,
+  type RegistryObjectReader,
+} from '@/chain/registryObjectReader';
+import { createSuiGrpcClient } from '@/chain/suiGrpcClient';
+import { REGISTRY_SLUG_LOOKUP_RPC_TIMEOUT_MS } from '@/constants';
 
 export type RegistrySlugLookupResult =
   | { status: 'unconfigured' }
@@ -22,38 +18,23 @@ export type RegistrySlugLookupResult =
   | { status: 'taken'; listing: OnChainListing }
   | { status: 'error'; message: string };
 
-async function mapWithConcurrency<T, R>(
-  items: readonly T[],
-  concurrency: number,
-  fn: (item: T, index: number) => Promise<R>,
-): Promise<R[]> {
-  if (items.length === 0) return [];
-  const results: R[] = new Array(items.length);
-  let nextIndex = 0;
-  const workers = Math.max(1, Math.min(concurrency, items.length));
-  async function worker() {
-    while (true) {
-      const i = nextIndex++;
-      if (i >= items.length) break;
-      const item = items[i];
-      if (item === undefined) continue;
-      results[i] = await fn(item, i);
-    }
-  }
-  await Promise.all(Array.from({ length: workers }, () => worker()));
-  return results;
-}
+export type RegistrySlugLookupOptions = {
+  /** Injectable object read so tests can run without a fullnode. */
+  readObject?: RegistryObjectReader;
+};
 
 /**
- * Best-effort on-chain slug lookup by scanning the registry object's dynamic fields.
+ * Look up a registry slug by reading its dynamic field directly.
  *
- * This is O(number of listings) RPC work. For very large registries, consider an
- * off-chain index later; for early testnets this is fine.
+ * Listings are keyed by slug, so the field's object id is derived locally and
+ * fetched in a single request. A `NOT_FOUND` status means the slug is free;
+ * anything else is reported as an error rather than silently read as available.
  */
 export async function lookupRegistrySlug(
   slug: string,
+  options: RegistrySlugLookupOptions = {},
 ): Promise<RegistrySlugLookupResult> {
-  const normalized = normalizeRegistrySlug(slug);
+  const normalized = slug.trim().toLowerCase();
   if (!normalized) {
     return { status: 'error', message: 'Slug is empty.' };
   }
@@ -62,77 +43,34 @@ export async function lookupRegistrySlug(
   const registryId = viteRegistryId();
   if (!registryId) return { status: 'unconfigured' };
 
-  const network = viteSuiNetwork();
-  const client = new SuiJsonRpcClient({
-    url: getJsonRpcFullnodeUrl(network),
-    network,
-  });
+  const readObject =
+    options.readObject ??
+    createRegistryObjectReader(createSuiGrpcClient(viteSuiNetwork()));
 
-  let cursor: string | null | undefined;
-  const seenCursors = new Set<string | null>();
-  let pagesRead = 0;
-
-  while (true) {
-    if (pagesRead >= REGISTRY_SLUG_LOOKUP_MAX_PAGES) {
-      return {
-        status: 'error',
-        message: `Slug lookup stopped after ${REGISTRY_SLUG_LOOKUP_MAX_PAGES} pages (registry very large). Try again later or ask for an indexed slug API.`,
-      };
-    }
-    if (seenCursors.has(cursor ?? null)) {
-      return {
-        status: 'error',
-        message: 'Slug lookup pagination loop detected.',
-      };
-    }
-    seenCursors.add(cursor ?? null);
-    pagesRead += 1;
-
-    let page: DynamicFieldPage;
-    try {
-      page = await withRpcTimeout(
-        client.getDynamicFields({
-          parentId: registryId,
-          cursor,
-        }),
-        REGISTRY_SLUG_LOOKUP_RPC_TIMEOUT_MS,
-        'slug lookup getDynamicFields',
-      );
-    } catch (e) {
-      return {
-        status: 'error',
-        message: e instanceof Error ? e.message : String(e),
-      };
-    }
-
-    for (const df of page.data) {
-      let obj: SuiObjectResponse;
-      try {
-        obj = await withRpcTimeout(
-          client.getDynamicFieldObject({
-            parentId: registryId,
-            name: df.name,
-          }),
-          REGISTRY_SLUG_LOOKUP_RPC_TIMEOUT_MS,
-          'slug lookup getDynamicFieldObject',
-        );
-      } catch {
-        continue;
-      }
-      const listing = parseRegistryListingObject(obj);
-      if (!listing) continue;
-      if (normalizeRegistrySlug(listing.slug) === normalized) {
-        return { status: 'taken', listing };
-      }
-    }
-
-    if (!page.hasNextPage) {
-      break;
-    }
-    cursor = page.nextCursor ?? null;
+  let read: RegistryObjectRead;
+  try {
+    read = await readObject(registrySlugFieldId(registryId, normalized), {
+      signal: AbortSignal.timeout(REGISTRY_SLUG_LOOKUP_RPC_TIMEOUT_MS),
+    });
+  } catch (error) {
+    return {
+      status: 'error',
+      message: error instanceof Error ? error.message : String(error),
+    };
   }
 
-  return { status: 'available' };
-}
+  if (read.status === 'notFound') return { status: 'available' };
+  if (read.status === 'failed') {
+    return { status: 'error', message: read.message };
+  }
 
-export { mapWithConcurrency };
+  const listing = parseRegistryListingFieldBcs(read.contents);
+  if (!listing) {
+    return {
+      status: 'error',
+      message: 'Registry listing could not be decoded.',
+    };
+  }
+
+  return { status: 'taken', listing };
+}
