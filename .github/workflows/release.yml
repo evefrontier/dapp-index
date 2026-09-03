@@ -1,0 +1,139 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g., 0.2.0)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Validate version format
+        run: |
+          if [[ ! ${{ inputs.version }} =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid version format. Use semantic versioning (e.g., 0.2.0)"
+            exit 1
+          fi
+
+      - name: Create git tag
+        run: |
+          git tag -a v${{ inputs.version }} -m "Release v${{ inputs.version }}"
+          git push origin v${{ inputs.version }}
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          # Get all commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --oneline main)
+          else
+            COMMITS=$(git log --oneline ${LAST_TAG}..main)
+          fi
+
+          # Format as markdown, grouped by type
+          FEATURES=$(echo "$COMMITS" | grep "^[a-f0-9]* feat:" | sed 's/^[a-f0-9]* //' | sed 's/^/- /')
+          FIXES=$(echo "$COMMITS" | grep "^[a-f0-9]* fix:" | sed 's/^[a-f0-9]* //' | sed 's/^/- /')
+          CHORES=$(echo "$COMMITS" | grep "^[a-f0-9]* chore:" | sed 's/^[a-f0-9]* //' | sed 's/^/- /')
+          DOCS=$(echo "$COMMITS" | grep "^[a-f0-9]* docs:" | sed 's/^[a-f0-9]* //' | sed 's/^/- /')
+
+          RELEASE_NOTES=""
+          [ -n "$FEATURES" ] && RELEASE_NOTES="${RELEASE_NOTES}## Features\n${FEATURES}\n\n"
+          [ -n "$FIXES" ] && RELEASE_NOTES="${RELEASE_NOTES}## Fixes\n${FIXES}\n\n"
+          [ -n "$DOCS" ] && RELEASE_NOTES="${RELEASE_NOTES}## Documentation\n${DOCS}\n\n"
+          [ -n "$CHORES" ] && RELEASE_NOTES="${RELEASE_NOTES}## Maintenance\n${CHORES}\n\n"
+
+          # Add manual note about Sui Move publishing
+          RELEASE_NOTES="${RELEASE_NOTES}## ⚠️ Manual Steps Required\n\n**Sui Move Package Publishing**\n\nThe Sui Move registry package must be published manually:\n\n\`\`\`bash\ncd registry/move\nsui move publish --gas-budget 100000000\n\`\`\`\n\nAfter publishing, update docs with the new package ID and create a follow-up commit on main."
+
+          echo "release_notes<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$RELEASE_NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ inputs.version }}
+          body: ${{ steps.notes.outputs.release_notes }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Bump version in package.json
+        run: |
+          # Calculate next dev version (e.g., 0.2.0 -> 0.3.0-dev)
+          CURRENT_VERSION="${{ inputs.version }}"
+          MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
+          MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
+          PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
+          NEXT_MINOR=$((MINOR + 1))
+          NEXT_VERSION="${MAJOR}.${NEXT_MINOR}.0-dev"
+
+          # Update package.json
+          npm pkg set version="$NEXT_VERSION"
+
+          # Commit and push
+          git add package.json
+          git commit -m "chore: bump version to $NEXT_VERSION [skip ci]"
+          git push origin main
+
+      - name: Merge release to live
+        run: |
+          git fetch origin live
+          git checkout live
+          git merge --no-ff v${{ inputs.version }} -m "Merge release v${{ inputs.version }} into live"
+          git push origin live
+        continue-on-error: true
+
+      - name: Create issue if live merge failed
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Release v${{ inputs.version }}: Manual merge to live required`,
+              body: `The automated merge to the \`live\` branch failed for release v${{ inputs.version }}. Please manually merge and push the release tag to the live branch.\n\n\`\`\`bash\ngit checkout live\ngit merge v${{ inputs.version }}\ngit push origin live\n\`\`\``,
+              labels: ['release', 'manual-intervention']
+            })
+
+      - name: Summary
+        run: |
+          echo "## Release v${{ inputs.version }} Complete ✓" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Git tag: v${{ inputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- GitHub Release created" >> $GITHUB_STEP_SUMMARY
+          echo "- Version bumped to next dev cycle" >> $GITHUB_STEP_SUMMARY
+          echo "- Live branch updated (if successful)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps (Manual)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. Verify live environment is deployed correctly" >> $GITHUB_STEP_SUMMARY
+          echo "2. When ready, publish Sui Move package:" >> $GITHUB_STEP_SUMMARY
+          echo "   \`cd registry/move && sui move publish --gas-budget 100000000\`" >> $GITHUB_STEP_SUMMARY
+          echo "3. Update docs with new package ID" >> $GITHUB_STEP_SUMMARY
+          echo "4. Create follow-up commit documenting the package ID" >> $GITHUB_STEP_SUMMARY
