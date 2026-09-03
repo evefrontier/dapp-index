@@ -1,9 +1,11 @@
 import { z } from 'zod';
 
+export const SLUG_MAX_LENGTH = 50;
+
 export const SlugSchema = z
   .string()
   .min(1, 'Slug is required.')
-  .max(50, 'Slug must be 50 characters or fewer.')
+  .max(SLUG_MAX_LENGTH, `Slug must be ${SLUG_MAX_LENGTH} characters or fewer.`)
   .regex(
     /^[a-z0-9]+(?:[a-z0-9-]*[a-z0-9])?$/,
     'Use lowercase letters, numbers, and hyphens.',

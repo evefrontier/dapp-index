@@ -7,6 +7,7 @@ type FieldProps = {
 };
 
 export function TextField({
+  action,
   error,
   id,
   label,
@@ -15,22 +16,35 @@ export function TextField({
   value,
   onChange,
 }: FieldProps & {
+  action?: ReactNode;
   maxLength?: number;
   type?: 'text' | 'url';
   value: string;
   onChange: (value: string) => void;
 }) {
+  const input = (
+    <input
+      aria-describedby={getFieldErrorId(id, error)}
+      aria-invalid={error ? true : undefined}
+      className={action ? 'min-w-0 flex-1' : undefined}
+      id={id}
+      maxLength={maxLength}
+      type={type}
+      value={value}
+      onChange={(event) => onChange(event.currentTarget.value)}
+    />
+  );
+
   return (
     <FieldShell error={error} id={id} label={label}>
-      <input
-        aria-describedby={getFieldErrorId(id, error)}
-        aria-invalid={error ? true : undefined}
-        id={id}
-        maxLength={maxLength}
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.currentTarget.value)}
-      />
+      {action ? (
+        <div className="flex items-center gap-2">
+          {input}
+          {action}
+        </div>
+      ) : (
+        input
+      )}
     </FieldShell>
   );
 }
