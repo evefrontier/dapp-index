@@ -41,6 +41,7 @@ export function AboutStepScreen({
         {(field) => (
           <TextAreaField
             error={field.state.meta.errors[0] ?? errors.description}
+            hint="The longer write-up shown on your dapp's detail page. Explain what it does, who it's for, and how it fits the Frontier ecosystem."
             id="builder-description"
             label="Description"
             maxLength={4000}
@@ -61,6 +62,7 @@ export function AboutStepScreen({
         {(field) => (
           <TextField
             error={field.state.meta.errors[0] ?? errors.liveUrl}
+            hint="The HTTPS link players use to open your dapp. This is required and must resolve to your live application."
             id="builder-live-url"
             label="Live URL"
             type="url"
@@ -82,6 +84,7 @@ export function AboutStepScreen({
         {(field) => (
           <TextField
             error={field.state.meta.errors[0] ?? errors.repositoryUrl}
+            hint="An optional HTTPS link to your dapp's public source code, for builders and reviewers who want to inspect the implementation."
             id="builder-repository-url"
             label="Repo URL"
             type="url"
@@ -103,6 +106,7 @@ export function AboutStepScreen({
         {(field) => (
           <TextField
             error={field.state.meta.errors[0] ?? errors.documentationUrl}
+            hint="An optional HTTPS link to setup guides, API docs, or other reference material for your dapp."
             id="builder-documentation-url"
             label="Docs URL"
             type="url"

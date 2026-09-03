@@ -9,7 +9,7 @@ import {
   type DappIndexSmartAssemblyType,
 } from '@/types/dapp-index';
 import { CheckboxOption } from './CheckboxOption';
-import { FieldError, getFieldErrorId } from './FormFields';
+import { FieldError, FieldHint, getFieldErrorId } from './FormFields';
 import type {
   RegistrationDraftFieldErrors,
   RegistrationDraftFields,
@@ -74,7 +74,10 @@ function CategoryFieldset({
       aria-invalid={error ? true : undefined}
       className="builder-fieldset grid gap-2"
     >
-      <legend>Categories</legend>
+      <legend className="flex items-center gap-1.5">
+        Categories
+        <FieldHint text="The index categories your dapp belongs to, such as Money, Logistics, or Infrastructure. Choose one to five — these drive how players filter and browse the index." />
+      </legend>
       <div className="grid gap-2 md:grid-cols-2">
         {DAPP_INDEX_CATEGORIES.map((category) => (
           <CheckboxOption
@@ -113,7 +116,10 @@ function SmartAssemblyFieldset({
       aria-invalid={error ? true : undefined}
       className="builder-fieldset grid gap-2"
     >
-      <legend>Smart assemblies</legend>
+      <legend className="flex items-center gap-1.5">
+        Smart assemblies
+        <FieldHint text="The in-game smart assembly types your dapp integrates with, such as Storage unit, Turret, or Gate. Selecting these lets players find your dapp from a focused assembly view." />
+      </legend>
       <div className="grid gap-2 md:grid-cols-3">
         {DAPP_INDEX_SMART_ASSEMBLY_TYPES.map((assembly) => (
           <CheckboxOption
@@ -151,7 +157,10 @@ function ServerTenantFilter({
       aria-invalid={error ? true : undefined}
       className="builder-fieldset grid gap-2"
     >
-      <legend>Server tenant</legend>
+      <legend className="flex items-center gap-1.5">
+        Server tenant
+        <FieldHint text="The EVE Frontier game server your dapp is registered for. This is required and determines which server's players see your listing." />
+      </legend>
       <div className="flex flex-wrap items-center gap-2">
         {DAPP_INDEX_SERVER_TENANTS.map((tenant) => {
           const selected = value === tenant;
