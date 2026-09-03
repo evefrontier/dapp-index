@@ -1,5 +1,6 @@
 import { RegistrationDraftBasicsSchema } from '@/schemas/registration-draft-fields';
 import { zodFieldValidator } from '@/schemas/zodFieldErrors';
+import { generateSlugSuggestion } from '@/utils/slug';
 import { TextAreaField, TextField } from './FormFields';
 import type {
   RegistrationDraftFieldErrors,
@@ -52,16 +53,37 @@ export function BasicsStepScreen({
           onChange: zodFieldValidator(RegistrationDraftBasicsSchema.shape.slug),
         }}
       >
-        {(field) => (
-          <TextField
-            error={field.state.meta.errors[0] ?? errors.slug}
-            id="builder-slug"
-            label="Slug"
-            maxLength={50}
-            value={field.state.value}
-            onChange={(slug) => updateField('slug', slug, field.handleChange)}
-          />
-        )}
+        {(field) => {
+          const slugSuggestion = generateSlugSuggestion(
+            fields.name,
+            fields.summary,
+          );
+
+          return (
+            <TextField
+              action={
+                <button
+                  className="builder-field-action-button"
+                  disabled={!slugSuggestion}
+                  type="button"
+                  onClick={() =>
+                    updateField('slug', slugSuggestion, field.handleChange)
+                  }
+                >
+                  Generate
+                </button>
+              }
+              error={field.state.meta.errors[0] ?? errors.slug}
+              id="builder-slug"
+              label="Slug"
+              maxLength={50}
+              value={field.state.value}
+              onChange={(slug) =>
+                updateField('slug', slug, field.handleChange)
+              }
+            />
+          );
+        }}
       </form.Field>
       <form.Field
         name="summary"

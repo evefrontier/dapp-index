@@ -52,6 +52,10 @@ h4 {
     @apply text-xs font-bold uppercase text-(--color-alert);
   }
 
+  .builder-field-action-button {
+    @apply shrink-0 whitespace-nowrap border border-(--color-neutral-30) px-3 py-2 text-xs font-bold uppercase text-(--color-neutral-60) transition-colors hover:border-(--color-martian-red) hover:text-(--color-neutral) disabled:cursor-default disabled:opacity-40 disabled:hover:border-(--color-neutral-30) disabled:hover:text-(--color-neutral-60);
+  }
+
   .builder-wizard-step {
     @apply flex w-full items-center justify-between gap-3 border border-(--color-neutral-20) px-3 py-2 text-left text-sm font-bold uppercase text-(--color-neutral-60) transition-colors hover:border-(--color-neutral-50) disabled:cursor-default;
   }
