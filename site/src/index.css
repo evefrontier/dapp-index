@@ -91,4 +91,16 @@ h4 {
   .builder-checkbox-option strong {
     @apply font-bold uppercase;
   }
+
+  .builder-hint-trigger {
+    @apply grid h-4 w-4 shrink-0 place-items-center rounded-full border border-(--color-neutral-30) text-[10px] font-bold normal-case leading-none text-(--color-neutral-60) transition-colors hover:border-(--color-neutral-50) hover:text-(--color-neutral);
+  }
+
+  .builder-hint-tooltip {
+    @apply invisible absolute bottom-full left-1/2 z-10 mb-1.5 w-56 -translate-x-1/2 border border-(--color-neutral-30) bg-(--color-crude) p-2 text-xs font-normal normal-case text-(--color-neutral) opacity-0 shadow-lg transition-opacity;
+  }
+
+  .builder-hint-tooltip[data-open] {
+    @apply visible opacity-100;
+  }
 }
