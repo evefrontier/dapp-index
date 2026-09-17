@@ -158,6 +158,74 @@ describe('registration draft fields', () => {
         suiPackages: [],
       }),
     ).toBe(true);
+    expect(
+      isRegistrationDraftStepValid('media', validFields, [
+        {
+          id: 'logo',
+          kind: 'screenshot',
+          role: 'logo',
+          name: 'Logo.png',
+          mimeType: 'image/png',
+          size: 1024,
+          createdAt: '2026-05-19T09:00:00.000Z',
+          alt: 'Logo',
+        },
+        {
+          id: 'thumbnail',
+          kind: 'screenshot',
+          role: 'thumbnail',
+          name: 'Card.png',
+          mimeType: 'image/png',
+          size: 1024,
+          createdAt: '2026-05-19T09:00:00.000Z',
+          alt: 'Card',
+        },
+        {
+          id: 'gallery-1',
+          kind: 'screenshot',
+          role: 'gallery',
+          name: 'Gallery.png',
+          mimeType: 'image/png',
+          size: 1024,
+          createdAt: '2026-05-19T09:00:00.000Z',
+          alt: 'Gallery',
+        },
+      ]),
+    ).toBe(true);
+    expect(
+      isRegistrationDraftStepValid('media', validFields, [
+        {
+          id: 'logo',
+          kind: 'screenshot',
+          role: 'logo',
+          name: 'Logo.png',
+          mimeType: 'image/png',
+          size: 1024,
+          createdAt: '2026-05-19T09:00:00.000Z',
+          alt: 'a'.repeat(241),
+        },
+        {
+          id: 'thumbnail',
+          kind: 'screenshot',
+          role: 'thumbnail',
+          name: 'Card.png',
+          mimeType: 'image/png',
+          size: 1024,
+          createdAt: '2026-05-19T09:00:00.000Z',
+          alt: 'Card',
+        },
+        {
+          id: 'gallery-1',
+          kind: 'screenshot',
+          role: 'gallery',
+          name: 'Gallery.png',
+          mimeType: 'image/png',
+          size: 1024,
+          createdAt: '2026-05-19T09:00:00.000Z',
+          alt: 'Gallery',
+        },
+      ]),
+    ).toBe(false);
   });
 
   test('identifies wizard steps backed by registration fields', () => {

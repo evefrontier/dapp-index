@@ -200,8 +200,10 @@ The builder-facing listing data uses the same concepts across Sui and Walrus:
 - `smartAssemblyTypes`: optional assembly facets such as Storage unit, Turret,
   and Gate;
 - `liveUrl`: where users can open the dapp;
-- `media`: Walrus-hosted screenshots, posters, and video sources for the public
-  gallery;
+- `media`: Walrus-hosted logo, thumbnail, gallery screenshots, and optional
+  video for the public directory. The builder media step uses six fixed slots
+  (logo, thumbnail, three gallery images, one video). Logo, thumbnail, and at
+  least one gallery image are required before publish.
 - `suiPackages`: required Move Registry package identities with at least one
   core package;
 - `serverTenant`: required EVE Frontier game server tenant;

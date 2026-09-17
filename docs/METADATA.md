@@ -150,8 +150,9 @@ manifest fields and the registry record should treat the listing as invalid.
 - WebM videos should use `vp9,opus` or `vp8,opus`.
 - Each image or poster is limited to `5 MB`.
 - Each video source is limited to `60 MB`, `1920x1080`, and `60` seconds.
-- A listing may include at most `10` media items and at most `2` videos.
+- A listing may include at most `6` media items (logo, thumbnail, up to three
+  gallery images, and one optional video) and at most `1` video.
 - Total public media across screenshots, posters, and video sources is limited
   to `150 MB`.
-- Gallery `thumbnail` and `hero` values must reference IDs from `media.items`.
+- Gallery `thumbnail` must reference an id in `media.items`.
 - Media IDs must be unique within the listing.

@@ -5,6 +5,11 @@ import { verifyMoveRegistryPackage } from '@/chain/moveRegistry';
 import { createMoveRegistryResolver } from '@/chain/moveRegistryResolver';
 import type { WizardShellProps } from './WizardShell';
 import { getErrorMessage } from './errors';
+import {
+  validateRegistrationDraftMediaStep,
+} from './registrationDraftMedia';
+import type { MediaSlotId } from './mediaSlotModel';
+import { useLocalMediaController } from './useLocalMediaController';
 import { resolveWizardRouteStep } from './wizardModel';
 import {
   createRegistrationDraftFieldPatch,
@@ -25,6 +30,7 @@ import {
   createDraftStorage,
   type Draft,
   type DraftAutosaveStatus,
+  type DraftMediaUpdate,
   type DraftStep,
   type DraftStorage,
 } from '@/storage/draftStorage';
@@ -52,6 +58,7 @@ type ListingStepMessage = Extract<
 type WizardNavigate = ReturnType<typeof useNavigate>;
 type WizardRouteStep = ReturnType<typeof resolveWizardRouteStep>;
 type DraftAutosave = ReturnType<typeof createDraftAutosave>;
+const EMPTY_DRAFT_MEDIA: Draft['media'] = [];
 
 type ListingStepState = {
   draft: Draft | null;
@@ -71,12 +78,25 @@ type ListingStepResultOptions = ListingStepState & {
   autosaveStatus: DraftAutosaveStatus;
   fieldErrors: RegistrationDraftFieldErrors;
   fields: RegistrationDraftFields;
+  mediaError: string | null;
+  mediaErrors: ReturnType<typeof validateRegistrationDraftMediaStep>['errors'];
+  mediaPending: boolean;
+  mediaPreviewUrls: Record<string, string>;
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
+  onUpdateMedia: (
+    mediaId: string,
+    update: DraftMediaUpdate,
+  ) => Promise<void>;
   onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
+  onUploadMediaForSlot: (
+    slotId: MediaSlotId,
+    file: File,
+  ) => Promise<void>;
   onVerifyPackages: () => Promise<void>;
 };
 
@@ -100,6 +120,10 @@ export function useListingStepController({
   const { autosave, autosaveError, autosaveStatus, setAutosaveStatus } =
     useDraftAutosaveController(storage, draftId);
   const { fields, fieldErrors } = useRegistrationDraftFields(draft);
+  const mediaErrors = useMemo(
+    () => validateRegistrationDraftMediaStep(draft?.media ?? []).errors,
+    [draft?.media],
+  );
   const moveRegistryResolver = useMemo(() => createMoveRegistryResolver(), []);
   const { loadedDraftId, routeStep } = useRouteStepSync({
     draft,
@@ -107,6 +131,19 @@ export function useListingStepController({
     setDraft,
     setNavigationError,
     step,
+    storage,
+  });
+  const {
+    mediaError,
+    mediaPending,
+    mediaPreviewUrls,
+    onDeleteMedia,
+    onUpdateMedia,
+    onUploadMediaForSlot,
+  } = useLocalMediaController({
+    draftMedia: draft?.media ?? EMPTY_DRAFT_MEDIA,
+    loadedDraftId,
+    setDraft,
     storage,
   });
   const onUpdateFields = useUpdateRegistrationDraftFields({
@@ -139,12 +176,19 @@ export function useListingStepController({
     fieldErrors,
     fields,
     loading,
+    mediaError,
+    mediaErrors,
+    mediaPending,
+    mediaPreviewUrls,
     navigationError,
     navigationPending,
     packageVerification,
+    onDeleteMedia,
     onExitWizard,
     onNavigateStep,
+    onUpdateMedia,
     onUpdateFields,
+    onUploadMediaForSlot,
     onVerifyPackages,
     routeStep,
   });
@@ -550,12 +594,19 @@ function createListingStepControllerResult(
       draft: options.draft,
       fieldErrors: options.fieldErrors,
       fields: options.fields,
+      mediaError: options.mediaError,
+      mediaErrors: options.mediaErrors,
+      mediaPending: options.mediaPending,
+      mediaPreviewUrls: options.mediaPreviewUrls,
       navigationError: options.navigationError,
       navigationPending: options.navigationPending,
       packageVerification: options.packageVerification,
+      onDeleteMedia: options.onDeleteMedia,
       onExitWizard: options.onExitWizard,
       onNavigateStep: options.onNavigateStep,
+      onUpdateMedia: options.onUpdateMedia,
       onUpdateFields: options.onUpdateFields,
+      onUploadMediaForSlot: options.onUploadMediaForSlot,
       onVerifyPackages: options.onVerifyPackages,
     },
   };

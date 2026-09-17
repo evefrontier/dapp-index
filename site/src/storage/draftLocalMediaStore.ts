@@ -52,6 +52,11 @@ export function createIndexedDbDraftLocalMediaStore(
       );
       return record?.content ?? null;
     },
+    delete: async (draftId, mediaId) => {
+      await withStore('readwrite', (store) =>
+        store.delete(mediaKey(draftId, mediaId)),
+      );
+    },
     deleteDraft: async (draftId) => {
       await withStore('readwrite', (store) =>
         deleteDraftLocalMedia(store, draftId),
@@ -72,6 +77,9 @@ export function createMemoryDraftLocalMediaStore(): DraftLocalMediaStore {
     },
     get: async (draftId, mediaId) =>
       localMedia.get(mediaKey(draftId, mediaId)) ?? null,
+    delete: async (draftId, mediaId) => {
+      localMedia.delete(mediaKey(draftId, mediaId));
+    },
     deleteDraft: async (draftId) => {
       const draftPrefix = `${encodeURIComponent(draftId)}:`;
       for (const key of localMedia.keys()) {
