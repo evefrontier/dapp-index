@@ -1,6 +1,7 @@
 import type { AnySchema, ErrorObject } from 'ajv';
 import Ajv2020 from 'ajv/dist/2020.js';
 import {
+  PUBLIC_MEDIA_ITEM_LIMIT,
   PUBLIC_MEDIA_TOTAL_SIZE_LIMIT_BYTES,
   PUBLIC_MEDIA_VIDEO_LIMIT,
 } from '@/constants';
@@ -99,6 +100,15 @@ function validateRegistryMetadataSemantics(data: unknown): ErrorObject[] {
       totalMediaSizeBytes += numberValue(asRecord(source)?.sizeBytes);
     });
   });
+
+  if (items.length > PUBLIC_MEDIA_ITEM_LIMIT) {
+    errors.push(
+      customError(
+        '/media/items',
+        `media may include at most ${PUBLIC_MEDIA_ITEM_LIMIT} items`,
+      ),
+    );
+  }
 
   for (const key of ['thumbnail', 'hero'] as const) {
     const referencedId = media[key];

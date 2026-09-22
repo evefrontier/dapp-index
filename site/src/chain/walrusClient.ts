@@ -6,6 +6,12 @@ import walrusWasmUrl from '@mysten/walrus-wasm/web/walrus_wasm_bg.wasm?url';
 
 export type WalrusChainNetwork = 'mainnet' | 'testnet';
 
+export function isWalrusChainNetwork(
+  network: string,
+): network is WalrusChainNetwork {
+  return network === 'testnet' || network === 'mainnet';
+}
+
 export type CreateWalrusSuiClientOptions = {
   /** Must be `mainnet` or `testnet` (Walrus contracts are only deployed there). */
   network: WalrusChainNetwork;
@@ -53,4 +59,8 @@ export function walrusBlobReadUrl(
 ): string {
   const base = aggregatorBaseUrl.trim().replace(/\/+$/, '');
   return `${base}/v1/blobs/${blobId}`;
+}
+
+export function walrusBlobUri(blobId: string): `walrus://blob/${string}` {
+  return `walrus://blob/${blobId}`;
 }

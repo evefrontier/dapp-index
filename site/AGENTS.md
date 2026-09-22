@@ -18,6 +18,7 @@
 
 ## Expectations
 
+- Builder media slots use stable draft media ids (`logo`, `thumbnail`, `gallery-1`, …). There is no migration for older flat-list local drafts; clear browser local draft storage when the media slot model changes during development.
 - Keep chain, Walrus, metadata, and UI concerns separated.
 - Add or update tests for schema validation, transaction builders, storage helpers, and trust/gating logic.
 - Browser-only APIs such as IndexedDB should have injectable adapters so unit tests can run under Bun.

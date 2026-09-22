@@ -7,6 +7,7 @@ import {
   readRegistrationDraftPackages,
   validateRegistrationDraftPackages,
 } from '../src/builder/registrationDraftPackages';
+import { RegistrationDraftPackageSchema } from '../src/schemas/registration-draft-package';
 
 const packageId =
   '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
@@ -176,7 +177,18 @@ describe('registration draft packages', () => {
     });
   });
 
-  test('requires MVR names only for package verification', () => {
+  test('accepts package rows without optional MVR identity fields in schema input', () => {
+    expect(
+      RegistrationDraftPackageSchema.safeParse({
+        draftPackageId: 'package-1',
+        network: 'mainnet',
+        role: 'core',
+        packageId,
+      }).success,
+    ).toBe(true);
+  });
+
+  test('does not require MVR names before package verification', () => {
     const packageIdOnly = {
       draftPackageId: 'package-1',
       network: 'mainnet' as const,
@@ -191,7 +203,7 @@ describe('registration draft packages', () => {
     );
     expect(
       getRegistrationDraftPackageVerificationBlocker([packageIdOnly]),
-    ).toBe('Add MVR names to verify packages.');
+    ).toBeNull();
     expect(
       getRegistrationDraftPackageVerificationBlocker([
         { ...packageIdOnly, mvrName: '@frontier/map' },

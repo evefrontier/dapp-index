@@ -1,20 +1,48 @@
-import type { DraftStep } from '@/storage/draftStorage';
+import type {
+  DraftMedia,
+  DraftMediaUpdate,
+  DraftStep,
+} from '@/storage/draftStorage';
 import { AboutStepScreen } from './AboutStepScreen';
 import { BasicsStepScreen } from './BasicsStepScreen';
 import { DiscoveryStepScreen } from './DiscoveryStepScreen';
+import { MediaStepScreen } from './MediaStepScreen';
 import { PackagesStepScreen } from './PackagesStepScreen';
+import { PublishStepScreen } from './PublishStepScreen';
+import { ReviewStepScreen } from './ReviewStepScreen';
+import type { MediaSlotId } from './mediaSlotModel';
 import type {
   RegistrationDraftFieldErrors,
   RegistrationDraftFields,
 } from './registrationDraftFields';
+import type { RegistrationDraftMediaErrors } from './registrationDraftMedia';
 import type { RegistrationDraftPackageVerificationState } from './registrationDraftPackages';
+import type { PublishStepControllerState } from './publishStepPresentation';
+import type { ReviewStepControllerState } from './reviewStepPresentation';
 
 export type RegistrationStepScreenProps = {
   activeStep: DraftStep;
   errors: RegistrationDraftFieldErrors;
   fields: RegistrationDraftFields;
+  media: DraftMedia[];
+  mediaError: string | null;
+  mediaErrors: RegistrationDraftMediaErrors;
+  mediaPending: boolean;
+  mediaPreviewUrls: Record<string, string>;
   packageVerification: RegistrationDraftPackageVerificationState;
+  publishStep: PublishStepControllerState;
+  readOnly: boolean;
+  reviewStep: ReviewStepControllerState;
+  onDeleteMedia: (mediaId: string) => Promise<void>;
+  onUpdateMedia: (
+    mediaId: string,
+    update: DraftMediaUpdate,
+  ) => Promise<void>;
   onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
+  onUploadMediaForSlot: (
+    slotId: MediaSlotId,
+    file: File,
+  ) => Promise<void>;
   onVerifyPackages: () => Promise<void>;
 };
 
@@ -22,8 +50,19 @@ export function RegistrationStepScreen({
   activeStep,
   errors,
   fields,
+  media,
+  mediaError,
+  mediaErrors,
+  mediaPending,
+  mediaPreviewUrls,
   packageVerification,
+  publishStep,
+  readOnly,
+  reviewStep,
+  onDeleteMedia,
+  onUpdateMedia,
   onUpdateFields,
+  onUploadMediaForSlot,
   onVerifyPackages,
 }: RegistrationStepScreenProps) {
   switch (activeStep) {
@@ -60,6 +99,23 @@ export function RegistrationStepScreen({
           onVerifyPackages={onVerifyPackages}
         />
       );
+    case 'media':
+      return (
+        <MediaStepScreen
+          errorMessage={mediaError}
+          media={media}
+          mediaErrors={mediaErrors}
+          pending={mediaPending}
+          previewUrls={mediaPreviewUrls}
+          onDeleteMedia={onDeleteMedia}
+          onUpdateMedia={onUpdateMedia}
+          onUploadMediaForSlot={onUploadMediaForSlot}
+        />
+      );
+    case 'review':
+      return <ReviewStepScreen {...reviewStep} />;
+    case 'publish':
+      return <PublishStepScreen {...publishStep} readOnly={readOnly} />;
     default:
       return (
         <p className="text-sm text-(--color-neutral-60)">

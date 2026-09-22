@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as BuilderRouteImport } from './routes/builder'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DappsSlugRouteImport } from './routes/dapps.$slug'
 import { Route as BuilderListingsDraftIdStepRouteImport } from './routes/builder_.listings.$draftId.$step'
 
 const BuilderRoute = BuilderRouteImport.update({
@@ -23,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DappsSlugRoute = DappsSlugRouteImport.update({
+  id: '/dapps/$slug',
+  path: '/dapps/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BuilderListingsDraftIdStepRoute =
   BuilderListingsDraftIdStepRouteImport.update({
     id: '/builder_/listings/$draftId/$step',
@@ -33,30 +39,43 @@ const BuilderListingsDraftIdStepRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
+  '/dapps/$slug': typeof DappsSlugRoute
   '/builder/listings/$draftId/$step': typeof BuilderListingsDraftIdStepRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
+  '/dapps/$slug': typeof DappsSlugRoute
   '/builder/listings/$draftId/$step': typeof BuilderListingsDraftIdStepRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/builder': typeof BuilderRoute
+  '/dapps/$slug': typeof DappsSlugRoute
   '/builder_/listings/$draftId/$step': typeof BuilderListingsDraftIdStepRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/builder' | '/builder/listings/$draftId/$step'
+  fullPaths:
+    | '/'
+    | '/builder'
+    | '/dapps/$slug'
+    | '/builder/listings/$draftId/$step'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/builder' | '/builder/listings/$draftId/$step'
-  id: '__root__' | '/' | '/builder' | '/builder_/listings/$draftId/$step'
+  to: '/' | '/builder' | '/dapps/$slug' | '/builder/listings/$draftId/$step'
+  id:
+    | '__root__'
+    | '/'
+    | '/builder'
+    | '/dapps/$slug'
+    | '/builder_/listings/$draftId/$step'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BuilderRoute: typeof BuilderRoute
+  DappsSlugRoute: typeof DappsSlugRoute
   BuilderListingsDraftIdStepRoute: typeof BuilderListingsDraftIdStepRoute
 }
 
@@ -76,6 +95,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dapps/$slug': {
+      id: '/dapps/$slug'
+      path: '/dapps/$slug'
+      fullPath: '/dapps/$slug'
+      preLoaderRoute: typeof DappsSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/builder_/listings/$draftId/$step': {
       id: '/builder_/listings/$draftId/$step'
       path: '/builder/listings/$draftId/$step'
@@ -89,6 +115,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BuilderRoute: BuilderRoute,
+  DappsSlugRoute: DappsSlugRoute,
   BuilderListingsDraftIdStepRoute: BuilderListingsDraftIdStepRoute,
 }
 export const routeTree = rootRouteImport

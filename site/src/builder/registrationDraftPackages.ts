@@ -146,10 +146,6 @@ export function getRegistrationDraftPackageVerificationBlocker(
     return packageValidation.fieldErrors.suiPackages;
   }
 
-  if (packages.some((draftPackage) => !draftPackage.mvrName.trim())) {
-    return 'Add MVR names to verify packages.';
-  }
-
   return null;
 }
 

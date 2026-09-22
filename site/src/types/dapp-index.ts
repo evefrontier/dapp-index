@@ -108,11 +108,11 @@ export interface DappIndexSuiPackage {
   network: DappIndexSuiNetwork;
   role: DappIndexSuiPackageRole;
   /** Canonical Move Registry name, e.g. `@studio/game`. */
-  mvrName: string;
-  /** Published Move package object ID resolved by MVR. */
+  mvrName?: string;
+  /** Published Move package object ID. */
   packageId: string;
   /** MVR PackageInfo object ID for this package on `network`. */
-  packageInfoId: string;
+  packageInfoId?: string;
   /** Move modules surfaced by this dapp package. */
   modules?: string[];
   explorerUrl?: string;
@@ -144,8 +144,8 @@ export interface DappIndexEntry {
   liveUrl: string;
   repositoryUrl?: string;
   documentationUrl?: string;
-  /** Move Registry verified Sui packages required before public release. */
-  suiPackages: DappIndexSuiPackage[];
+  /** Optional Sui packages surfaced by this dapp. */
+  suiPackages?: DappIndexSuiPackage[];
   /** Walrus / metadata URI recorded in the on-chain registry. */
   metadataUri?: string;
   /** Hex-encoded SHA-256 metadata hash recorded in the on-chain registry. */

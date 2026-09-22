@@ -19,7 +19,7 @@ const baseEntry = {
   serverTenant: 'stillness',
 };
 
-const corePackage = {
+const packageEntry = {
   network: 'mainnet',
   role: 'core',
   mvrName: '@frontier/map',
@@ -45,13 +45,13 @@ describe('registry metadata MVR package shape', () => {
       expect(isValidMvrName(name)).toBe(isValidNamedPackage(name));
       expect(validateRegistryMetadataJson({
         ...baseEntry,
-        suiPackages: [{ ...corePackage, mvrName: name }],
+        suiPackages: [{ ...packageEntry, mvrName: name }],
       }).ok).toBe(isValidNamedPackage(name));
     }
   });
 
-  test('requires at least one core Sui package with Move Registry identity', () => {
-    expect(validateRegistryMetadataJson(baseEntry).ok).toBe(false);
+  test('allows listings without Sui packages', () => {
+    expect(validateRegistryMetadataJson(baseEntry).ok).toBe(true);
 
     expect(
       validateRegistryMetadataJson({
@@ -61,32 +61,28 @@ describe('registry metadata MVR package shape', () => {
         ],
       }).ok,
     ).toBe(false);
-
-    expect(
-      validateRegistryMetadataJson({
-        ...baseEntry,
-        suiPackages: [corePackage],
-      }).ok,
-    ).toBe(true);
   });
 
-  test('rejects package lists without a core package', () => {
+  test('accepts package ID only and optional Move Registry identity fields', () => {
     expect(
       validateRegistryMetadataJson({
         ...baseEntry,
         suiPackages: [
           {
-            network: 'testnet',
-            role: 'dependency',
-            mvrName: '@frontier/library',
-            packageId:
-              '0x4444444444444444444444444444444444444444444444444444444444444444',
-            packageInfoId:
-              '0x5555555555555555555555555555555555555555555555555555555555555555',
+            network: 'mainnet',
+            role: 'core',
+            packageId: packageEntry.packageId,
           },
         ],
       }).ok,
-    ).toBe(false);
+    ).toBe(true);
+
+    expect(
+      validateRegistryMetadataJson({
+        ...baseEntry,
+        suiPackages: [packageEntry],
+      }).ok,
+    ).toBe(true);
   });
 
   test('rejects maintainer because package contact metadata belongs in MVR', () => {
@@ -94,7 +90,6 @@ describe('registry metadata MVR package shape', () => {
       validateRegistryMetadataJson({
         ...baseEntry,
         maintainer: 'Frontier Guild',
-        suiPackages: [corePackage],
       }).ok,
     ).toBe(false);
   });

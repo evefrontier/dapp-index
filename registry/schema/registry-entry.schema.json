@@ -11,7 +11,6 @@
     "name",
     "summary",
     "categories",
-    "suiPackages",
     "liveUrl",
     "serverTenant"
   ],
@@ -49,9 +48,7 @@
     "repositoryUrl": { "$ref": "#/$defs/httpsUrl" },
     "suiPackages": {
       "type": "array",
-      "minItems": 1,
       "maxItems": 12,
-      "contains": { "$ref": "#/$defs/coreSuiPackage" },
       "items": { "$ref": "#/$defs/suiPackage" }
     },
     "serverTenant": {
@@ -118,7 +115,7 @@
     "suiPackage": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["network", "role", "mvrName", "packageId", "packageInfoId"],
+      "required": ["network", "role", "packageId"],
       "properties": {
         "network": { "type": "string", "enum": ["mainnet", "testnet"] },
         "role": {
@@ -141,18 +138,6 @@
         },
         "explorerUrl": { "$ref": "#/$defs/httpsUrl" }
       }
-    },
-    "coreSuiPackage": {
-      "allOf": [
-        { "$ref": "#/$defs/suiPackage" },
-        {
-          "type": "object",
-          "required": ["role"],
-          "properties": {
-            "role": { "const": "core" }
-          }
-        }
-      ]
     },
     "mediaGallery": {
       "type": "object",

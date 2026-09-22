@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import type {
   Draft,
   DraftAutosaveStatus,
+  DraftMediaUpdate,
   DraftStep,
 } from '@/storage/draftStorage';
 import { RegistrationStepScreen } from './RegistrationStepScreens';
@@ -24,6 +25,16 @@ import {
   addRegistrationDraftPackage,
   type RegistrationDraftPackageVerificationState,
 } from './registrationDraftPackages';
+import type { RegistrationDraftMediaErrors } from './registrationDraftMedia';
+import type { MediaSlotId } from './mediaSlotModel';
+import {
+  getReviewNextBlockerMessage,
+  isReviewSlugCheckReady,
+  type RegistrationDraftReview,
+  type RegistrationDraftSlugCheckState,
+} from './registrationDraftReview';
+import type { PublishStepControllerState } from './publishStepPresentation';
+import type { ReviewStepControllerState } from './reviewStepPresentation';
 
 export type WizardShellProps = {
   activeStep: DraftStep;
@@ -32,12 +43,28 @@ export type WizardShellProps = {
   draft: Draft;
   fieldErrors: RegistrationDraftFieldErrors;
   fields: RegistrationDraftFields;
+  mediaError: string | null;
+  mediaErrors: RegistrationDraftMediaErrors;
+  mediaPending: boolean;
+  mediaPreviewUrls: Record<string, string>;
   navigationError: string | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
+  publishStep: PublishStepControllerState;
+  readOnly: boolean;
+  reviewStep: ReviewStepControllerState;
+  onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
+  onUpdateMedia: (
+    mediaId: string,
+    update: DraftMediaUpdate,
+  ) => Promise<void>;
   onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
+  onUploadMediaForSlot: (
+    slotId: MediaSlotId,
+    file: File,
+  ) => Promise<void>;
   onVerifyPackages: () => Promise<void>;
 };
 
@@ -48,12 +75,22 @@ export function WizardShell({
   draft,
   fieldErrors,
   fields,
+  mediaError,
+  mediaErrors,
+  mediaPending,
+  mediaPreviewUrls,
   navigationError,
   navigationPending,
   packageVerification,
+  publishStep,
+  readOnly,
+  reviewStep,
+  onDeleteMedia,
   onExitWizard,
   onNavigateStep,
+  onUpdateMedia,
   onUpdateFields,
+  onUploadMediaForSlot,
   onVerifyPackages,
 }: WizardShellProps) {
   const stepItems = createWizardStepItems(
@@ -66,11 +103,20 @@ export function WizardShell({
   const statusLabel = getWizardStatusLabel(autosaveStatus);
   const errorMessage = navigationError ?? autosaveError;
   const canNavigateNext =
-    !nextStep || isRegistrationDraftStepValid(activeStep, fields);
+    readOnly ||
+    !nextStep ||
+    isWizardStepReadyForNext(
+      activeStep,
+      fields,
+      draft.media,
+      reviewStep.review,
+      reviewStep.slugCheck,
+    );
 
   return (
     <div className="space-y-6">
       <WizardHeader statusLabel={statusLabel} title={title} />
+      {readOnly ? <WizardPublishedBanner /> : null}
       <WizardErrorMessage message={errorMessage} />
 
       <div className="grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)]">
@@ -90,13 +136,35 @@ export function WizardShell({
           activeStep={activeStep}
           canNavigateNext={canNavigateNext}
           navigationPending={navigationPending}
+          readOnly={readOnly}
           onExitWizard={onExitWizard}
+          onDeleteMedia={onDeleteMedia}
           onNavigateStep={onNavigateStep}
+          onUpdateMedia={onUpdateMedia}
           onUpdateFields={onUpdateFields}
+          onUploadMediaForSlot={onUploadMediaForSlot}
+          mediaError={mediaError}
+          mediaErrors={mediaErrors}
+          mediaPending={mediaPending}
+          mediaPreviewUrls={mediaPreviewUrls}
           packageVerification={packageVerification}
+          publishStep={publishStep}
+          reviewStep={reviewStep}
           onVerifyPackages={onVerifyPackages}
         />
       </div>
+    </div>
+  );
+}
+
+function WizardPublishedBanner() {
+  return (
+    <div
+      className="border border-(--color-neutral-20) bg-(--color-crude-20) p-3 text-sm text-(--color-neutral-60)"
+      role="status"
+    >
+      Published on Sui. This local draft is kept as a read-only record. Delete it
+      from the drafts list when you no longer need it.
     </div>
   );
 }
@@ -205,14 +273,24 @@ function WizardStepPanel({
   draft,
   fieldErrors,
   fields,
+  mediaError,
+  mediaErrors,
+  mediaPending,
+  mediaPreviewUrls,
   nextStep,
   navigationPending,
   packageVerification,
   previousStep,
+  publishStep,
+  readOnly,
+  reviewStep,
   title,
+  onDeleteMedia,
   onExitWizard,
   onNavigateStep,
+  onUpdateMedia,
   onUpdateFields,
+  onUploadMediaForSlot,
   onVerifyPackages,
 }: {
   activeStep: DraftStep;
@@ -220,18 +298,38 @@ function WizardStepPanel({
   draft: Draft;
   fieldErrors: RegistrationDraftFieldErrors;
   fields: RegistrationDraftFields;
+  mediaError: string | null;
+  mediaErrors: RegistrationDraftMediaErrors;
+  mediaPending: boolean;
+  mediaPreviewUrls: Record<string, string>;
   nextStep: DraftStep | null;
   navigationPending: boolean;
   packageVerification: RegistrationDraftPackageVerificationState;
   previousStep: DraftStep | null;
+  publishStep: PublishStepControllerState;
+  readOnly: boolean;
+  reviewStep: ReviewStepControllerState;
   title: string;
+  onDeleteMedia: (mediaId: string) => Promise<void>;
   onExitWizard: () => Promise<void>;
   onNavigateStep: (step: DraftStep) => Promise<void>;
+  onUpdateMedia: (
+    mediaId: string,
+    update: DraftMediaUpdate,
+  ) => Promise<void>;
   onUpdateFields: (fields: Partial<RegistrationDraftFields>) => void;
+  onUploadMediaForSlot: (
+    slotId: MediaSlotId,
+    file: File,
+  ) => Promise<void>;
   onVerifyPackages: () => Promise<void>;
 }) {
   const isPlaceholderStep = isWizardPlaceholderStep(activeStep);
-  const panelAction =
+  const reviewNextBlocker =
+    activeStep === 'review' && nextStep && !canNavigateNext
+      ? getReviewNextBlockerMessage(reviewStep.review, reviewStep.slugCheck)
+      : null;
+  const headerAction =
     activeStep === 'packages' ? (
       <Button
         variant="secondary"
@@ -249,22 +347,35 @@ function WizardStepPanel({
   return (
     <main className="min-w-0 space-y-5">
       <section className="border border-(--color-neutral-20) p-4">
-        <div className="space-y-4">
-          <WizardStepPanelHeader
-            action={panelAction}
-            draftId={draft.id}
-            showDraftMeta={isPlaceholderStep}
-            title={title}
-          />
-          <RegistrationStepScreen
-            activeStep={activeStep}
-            errors={fieldErrors}
-            fields={fields}
-            packageVerification={packageVerification}
-            onUpdateFields={onUpdateFields}
-            onVerifyPackages={onVerifyPackages}
-          />
-        </div>
+        <fieldset className="contents" disabled={readOnly}>
+          <div className="space-y-4">
+            <WizardStepPanelHeader
+              action={headerAction}
+              draftId={draft.id}
+              showDraftMeta={isPlaceholderStep}
+              title={title}
+            />
+            <RegistrationStepScreen
+              activeStep={activeStep}
+              errors={fieldErrors}
+              fields={fields}
+              media={draft.media}
+              mediaError={mediaError}
+              mediaErrors={mediaErrors}
+              mediaPending={mediaPending}
+              mediaPreviewUrls={mediaPreviewUrls}
+              packageVerification={packageVerification}
+              publishStep={publishStep}
+              readOnly={readOnly}
+              reviewStep={reviewStep}
+              onDeleteMedia={onDeleteMedia}
+              onUpdateMedia={onUpdateMedia}
+              onUpdateFields={onUpdateFields}
+              onUploadMediaForSlot={onUploadMediaForSlot}
+              onVerifyPackages={onVerifyPackages}
+            />
+          </div>
+        </fieldset>
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -278,7 +389,10 @@ function WizardStepPanel({
         >
           Back to drafts
         </button>
-        <div className="flex flex-wrap gap-2">
+        <div className="builder-wizard-nav-actions">
+          {reviewNextBlocker ? (
+            <p className="builder-wizard-next-blocker">{reviewNextBlocker}</p>
+          ) : null}
           <Button
             variant="secondary"
             size="small"
@@ -346,4 +460,18 @@ function StepStateLabel({ item }: { item: WizardStepItem }) {
   const label = item.state === 'active' ? 'Now' : 'Done';
 
   return <span className="text-xs">{label}</span>;
+}
+
+function isWizardStepReadyForNext(
+  step: DraftStep,
+  fields: RegistrationDraftFields,
+  media: Draft['media'],
+  review: RegistrationDraftReview,
+  slugCheck: RegistrationDraftSlugCheckState,
+): boolean {
+  if (step === 'review') {
+    return review.ready && isReviewSlugCheckReady(slugCheck);
+  }
+
+  return isRegistrationDraftStepValid(step, fields, media);
 }
