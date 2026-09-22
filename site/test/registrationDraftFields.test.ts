@@ -24,7 +24,7 @@ describe('registration draft fields', () => {
         liveUrl: 'https://frontier-map.example',
         repositoryUrl: 'https://github.com/example/frontier-map',
         documentationUrl: 'https://docs.frontier-map.example',
-        categories: ['logistics', 'bad-category', 'logistics', 'intel'],
+        categories: ['commerce', 'bad-category', 'commerce', 'intel'],
         smartAssemblyTypes: ['gate', 'not-real', 'storage-unit'],
         serverTenant: 'stillness',
         suiPackages: [
@@ -46,7 +46,7 @@ describe('registration draft fields', () => {
       liveUrl: 'https://frontier-map.example',
       repositoryUrl: 'https://github.com/example/frontier-map',
       documentationUrl: 'https://docs.frontier-map.example',
-      categories: ['logistics', 'intel'],
+      categories: ['commerce', 'intel'],
       smartAssemblyTypes: ['gate', 'storage-unit'],
       serverTenant: 'stillness',
       suiPackages: [
@@ -68,7 +68,7 @@ describe('registration draft fields', () => {
         ...createRegistrationDraftFields(),
         name: 'Frontier Map',
         slug: 'frontier-map',
-        categories: ['logistics'],
+        categories: ['commerce'],
       }),
     ).toEqual({
       name: 'Frontier Map',
@@ -78,7 +78,7 @@ describe('registration draft fields', () => {
       liveUrl: '',
       repositoryUrl: '',
       documentationUrl: '',
-      categories: ['logistics'],
+      categories: ['commerce'],
       smartAssemblyTypes: [],
       serverTenant: '',
       suiPackages: [],
@@ -115,7 +115,7 @@ describe('registration draft fields', () => {
       slug: 'frontier-map',
       summary: 'Maps routes and gate networks.',
       liveUrl: 'https://frontier-map.example',
-      categories: ['logistics'],
+      categories: ['commerce'],
       serverTenant: 'stillness',
       suiPackages: [
         {

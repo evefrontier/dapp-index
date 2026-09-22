@@ -195,7 +195,7 @@ The builder-facing listing data uses the same concepts across Sui and Walrus:
 
 - `id` / slug: stable URL-safe identifier;
 - `name` and `summary`: display copy;
-- `categories`: index categories such as Money, Logistics, Infrastructure,
+- `categories`: index categories such as Money, Commerce, Infrastructure,
   Intel, Coordination, Build, and Social;
 - `smartAssemblyTypes`: optional assembly facets such as Storage unit, Turret,
   and Gate;
