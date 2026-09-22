@@ -74,10 +74,27 @@ export function getWizardAdjacentStep(
   return DRAFT_STEPS[nextIndex] ?? null;
 }
 
+export type WizardStatusTone = 'secondary' | 'tertiary' | 'primary' | 'error';
+
 export function getWizardStatusLabel(
   status: DraftAutosaveStatus,
 ): string {
   return WIZARD_STATUS_LABELS[status];
+}
+
+export function getWizardStatusTone(
+  status: DraftAutosaveStatus,
+): WizardStatusTone {
+  switch (status) {
+    case 'idle':
+    case 'saved':
+      return 'secondary';
+    case 'pending':
+    case 'saving':
+      return 'tertiary';
+    case 'error':
+      return 'error';
+  }
 }
 
 export function isWizardPlaceholderStep(step: DraftStep): boolean {

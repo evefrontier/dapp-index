@@ -1,5 +1,8 @@
+import { BuilderBracketFrame } from './BuilderBracketFrame';
+
 type CheckboxOptionProps = {
   checked: boolean;
+  disabled?: boolean;
   error: boolean;
   label: string;
   name: string;
@@ -10,6 +13,7 @@ type CheckboxOptionProps = {
 
 export function CheckboxOption({
   checked,
+  disabled = false,
   error,
   label,
   name,
@@ -17,33 +21,42 @@ export function CheckboxOption({
   value,
   onChange,
 }: CheckboxOptionProps) {
+  const bracketTone = disabled ? 'disabled' : error ? 'error' : 'default';
+
   return (
-    <label className="builder-checkbox-option group grid cursor-pointer grid-cols-[auto_minmax(0,1fr)] gap-3 border border-(--color-neutral-20) p-3 text-sm text-(--color-neutral) hover:border-(--color-neutral-50)">
+    <label className="builder-checkbox-option group block cursor-pointer">
       <input
         checked={checked}
         className="peer sr-only"
+        disabled={disabled}
         name={name}
         type="checkbox"
         value={value}
         onChange={onChange}
       />
-      <span
-        aria-hidden="true"
-        className="builder-checkbox-box"
-        data-checked={checked ? '' : undefined}
-        data-error={error ? '' : undefined}
-      >
-        <span
-          className="builder-checkbox-mark"
-          data-checked={checked ? '' : undefined}
-        />
-      </span>
-      <span className="grid gap-1">
-        <strong>{label}</strong>
-        {subLabel ? (
-          <span className="text-xs text-(--color-neutral-60)">{subLabel}</span>
-        ) : null}
-      </span>
+      <BuilderBracketFrame tone={bracketTone}>
+        <div className="builder-checkbox-option-content grid grid-cols-[auto_minmax(0,1fr)] gap-3 p-3 text-base text-(--color-neutral)">
+          <span
+            aria-hidden="true"
+            className="builder-checkbox-box"
+            data-checked={checked ? '' : undefined}
+            data-error={error ? '' : undefined}
+          >
+            <span
+              className="builder-checkbox-fill"
+              data-checked={checked ? '' : undefined}
+            />
+          </span>
+          <span className="grid gap-1">
+            <strong>{label}</strong>
+            {subLabel ? (
+              <span className="text-xs text-(--color-neutral-60)">
+                {subLabel}
+              </span>
+            ) : null}
+          </span>
+        </div>
+      </BuilderBracketFrame>
     </label>
   );
 }

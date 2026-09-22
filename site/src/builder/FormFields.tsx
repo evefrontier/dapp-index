@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { BuilderBracketFrame } from './BuilderBracketFrame';
 
 type FieldProps = {
   error?: string;
@@ -104,7 +105,9 @@ export function FieldShell({
       <label htmlFor={id}>
         {label}
       </label>
-      {children}
+      <BuilderBracketFrame tone={error ? 'error' : 'default'}>
+        {children}
+      </BuilderBracketFrame>
       <FieldError id={id} message={error} />
     </div>
   );
