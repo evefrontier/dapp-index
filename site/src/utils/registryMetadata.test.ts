@@ -44,12 +44,11 @@ function validMetadata() {
     ],
     media: {
       thumbnail: 'dashboard',
-      hero: 'dashboard',
       items: [
         {
           id: 'dashboard',
           kind: 'image',
-          role: 'hero',
+          role: 'thumbnail',
           uri: 'walrus://blob/dashboardBlobId',
           mimeType: 'image/webp',
           sha256: HEX_32,

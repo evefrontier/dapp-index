@@ -74,7 +74,6 @@ export const DAPP_INDEX_VIDEO_MIME_TYPE = 'video/webm';
 
 export const DAPP_INDEX_MEDIA_ROLES = [
   'thumbnail',
-  'hero',
   'gallery',
   'demo',
   'logo',
