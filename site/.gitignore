@@ -6,3 +6,11 @@ dist
 *.local
 .vite
 node_modules/.tmp
+
+# Playwright (Linux baselines under e2e/__screenshots__ are committed; CI is the source of truth)
+/playwright-report
+/test-results
+/blob-report
+/e2e/.cache
+e2e/__screenshots__/**/*-darwin.png
+e2e/__screenshots__/**/*-win32.png
