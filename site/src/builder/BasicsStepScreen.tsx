@@ -39,6 +39,7 @@ export function BasicsStepScreen({
         {(field) => (
           <TextField
             error={field.state.meta.errors[0] ?? errors.name}
+            hint="The public display name for your dapp. It appears across the index and dapp cards, so keep it consistent with your other branding."
             id="builder-name"
             label="Name"
             maxLength={80}
@@ -74,6 +75,7 @@ export function BasicsStepScreen({
                 </button>
               }
               error={field.state.meta.errors[0] ?? errors.slug}
+              hint="A short, URL-safe identifier for your dapp using lowercase letters, numbers, and hyphens. It's used in the listing's URL and must be unique across the index."
               id="builder-slug"
               label="Slug"
               maxLength={50}
@@ -94,6 +96,7 @@ export function BasicsStepScreen({
         {(field) => (
           <TextAreaField
             error={field.state.meta.errors[0] ?? errors.summary}
+            hint="A one-line pitch shown alongside your dapp's name in listings. Keep it short and specific — it's capped at 180 characters."
             id="builder-summary"
             label="Summary"
             maxLength={180}

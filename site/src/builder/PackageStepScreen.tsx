@@ -145,6 +145,7 @@ function PackageCard({
 
       <div className="grid gap-4 md:grid-cols-2">
         <SelectField
+          hint="The Sui network this package is deployed on. Use testnet while iterating and mainnet for production listings."
           id={`builder-package-${draftPackage.draftPackageId}-network`}
           label="Network"
           value={draftPackage.network}
@@ -162,6 +163,7 @@ function PackageCard({
           ))}
         </SelectField>
         <SelectField
+          hint="How this package relates to your dapp. Mark your dapp's primary package 'core'; use 'dependency' or 'utility' for supporting packages. At least one package must be core."
           id={`builder-package-${draftPackage.draftPackageId}-role`}
           label="Role"
           value={draftPackage.role}
@@ -182,6 +184,7 @@ function PackageCard({
 
       <TextField
         error={packageError.packageId}
+        hint="The on-chain object ID (0x...) of the deployed Sui Move package. This is required and gets verified against the chain."
         id={`builder-package-${draftPackage.draftPackageId}-package-id`}
         label="Package ID"
         value={draftPackage.packageId}
@@ -189,6 +192,7 @@ function PackageCard({
       />
       <TextField
         error={packageError.mvrName}
+        hint="The package's Move Registry (MVR) name, if it's registered there. Providing this lets Dapp Index cross-check the package ID against the MVR resolver."
         id={`builder-package-${draftPackage.draftPackageId}-mvr-name`}
         label="MVR name (optional)"
         value={draftPackage.mvrName}
@@ -196,6 +200,7 @@ function PackageCard({
       />
       <TextField
         error={packageError.packageInfoId}
+        hint="The Sui object ID of this package's PackageInfo object in the Move Registry, if available. Used to verify the package's MVR registration."
         id={`builder-package-${draftPackage.draftPackageId}-package-info-id`}
         label="PackageInfo ID (optional)"
         value={draftPackage.packageInfoId}

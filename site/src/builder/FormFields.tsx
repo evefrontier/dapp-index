@@ -1,8 +1,9 @@
-import type { ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { BuilderBracketFrame } from './BuilderBracketFrame';
 
 type FieldProps = {
   error?: string;
+  hint?: string;
   id: string;
   label: string;
 };
@@ -10,6 +11,7 @@ type FieldProps = {
 export function TextField({
   action,
   error,
+  hint,
   id,
   label,
   maxLength,
@@ -37,7 +39,7 @@ export function TextField({
   );
 
   return (
-    <FieldShell error={error} id={id} label={label}>
+    <FieldShell error={error} hint={hint} id={id} label={label}>
       {action ? (
         <div className="flex items-center gap-2">
           {input}
@@ -52,6 +54,7 @@ export function TextField({
 
 export function TextAreaField({
   error,
+  hint,
   id,
   label,
   maxLength,
@@ -65,7 +68,7 @@ export function TextAreaField({
   onChange: (value: string) => void;
 }) {
   return (
-    <FieldShell error={error} id={id} label={label}>
+    <FieldShell error={error} hint={hint} id={id} label={label}>
       <textarea
         aria-describedby={getFieldErrorId(id, error)}
         aria-invalid={error ? true : undefined}
@@ -82,6 +85,7 @@ export function TextAreaField({
 export function SelectField({
   children,
   error,
+  hint,
   id,
   label,
   value,
@@ -92,7 +96,7 @@ export function SelectField({
   onChange: (value: string) => void;
 }) {
   return (
-    <FieldShell error={error} id={id} label={label}>
+    <FieldShell error={error} hint={hint} id={id} label={label}>
       <select
         aria-describedby={getFieldErrorId(id, error)}
         aria-invalid={error ? true : undefined}
@@ -109,6 +113,7 @@ export function SelectField({
 export function FieldShell({
   children,
   error,
+  hint,
   id,
   label,
 }: FieldProps & {
@@ -116,14 +121,47 @@ export function FieldShell({
 }) {
   return (
     <div className="builder-field grid gap-2">
-      <label htmlFor={id}>
-        {label}
-      </label>
+      <span className="flex items-center gap-1.5">
+        <label htmlFor={id}>{label}</label>
+        {hint ? <FieldHint text={hint} /> : null}
+      </span>
       <BuilderBracketFrame tone={error ? 'error' : 'default'}>
         {children}
       </BuilderBracketFrame>
       <FieldError id={id} message={error} />
     </div>
+  );
+}
+
+export function FieldHint({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  const tooltipId = useId();
+
+  return (
+    <span className="builder-hint relative inline-flex">
+      <button
+        aria-describedby={tooltipId}
+        aria-expanded={open}
+        aria-label="What does this field mean?"
+        className="builder-hint-trigger"
+        type="button"
+        onBlur={() => setOpen(false)}
+        onClick={() => setOpen(true)}
+        onFocus={() => setOpen(true)}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+      >
+        ?
+      </button>
+      <span
+        className="builder-hint-tooltip"
+        data-open={open ? '' : undefined}
+        id={tooltipId}
+        role="tooltip"
+      >
+        {text}
+      </span>
+    </span>
   );
 }
 
