@@ -96,6 +96,7 @@ export async function presignUpload(
   const objectKey = requireNonEmptyString(parsed.objectKey, 'objectKey');
   const publicUrl = requirePublicMediaUrl(parsed.publicUrl, mediaCdnBase);
   const headers = normalizeHeaders(parsed.headers);
+  requireMatchingContentTypeHeader(headers, input.contentType);
 
   return {
     uploadUrl,
@@ -176,6 +177,33 @@ function requirePublicMediaUrl(value: unknown, mediaCdnBase: string): string {
   }
 
   return url;
+}
+
+/**
+ * The Blob PUT to S3 carries no MIME type of its own — the `Content-Type`
+ * the object is stored (and later served) with comes entirely from the
+ * presign response header. A missing or mismatched header would silently
+ * store the object with the wrong Content-Type, so the CDN response would
+ * disagree with what the on-chain manifest declares.
+ */
+function requireMatchingContentTypeHeader(
+  headers: Record<string, string>,
+  expectedContentType: string,
+): void {
+  const key = Object.keys(headers).find(
+    (candidate) => candidate.toLowerCase() === 'content-type',
+  );
+  const actual = key ? headers[key] : undefined;
+  if (!actual || primaryMimeType(actual) !== primaryMimeType(expectedContentType)) {
+    throw new UploadError(
+      'presign_invalid_response',
+      'Upload service returned headers with a missing or mismatched Content-Type.',
+    );
+  }
+}
+
+function primaryMimeType(contentType: string): string {
+  return contentType.split(';')[0]?.trim().toLowerCase() ?? '';
 }
 
 function normalizeHeaders(value: unknown): Record<string, string> {

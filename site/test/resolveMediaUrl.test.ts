@@ -11,12 +11,32 @@ describe('resolveMediaUrl', () => {
     ).toBe('https://cdn.example/testnet/0xabc/demo/thumbnail.webp');
   });
 
-  test('rewrites legacy CloudFront media URLs to the public CDN', () => {
+  test('rewrites the configured legacy CloudFront host to the public CDN', () => {
     expect(
       resolveMediaUrl(
         'https://d111111abcdef8.cloudfront.net/testnet/0xabc/demo/gallery-1.png',
+        { legacyCloudFrontHost: 'd111111abcdef8.cloudfront.net' },
       ),
     ).toBe(`${DAPP_MEDIA_CDN_ORIGIN}/testnet/0xabc/demo/gallery-1.png`);
+  });
+
+  test('leaves other CloudFront hosts untouched when no legacy host is configured', () => {
+    // Without VITE_LEGACY_CLOUDFRONT_HOST set, no *.cloudfront.net URL is
+    // rewritten — a builder-referenced third-party distribution must not be
+    // redirected to a path that generally won't exist on our CDN.
+    const thirdPartyUrl =
+      'https://d222222xyz.cloudfront.net/some/other/project/asset.png';
+    expect(resolveMediaUrl(thirdPartyUrl)).toBe(thirdPartyUrl);
+  });
+
+  test('does not rewrite a CloudFront host that does not match the configured legacy host', () => {
+    const thirdPartyUrl =
+      'https://d222222xyz.cloudfront.net/some/other/project/asset.png';
+    expect(
+      resolveMediaUrl(thirdPartyUrl, {
+        legacyCloudFrontHost: 'd111111abcdef8.cloudfront.net',
+      }),
+    ).toBe(thirdPartyUrl);
   });
 
   test('rejects http URLs', () => {
