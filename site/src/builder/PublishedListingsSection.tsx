@@ -1,4 +1,4 @@
-import { Button } from '@evefrontier/ui';
+import { Button } from '@evefrontier/component-library';
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { RemoveListingModal } from './RemoveListingModal';
@@ -96,7 +96,7 @@ function StateBody({
           </p>
           <Button
             variant="secondary"
-            size="small"
+            size="sm"
             onClick={onConnectWallet}
           >
             Connect wallet

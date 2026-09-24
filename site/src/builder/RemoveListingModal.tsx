@@ -1,4 +1,4 @@
-import { Button } from '@evefrontier/ui';
+import { Button } from '@evefrontier/component-library';
 import { BuilderDialog } from './BuilderDialog';
 import type { RemoveListingAction } from './publishedListingsModel';
 
@@ -58,7 +58,7 @@ export function RemoveListingModal({
       </div>
 
       <div className="flex flex-wrap items-center justify-end gap-3">
-        <Button variant="secondary" size="small" onClick={onCancel}>
+        <Button variant="secondary" size="sm" onClick={onCancel}>
           Cancel
         </Button>
         <button
